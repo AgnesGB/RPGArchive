@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% macro tree(nodes, depth=0) %}
+  {% for n in nodes %}
+    {% set p = n.page %}
+    {% set active = page is defined and page.id is defined and page.id == p.id %}
+    {% if n.children %}
+      <details class="group/t" {{ 'open' if depth == 0 and loop.length < 8 }} data-tree="{{ p.id }}">
+        <summary class="nav-link cursor-pointer list-none {{ 'active' if active }}" style="padding-left: {{ 0.5 + depth * 0.9 }}rem">
+          <span class="w-3 shrink-0 text-[10px] text-faint transition group-open/t:rotate-90">▶</span>
+          <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="flex min-w-0 flex-1 items-center gap-1.5">
+            <span>{{ p.icon or CATEGORY_MAP.get(p.category, CATEGORY_MAP.nota).icon }}</span><span class="truncate">{{ p.title }}</span>
+          </a>
+        </summary>
+        {{ tree(n.children, depth + 1) }}
+      </details>
+    {% else %}
+      <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="nav-link {{ 'active' if active }}" style="padding-left: {{ 0.5 + depth * 0.9 }}rem">
+        <span class="w-3 shrink-0"></span>
+        <span>{{ p.icon or CATEGORY_MAP.get(p.category, CATEGORY_MAP.nota).icon }}</span><span class="truncate">{{ p.title }}</span>
+      </a>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+{% block body %}
+{% set ep = request.endpoint %}
+<div class="flex min-h-[calc(100vh-3.5rem)] flex-col md:flex-row">
+  <aside class="shrink-0 border-b border-line bg-surface/50 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
+    <div class="space-y-5 p-3">
+      <form action="{{ url_for('pages.index', wid=world.id) }}" class="relative">
+        <input class="input py-1.5 pl-8 text-sm" name="q" placeholder="Buscar…" value="{{ q if q is defined else '' }}">
+        <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">⌕</span>
+      </form>
+
+      <nav class="space-y-0.5">
+        <a href="{{ url_for('worlds.world_home', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.world_home' }}">🏠 Início</a>
+        <a href="{{ url_for('boards.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">🕸️ Mapas mentais <span class="ml-auto text-xs text-faint">{{ g.boards|length }}</span></a>
+        <a href="{{ url_for('maps.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('maps.') }}">🗺️ Mapas <span class="ml-auto text-xs text-faint">{{ g.maps|length }}</span></a>
+        <a href="{{ url_for('history.timelines', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">⏳ Linhas do tempo</a>
+        <a href="{{ url_for('history.trees', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.trees' }}">🌳 Árvores genealógicas</a>
+        <a href="{{ url_for('files.library', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">🗃️ Acervo</a>
+        <a href="{{ url_for('worlds.members', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.members' }}">🤝 Pessoas <span class="ml-auto text-xs text-faint">{{ g.member_count }}</span></a>
+      </nav>
+
+      <div>
+        <div class="flex items-center justify-between pr-1">
+          <p class="section-title">Páginas</p>
+          <a href="{{ url_for('pages.new', wid=world.id) }}" class="rounded px-1.5 text-lg leading-none text-faint hover:bg-surface-2 hover:text-ink" title="Nova página">+</a>
+        </div>
+        <a href="{{ url_for('pages.index', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'pages.index' and not cat }}"><span class="w-3"></span>📚 Todas <span class="ml-auto text-xs text-faint">{{ g.page_count }}</span></a>
+        <div class="mt-1 space-y-0.5">
+          {{ tree(g.page_tree) }}
+        </div>
+        {% if not g.page_tree %}<p class="px-2 py-2 text-xs text-faint">Nenhuma página ainda.</p>{% endif %}
+      </div>
+
+      <div>
+        <p class="section-title">Categorias</p>
+        {% for c in CATEGORIES %}
+          <a href="{{ url_for('pages.index', wid=world.id, cat=c.key) }}" class="nav-link {{ 'active' if cat is defined and cat == c.key }}">
+            <span>{{ c.icon }}</span> {{ c.label }} <span class="ml-auto text-xs text-faint">{{ g.category_counts.get(c.key, 0) }}</span>
+          </a>
+        {% endfor %}
+      </div>
+
+      {% if g.is_owner %}
+        <a href="{{ url_for('worlds.world_settings', wid=world.id) }}" class="nav-link text-muted {{ 'active' if ep == 'worlds.world_settings' }}">⚙️ Configurações</a>
+      {% endif %}
+    </div>
+  </aside>
+  <main class="min-w-0 flex-1">
+    {% block world_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

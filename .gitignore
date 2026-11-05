@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+instance/
+.env
+
+# pacotes de assets originais (licença não permite redistribuir)
+assets/

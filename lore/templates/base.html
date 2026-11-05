@@ -1,0 +1,167 @@
+{% set theme, accent = ui_prefs() %}<!doctype html>
+<html lang="pt-BR" class="h-full" data-theme="{{ theme }}" data-accent="{{ accent }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{% endblock %}{% if self.title() %} · {% endif %}{{ SITE_NAME }}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    /* ---------- Paleta: neutros (escuro por padrão) ---------- */
+    html {
+      color-scheme: dark;
+      --n-bg: #0c0a09; --n-canvas: #141210; --n-surface: #1c1917; --n-surface-2: #292524;
+      --n-line: #292524; --n-line-strong: #44403c;
+      --n-ink: #f5f5f4; --n-ink-2: #d6d3d1; --n-muted: #a8a29e; --n-faint: #78716c;
+    }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --n-bg: #faf9f7; --n-canvas: #f1efec; --n-surface: #ffffff; --n-surface-2: #f3f2f0;
+      --n-line: #e7e5e4; --n-line-strong: #d6d3d1;
+      --n-ink: #1c1917; --n-ink-2: #44403c; --n-muted: #78716c; --n-faint: #a8a29e;
+    }
+    /* ---------- Paleta: cor de destaque ---------- */
+    html, html[data-accent="yellow"] { --a300:#fcd34d; --a400:#fbbf24; --a500:#f59e0b; --a600:#d97706; --a700:#b45309; --a-on:#1c1917; }
+    html[data-accent="red"]    { --a300:#fca5a5; --a400:#f87171; --a500:#ef4444; --a600:#dc2626; --a700:#b91c1c; --a-on:#ffffff; }
+    html[data-accent="blue"]   { --a300:#93c5fd; --a400:#60a5fa; --a500:#3b82f6; --a600:#2563eb; --a700:#1d4ed8; --a-on:#ffffff; }
+    html[data-accent="pink"]   { --a300:#f9a8d4; --a400:#f472b6; --a500:#ec4899; --a600:#db2777; --a700:#be185d; --a-on:#ffffff; }
+    html[data-accent="purple"] { --a300:#c4b5fd; --a400:#a78bfa; --a500:#8b5cf6; --a600:#7c3aed; --a700:#6d28d9; --a-on:#ffffff; }
+    html[data-accent="green"]  { --a300:#6ee7b7; --a400:#34d399; --a500:#10b981; --a600:#059669; --a700:#047857; --a-on:#ffffff; }
+    html { --a-hover: var(--a400); --a-ink: var(--a400); }
+    html[data-theme="light"] { --a-hover: var(--a600); --a-ink: var(--a700); }
+  </style>
+  <style type="text/tailwindcss">
+    @theme {
+      --font-display: "Cinzel", ui-serif, Georgia, serif;
+      --font-serif: "Lora", ui-serif, Georgia, serif;
+      --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --color-bg: var(--n-bg);
+      --color-canvas: var(--n-canvas);
+      --color-surface: var(--n-surface);
+      --color-surface-2: var(--n-surface-2);
+      --color-line: var(--n-line);
+      --color-line-strong: var(--n-line-strong);
+      --color-ink: var(--n-ink);
+      --color-ink-2: var(--n-ink-2);
+      --color-muted: var(--n-muted);
+      --color-faint: var(--n-faint);
+      --color-accent: var(--a500);
+      --color-accent-hover: var(--a-hover);
+      --color-accent-ink: var(--a-ink);
+      --color-accent-soft: var(--a300);
+      --color-on-accent: var(--a-on);
+    }
+    @layer components {
+      .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition cursor-pointer disabled:opacity-50 whitespace-nowrap; }
+      .btn-primary { @apply bg-accent text-on-accent hover:bg-accent-hover shadow-sm; }
+      .btn-ghost { @apply text-ink-2 hover:bg-surface-2 hover:text-ink; }
+      .btn-outline { @apply border border-line-strong text-ink-2 hover:bg-surface-2; }
+      .btn-danger { @apply bg-red-600 text-white hover:bg-red-500; }
+      .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+      .input { @apply w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-ink placeholder:text-faint outline-none focus:border-accent focus:ring-2 focus:ring-accent/20; }
+      .label { @apply mb-1 block text-sm font-medium text-ink-2; }
+      .panel { @apply rounded-2xl border border-line bg-surface; }
+      .chip { @apply inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted; }
+      .nav-link { @apply flex items-center gap-2 rounded-md px-2 py-1 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink; }
+      .nav-link.active { @apply bg-surface-2 text-ink font-medium; }
+      .section-title { @apply mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-faint; }
+    }
+    /* Conteúdo das páginas (markdown renderizado) */
+    .lore { @apply text-ink-2 leading-relaxed text-[1.02rem]; }
+    .lore > * + * { @apply mt-4; }
+    .lore h1 { @apply font-display text-2xl text-ink mt-10; }
+    .lore h2 { @apply font-display text-xl text-ink mt-8 border-b border-line pb-1; }
+    .lore h3 { @apply font-semibold text-lg text-ink mt-6; }
+    .lore a { @apply text-accent-ink underline decoration-accent/40 underline-offset-2 hover:decoration-accent; }
+    .lore a[href*="/pages/new"] { @apply text-red-500 decoration-red-500/40 decoration-dashed; }
+    .lore ul { @apply list-disc pl-6 space-y-1; }
+    .lore ol { @apply list-decimal pl-6 space-y-1; }
+    .lore li > input[type=checkbox] { @apply mr-2 accent-accent; }
+    .lore blockquote { @apply border-l-4 border-accent bg-surface-2 px-4 py-3 font-serif italic text-ink-2 rounded-r-lg; }
+    .lore code { @apply rounded bg-surface-2 px-1.5 py-0.5 text-sm; }
+    .lore pre { @apply rounded-lg bg-surface-2 p-4 overflow-x-auto; }
+    .lore pre code { @apply bg-transparent p-0; }
+    .lore table { @apply w-full text-sm border-collapse; }
+    .lore th, .lore td { @apply border border-line px-3 py-1.5 text-left; }
+    .lore th { @apply bg-surface-2 text-ink; }
+    .lore hr { @apply border-line my-8; }
+    .lore img { @apply rounded-xl border border-line max-h-[32rem] mx-auto; }
+    .lore strong { @apply text-ink; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-full bg-bg font-sans text-ink antialiased">
+  <header class="sticky top-0 z-40 h-14 border-b border-line bg-bg/85 backdrop-blur">
+    <div class="flex h-full items-center gap-3 px-4">
+      <a href="{{ url_for('index') }}" class="flex shrink-0 items-center gap-2 font-display text-base font-semibold tracking-wide text-accent-ink sm:text-lg">
+        <span class="text-xl">👁️</span> <span class="hidden sm:inline">{{ SITE_NAME }}</span>
+      </a>
+      {% if g.world %}
+        <span class="text-faint">/</span>
+        <a href="{{ url_for('worlds.world_home', wid=g.world.id) }}" class="truncate font-medium text-ink-2 hover:text-ink">{{ g.world.icon }} {{ g.world.name }}</a>
+      {% endif %}
+      <div class="ml-auto flex items-center gap-1">
+        {% include "_theme_picker.html" %}
+        {% if g.user %}
+          <a href="{{ url_for('worlds.list_worlds') }}" class="btn btn-ghost hidden sm:inline-flex">Meus mundos</a>
+          <div class="flex items-center gap-2 pl-1" title="{{ g.user.email }}">
+            {% if g.user.avatar_url %}
+              <img src="{{ g.user.avatar_url }}" alt="" class="size-8 rounded-full ring-1 ring-line-strong" referrerpolicy="no-referrer">
+            {% else %}
+              <span class="grid size-8 place-items-center rounded-full bg-accent text-sm font-semibold text-on-accent">{{ g.user.name[:1]|upper }}</span>
+            {% endif %}
+          </div>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ghost" title="Sair">Sair</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Entrar</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Criar conta</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="pointer-events-none fixed inset-x-0 top-16 z-50 flex flex-col items-center gap-2 px-4" id="flashes">
+        {% for cat, msg in messages %}
+          <div class="pointer-events-auto max-w-lg rounded-lg border px-4 py-2 text-sm shadow-lg
+            {{ 'border-red-500/40 bg-red-600 text-white' if cat == 'error' else 'border-emerald-500/40 bg-emerald-600 text-white' }}">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+      <script>setTimeout(() => document.getElementById('flashes')?.remove(), 5000)</script>
+    {% endif %}
+  {% endwith %}
+
+  {% block body %}{% endblock %}
+  <script>
+    // Helper global: fetch com CSRF e JSON
+    window.api = async (method, url, body) => {
+      const opts = { method, headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } };
+      if (body instanceof FormData) opts.body = body;
+      else if (body !== undefined) { opts.body = JSON.stringify(body); opts.headers['Content-Type'] = 'application/json'; }
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        let msg = 'Não foi possível salvar.';
+        try { const j = await res.json(); msg = j.error || (j.errors || []).join(' ') || msg; } catch {}
+        window.toast?.(msg, true);
+        throw new Error(msg);
+      }
+      return res.status === 204 ? null : res.json();
+    };
+    window.toast = (msg, err) => {
+      const t = document.createElement('div');
+      t.className = 'fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-lg px-4 py-2 text-sm text-white shadow-xl ' + (err ? 'bg-red-600' : 'bg-emerald-600');
+      t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 3500);
+    };
+  </script>
+</body>
+</html>

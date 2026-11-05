@@ -1,0 +1,59 @@
+{% extends "world/_layout.html" %}
+{% import "world/_macros.html" as m %}
+{% block title %}Configurações · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-2xl space-y-8 px-6 py-8">
+  <form method="post" enctype="multipart/form-data" class="panel space-y-5 overflow-hidden">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div id="cover-preview">{{ m.cover(world.cover_url, world.cover_pos, 'h-44') }}</div>
+    <div class="space-y-5 px-6 pb-6">
+      <h1 class="font-display text-2xl text-ink">Configurações do mundo</h1>
+      <div class="flex gap-3">
+        <div class="w-20">
+          <label class="label" for="icon">Ícone</label>
+          <input class="input text-center text-xl" id="icon" name="icon" value="{{ world.icon }}" maxlength="8">
+        </div>
+        <div class="flex-1">
+          <label class="label" for="name">Nome</label>
+          <input class="input" id="name" name="name" value="{{ world.name }}" required>
+        </div>
+      </div>
+      <div>
+        <label class="label" for="description">Descrição</label>
+        <textarea class="input" id="description" name="description" rows="4">{{ world.description }}</textarea>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label" for="cover">Imagem de capa</label>
+          <input class="input text-sm file:mr-3 file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-1 file:text-ink" id="cover" name="cover" type="file" accept="image/*">
+          {% if world.cover_url %}<label class="mt-2 flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="remove_cover" value="1"> Remover capa</label>{% endif %}
+        </div>
+        <div>
+          <label class="label" for="cover_pos">Posição vertical da capa</label>
+          <input class="w-full accent-accent" id="cover_pos" name="cover_pos" type="range" min="0" max="100" value="{{ world.cover_pos }}">
+        </div>
+      </div>
+      <div class="flex justify-end"><button class="btn btn-primary">Salvar</button></div>
+    </div>
+  </form>
+
+  <form method="post" action="{{ url_for('worlds.world_delete', wid=world.id) }}" class="space-y-3 rounded-2xl border border-red-500/40 bg-red-500/5 p-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2 class="font-semibold text-red-500">Apagar mundo</h2>
+    <p class="text-sm text-muted">Apaga páginas, mapas mentais, mapas e arquivos de todos os colaboradores. Digite <strong class="text-ink">{{ world.name }}</strong> para confirmar.</p>
+    <input class="input" name="confirm" autocomplete="off">
+    <div class="flex justify-end"><button class="btn btn-danger">Apagar para sempre</button></div>
+  </form>
+</div>
+<script>
+  // pré-visualização da capa e da posição
+  const img = () => document.querySelector('#cover-preview img');
+  document.getElementById('cover_pos').addEventListener('input', e => { if (img()) img().style.objectPosition = `center ${e.target.value}%`; });
+  document.getElementById('cover').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const box = document.querySelector('#cover-preview > div');
+    box.innerHTML = ''; const i = document.createElement('img'); i.className = 'size-full object-cover';
+    i.style.objectPosition = `center ${document.getElementById('cover_pos').value}%`; i.src = URL.createObjectURL(f); box.append(i);
+  });
+</script>
+{% endblock %}

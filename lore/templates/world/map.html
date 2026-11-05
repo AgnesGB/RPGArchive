@@ -1,0 +1,166 @@
+{% extends "world/_layout.html" %}
+{% block title %}{{ map.name }} · {{ world.name }}{% endblock %}
+{% block head %}
+<style>
+  #mviewport { touch-action: none; }
+  #mviewport.panning { cursor: grabbing; }
+  #mviewport.placing { cursor: crosshair; }
+  #mviewport.editing { cursor: crosshair; }
+  #mviewport.editing.tool-move { cursor: grab; }
+  #mworld { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #mworld canvas, #mworld #map-img { position: absolute; left: 0; top: 0; image-rendering: pixelated; }
+  #mviewport.editing #pins { opacity: .45; pointer-events: none; }
+  .pin { position: absolute; transform-origin: 50% 100%; cursor: grab; user-select: none; }
+  .pin.token { transform-origin: 50% 50%; }
+  .pin .drop { width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid rgba(255,255,255,.9);
+               box-shadow: 0 3px 8px rgba(0,0,0,.45); display: grid; place-items: center; }
+  .pin .drop > span { transform: rotate(45deg); font-size: 13px; }
+  .pin.selected .drop, .pin.selected .coin { outline: 3px solid var(--a500); outline-offset: 3px; }
+  .pin .coin { width: 48px; height: 48px; border-radius: 9999px; border: 4px solid; box-shadow: 0 3px 10px rgba(0,0,0,.5); overflow: hidden;
+               display: grid; place-items: center; font-weight: 700; color: white; background: #1c1917; }
+  .pin .tag { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 600 12px Inter, sans-serif;
+              color: white; background: rgba(0,0,0,.7); padding: 1px 8px; border-radius: 9999px; pointer-events: none; }
+  .swatch { image-rendering: pixelated; }
+  .tool.active, .swatch.active, .asset.active { outline: 2px solid var(--a500); outline-offset: 1px; }
+</style>
+{% endblock %}
+{% block world_content %}
+<div class="flex h-[calc(100vh-3.5rem)] flex-col">
+  {# ---------- barra superior ---------- #}
+  <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-3 py-2">
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('maps.settings', wid=world.id, mid=map.id) }}" class="flex items-center gap-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="name" value="{{ map.name }}" onchange="this.form.submit()"
+             class="w-64 max-w-[40vw] rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
+    </form>
+    <div class="flex rounded-lg bg-surface-2 p-0.5 text-sm">
+      <button data-mode="play" class="rounded-md px-3 py-1">🎲 Jogar</button>
+      <button data-mode="edit" class="rounded-md px-3 py-1">✏️ Editar mapa</button>
+    </div>
+    <div class="ml-auto flex flex-wrap items-center gap-1">
+      <span data-only="play" class="flex gap-1">
+        <button id="add-pin" class="btn btn-primary btn-sm">📍 Marcador</button>
+        <button id="add-token" class="btn btn-outline btn-sm">🪙 Token</button>
+      </span>
+      <span data-only="edit" class="hidden items-center gap-1">
+        <button id="undo" class="btn btn-ghost btn-sm" title="Desfazer (Ctrl+Z)">↶</button>
+        <button id="redo" class="btn btn-ghost btn-sm" title="Refazer (Ctrl+Y)">↷</button>
+        <span id="save-state" class="w-20 text-xs text-faint"></span>
+      </span>
+      <span class="mx-1 h-6 w-px bg-line"></span>
+      <button data-zoom="0.8" class="btn btn-ghost btn-sm">−</button>
+      <span id="zoom-level" class="w-11 text-center text-xs text-muted">100%</span>
+      <button data-zoom="1.25" class="btn btn-ghost btn-sm">+</button>
+      <button id="fit" class="btn btn-ghost btn-sm" title="Enquadrar">⤢</button>
+      <form method="post" action="{{ url_for('maps.delete', wid=world.id, mid=map.id) }}"
+            data-confirm="Apagar o mapa “{{ map.name }}” com todos os marcadores?" onsubmit="return confirm(this.dataset.confirm)">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost btn-sm text-red-500">🗑</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="relative flex min-h-0 flex-1">
+    {# ---------- paleta do editor ---------- #}
+    <aside id="palette" class="hidden w-72 shrink-0 flex-col overflow-hidden border-r border-line bg-surface">
+      <div class="grid grid-cols-6 gap-1 border-b border-line p-2">
+        {% for key, icon, tip in [('terrain','🖌️','Pincel de terreno (B)'),('fill','🪣','Preencher área (F)'),('walls','🧱','Paredes nas bordas (W)'),('props','🌳','Objetos (O)'),('move','✋','Mover a vista (espaço)'),('grid','⚙️','Grade e fundo')] %}
+          <button class="tool rounded-lg py-2 text-lg hover:bg-surface-2" data-tool="{{ key }}" title="{{ tip }}">{{ icon }}</button>
+        {% endfor %}
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto p-3 text-sm">
+        {# terreno / preencher #}
+        <div data-panel="terrain fill" class="space-y-3">
+          <div data-panel="terrain" class="flex items-center gap-2">
+            <span class="text-muted">Pincel</span>
+            {% for n in [1, 2, 3, 5] %}<button class="brush rounded-md border border-line px-2.5 py-1 text-xs" data-brush="{{ n }}">{{ n }}</button>{% endfor %}
+          </div>
+          <div id="terrain-list" class="grid grid-cols-4 gap-2"></div>
+          <p class="text-xs text-faint">Clique e arraste para pintar · <strong>botão direito apaga</strong> (volta ao terreno base).</p>
+        </div>
+        {# paredes #}
+        <div data-panel="walls" class="hidden space-y-2">
+          <div id="wall-list" class="grid gap-1"></div>
+          <p class="text-xs text-faint">Passe o mouse perto da borda entre dois quadrados e arraste. <strong>Botão direito apaga.</strong>
+            Passagens secretas só aparecem no modo de edição.</p>
+        </div>
+        {# objetos #}
+        <div data-panel="props" class="hidden space-y-2">
+          <div class="flex gap-1">
+            <select id="prop-cat" class="input py-1 text-xs"></select>
+            <input id="prop-search" class="input py-1 text-xs" placeholder="Buscar…">
+          </div>
+          <label class="flex items-center gap-2 text-xs text-muted"><input type="checkbox" id="snap" class="accent-accent" checked> Encaixar no grid</label>
+          <div id="prop-sel" class="hidden space-y-2 rounded-lg border border-line p-2">
+            <p class="text-xs font-medium text-ink">Objeto selecionado</p>
+            <label class="flex items-center gap-2 text-xs text-muted">Tamanho <input type="range" id="prop-scale" min="0.25" max="4" step="0.05" class="flex-1 accent-accent"></label>
+            <div class="flex items-center gap-1 text-xs text-muted">
+              Girar
+              <button id="prop-rot-l" class="btn btn-outline btn-sm px-2" title="Girar 90° para a esquerda (Shift+R)">⟲</button>
+              <input type="range" id="prop-rot" min="0" max="345" step="15" class="flex-1 accent-accent" title="Ângulo">
+              <button id="prop-rot-r" class="btn btn-outline btn-sm px-2" title="Girar 90° para a direita (R)">⟳</button>
+              <span id="prop-rot-val" class="w-8 text-right">0°</span>
+            </div>
+            <div class="flex gap-1">
+              <button id="prop-flip" class="btn btn-outline btn-sm flex-1">⇋ Espelhar</button>
+              <button id="prop-dup" class="btn btn-outline btn-sm flex-1">⧉ Duplicar</button>
+              <button id="prop-del" class="btn btn-ghost btn-sm text-red-500">🗑</button>
+            </div>
+          </div>
+          <div id="prop-list" class="grid grid-cols-4 gap-1.5"></div>
+          <p class="text-xs text-faint">Escolha um objeto e clique no mapa. Clique num objeto para selecionar e arrastar · botão direito apaga.</p>
+        </div>
+        {# grade #}
+        <div data-panel="grid" class="hidden space-y-3" id="grid-form">
+          <div><span class="label text-xs">Tipo de grade</span>
+            <select data-g="type" class="input py-1.5 text-sm">
+              <option value="square">Quadrada</option><option value="hex">Hexagonal</option><option value="none">Sem grade</option>
+            </select></div>
+          <div><span class="label text-xs">Tamanho do quadrado: <span data-out="size"></span> px</span>
+            <input type="range" data-g="size" min="16" max="160" step="2" class="w-full accent-accent"></div>
+          <div class="grid grid-cols-2 gap-2" data-blank-only>
+            <div><span class="label text-xs">Colunas</span><input type="number" data-g="cols" min="2" max="150" class="input py-1.5 text-sm"></div>
+            <div><span class="label text-xs">Linhas</span><input type="number" data-g="rows" min="2" max="150" class="input py-1.5 text-sm"></div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-ink-2"><input type="checkbox" data-g="show" class="accent-accent"> Mostrar linhas da grade</label>
+          <div class="grid grid-cols-2 gap-2">
+            <div><span class="label text-xs">Cor da grade</span><input type="color" data-g="color" class="h-9 w-full rounded-lg border border-line bg-surface"></div>
+            <div><span class="label text-xs">Opacidade</span><input type="range" data-g="opacity" min="0" max="1" step="0.05" class="w-full accent-accent"></div>
+          </div>
+          <div><span class="label text-xs">Terreno base (preenche o mapa todo)</span><select data-m="base" class="input py-1.5 text-sm"></select></div>
+          <div data-blank-only><span class="label text-xs">Cor de fundo</span><input type="color" data-m="bg" class="h-9 w-full rounded-lg border border-line bg-surface"></div>
+          <div data-image-only><span class="label text-xs">Opacidade da imagem de fundo</span><input type="range" data-m="imageOpacity" min="0" max="1" step="0.05" class="w-full accent-accent"></div>
+          <form method="post" enctype="multipart/form-data" action="{{ url_for('maps.settings', wid=world.id, mid=map.id) }}" class="border-t border-line pt-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="btn btn-outline btn-sm w-full cursor-pointer">🖼️ {{ 'Trocar' if image else 'Usar' }} imagem de fundo<input type="file" name="image" accept="image/*" class="hidden" onchange="this.form.submit()"></label>
+          </form>
+          <p class="text-xs text-faint">Mudar o tipo ou tamanho da grade reposiciona o terreno e as paredes já pintados.</p>
+        </div>
+      </div>
+    </aside>
+
+    {# ---------- mapa ---------- #}
+    <div id="mviewport" class="relative flex-1 overflow-hidden bg-canvas">
+      <div id="mworld">
+        {% if image %}<img id="map-img" src="{{ image }}" alt="{{ map.name }}" draggable="false" class="block max-w-none select-none">{% endif %}
+        <canvas id="cv-terrain"></canvas>
+        <canvas id="cv-grid"></canvas>
+        <canvas id="cv-objects"></canvas>
+        <canvas id="cv-ui"></canvas>
+        <div id="pins" class="absolute inset-0"></div>
+      </div>
+      <div id="place-hint" class="pointer-events-none absolute left-1/2 top-4 hidden -translate-x-1/2 rounded-full bg-black/75 px-4 py-1.5 text-sm text-white">Clique no mapa para posicionar · Esc cancela</div>
+    </div>
+
+    <aside id="side" class="hidden w-80 shrink-0 flex-col overflow-y-auto border-l border-line bg-surface"></aside>
+  </div>
+</div>
+
+<script id="map-data" type="application/json">{{ {
+  'pins': pins, 'pages': page_list, 'files': file_list, 'colors': PIN_COLORS,
+  'api': url_for('maps.pins', wid=world.id, mid=map.id), 'upload': url_for('files.upload', wid=world.id),
+  'dataUrl': url_for('maps.data', wid=world.id, mid=map.id), 'data': mapdata, 'version': version,
+  'kit': url_for('static', filename='mapkit/'), 'image': image, 'startEdit': start_edit,
+  'mapId': map.id }|tojson }}</script>
+<script src="{{ url_for('static', filename='map.js') }}"></script>
+{% endblock %}

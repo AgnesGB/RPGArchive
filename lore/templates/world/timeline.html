@@ -1,0 +1,166 @@
+{% extends "world/_layout.html" %}
+{% block title %}{{ current.name if current else 'Linhas do tempo' }} · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-5xl px-6 py-8 lg:px-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl text-ink">⏳ Linhas do tempo</h1>
+      <p class="mt-1 text-muted">Crie quantas quiser: a história do reino, a vida de um personagem, as sessões da mesa…</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-outline" onclick="document.getElementById('new-line').showModal()">+ Linha do tempo</button>
+      <button class="btn btn-primary" onclick="document.getElementById('new-event').showModal()">+ Evento</button>
+    </div>
+  </div>
+
+  {# ---------- abas ---------- #}
+  <div class="mt-6 flex flex-wrap items-center gap-2 border-b border-line pb-3">
+    <a href="{{ url_for('history.timelines', wid=world.id) }}" class="rounded-full px-3 py-1 text-sm {{ 'bg-ink text-bg' if not current else 'text-muted hover:bg-surface-2' }}">Todas</a>
+    {% for t in lines %}
+      <a href="{{ url_for('history.timelines', wid=world.id, t=t.id) }}"
+         class="flex items-center gap-1.5 rounded-full px-3 py-1 text-sm {{ 'bg-ink text-bg' if current and current.id == t.id else 'text-muted hover:bg-surface-2' }}">
+        <span class="size-2.5 rounded-full" style="background: {{ t.color }}"></span>{{ t.name }} <span class="text-xs opacity-60">{{ t.n }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if current %}
+    <form method="post" action="{{ url_for('history.timeline_update', wid=world.id, tid=current.id) }}" class="mt-4 flex flex-wrap items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="name" value="{{ current.name }}" class="input w-64 py-1.5 text-sm" onchange="this.form.submit()">
+      <div class="flex gap-1">
+        {% for c in colors %}
+          <button name="color" value="{{ c }}" class="size-6 rounded-full ring-offset-2 ring-offset-bg {{ 'ring-2 ring-ink' if c == current.color }}" style="background: {{ c }}" title="Cor"></button>
+        {% endfor %}
+      </div>
+      <button name="delete" value="1" class="btn btn-ghost btn-sm ml-auto text-red-500"
+              onclick="return confirm('Apagar a linha do tempo “{{ current.name|e }}”? As páginas continuam existindo.')">🗑 Apagar linha</button>
+    </form>
+  {% endif %}
+
+  {% if events %}
+    <ol class="relative mt-10">
+      <div class="absolute bottom-0 left-[4.5rem] top-0 w-px md:left-1/2" style="background: {{ current.color if current else 'var(--n-line-strong)' }}"></div>
+      {% set ns = namespace(last=None) %}
+      {% for e in events %}
+        {% set c = CATEGORY_MAP.get(e.category, CATEGORY_MAP.nota) %}
+        {% set left = loop.index is odd %}
+        {% set lines_of = membership.get(e.id, []) %}
+        <li id="e{{ e.id }}" class="group relative mb-8 flex items-start gap-4 md:mb-10 {{ 'md:flex-row-reverse' if not left }}">
+          <div class="relative z-10 w-[4.5rem] shrink-0 pt-3 text-right md:absolute md:left-1/2 md:w-auto md:-translate-x-1/2 md:pt-0 md:text-center">
+            {% if e.year != ns.last %}
+              <span class="inline-block rounded-full px-3 py-1 font-display text-sm font-semibold text-white shadow" style="background: {{ current.color if current else 'var(--a500)' }}">{{ e.year }}</span>
+            {% else %}
+              <span class="mt-2 inline-block size-3 rounded-full border-2 bg-bg md:mt-0" style="border-color: {{ current.color if current else 'var(--a500)' }}"></span>
+            {% endif %}
+          </div>
+          {% set ns.last = e.year %}
+          <div class="relative min-w-0 flex-1 md:w-1/2 md:flex-none {{ 'md:pr-14' if left else 'md:pl-14' }} md:pt-10">
+            <a href="{{ url_for('pages.view', wid=world.id, aid=e.id) }}" class="panel flex overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg {{ 'md:flex-row-reverse' if left }}">
+              {% if e.image_url %}
+                <img src="{{ e.image_url }}" alt="" class="w-20 shrink-0 object-cover sm:w-28" style="object-position: center {{ e.cover_pos }}%" referrerpolicy="no-referrer">
+              {% endif %}
+              <div class="min-w-0 p-4">
+                <p class="text-xs uppercase tracking-wider text-faint">{{ e.date_label or ('Ano ' ~ e.year) }}</p>
+                <h3 class="mt-0.5 font-semibold text-ink">{{ e.icon or c.icon }} {{ e.title }}</h3>
+                {% if e.summary %}<p class="mt-1 line-clamp-3 text-sm text-muted">{{ e.summary }}</p>{% endif %}
+                {% if not current and lines_of %}
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    {% for t in lines_of %}<span class="chip"><span class="size-2 rounded-full" style="background: {{ t.color }}"></span>{{ t.name }}</span>{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </a>
+            {% if current %}
+              <form method="post" action="{{ url_for('history.timeline_remove', wid=world.id, tid=current.id, aid=e.id) }}"
+                    class="absolute top-2 hidden group-hover:block md:top-12 {{ 'right-2 md:right-16' if left else 'right-2' }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="grid size-7 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-red-600" title="Tirar desta linha do tempo">✕</button>
+              </form>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="panel mt-8 p-10 text-center text-muted">
+      {% if not lines %}Crie a primeira linha do tempo e comece a adicionar eventos.
+      {% else %}Nenhum evento aqui ainda. Use <strong>+ Evento</strong> ou marque esta linha numa página que tenha ano.{% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<dialog id="new-line" class="m-auto w-full max-w-sm rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
+  <form method="post" action="{{ url_for('history.timeline_create', wid=world.id) }}" class="space-y-4 p-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2 class="font-display text-xl">Nova linha do tempo</h2>
+    <input class="input" name="name" required placeholder="Ex.: Dinastia Cinzenta, Sessões da campanha">
+    <div class="flex gap-2">
+      {% for c in colors %}
+        <label><input type="radio" name="color" value="{{ c }}" class="peer sr-only" {{ 'checked' if loop.first }}>
+          <span class="block size-7 cursor-pointer rounded-full ring-offset-2 ring-offset-surface peer-checked:ring-2 peer-checked:ring-ink" style="background: {{ c }}"></span></label>
+      {% endfor %}
+    </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn btn-primary">Criar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="new-event" class="m-auto w-full max-w-md rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
+  <form method="post" action="{{ url_for('history.timeline_add_event', wid=world.id) }}" class="space-y-4 p-6" id="event-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="back" value="{{ current.id if current else '' }}">
+    <h2 class="font-display text-xl">Adicionar evento</h2>
+    <div class="flex rounded-lg bg-surface-2 p-0.5 text-sm">
+      <button type="button" data-mode="new" class="flex-1 rounded-md px-3 py-1">Novo evento</button>
+      <button type="button" data-mode="page" class="flex-1 rounded-md px-3 py-1">Página existente</button>
+    </div>
+    <div data-show="new" class="space-y-4">
+      <div><label class="label">Título</label><input class="input" name="title" placeholder="A Queda de Valdoria"></div>
+      <div><label class="label">Resumo</label><textarea class="input" name="summary" rows="2"></textarea></div>
+    </div>
+    <div data-show="page" class="hidden">
+      <label class="label">Página</label>
+      <select class="input" name="page_id">
+        <option value="">Escolha…</option>
+        {% for p in pages %}<option value="{{ p.id }}">{{ p.icon or CATEGORY_MAP.get(p.category, CATEGORY_MAP.nota).icon }} {{ p.title }}{% if p.year is not none %} (ano {{ p.year }}){% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="flex gap-3">
+      <div class="w-28"><label class="label">Ano</label><input class="input" name="year" type="number" placeholder="-300"></div>
+      <div class="flex-1"><label class="label">Data no calendário</label><input class="input" name="date_label" placeholder="Fim do Inverno Longo"></div>
+    </div>
+    {% if lines %}
+      <div>
+        <span class="label">Linhas do tempo</span>
+        <div class="flex flex-wrap gap-2">
+          {% for t in lines %}
+            <label class="flex cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent/10">
+              <input type="checkbox" name="timeline" value="{{ t.id }}" class="accent-accent" {{ 'checked' if (current and current.id == t.id) or (not current and loop.first) }}>
+              <span class="size-2 rounded-full" style="background: {{ t.color }}"></span>{{ t.name }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    <div class="flex justify-end gap-2">
+      <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn btn-primary">Adicionar</button>
+    </div>
+  </form>
+</dialog>
+<script>
+  const ef = document.getElementById('event-form');
+  const setMode = m => {
+    ef.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('bg-surface', b.dataset.mode === m));
+    ef.querySelectorAll('[data-show]').forEach(d => d.classList.toggle('hidden', d.dataset.show !== m));
+    const F = n => ef.elements.namedItem(n);  // ef.title seria o atributo title do <form>
+    F('title').required = m === 'new'; F('page_id').required = m === 'page'; F('year').required = m === 'new';
+    if (m === 'new') F('page_id').value = ''; else F('title').value = '';
+  };
+  ef.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  setMode('new');
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Criar conta{% endblock %}
+{% block body %}
+<main class="grid min-h-[calc(100vh-3.5rem)] place-items-center px-4 py-12">
+  <div class="panel w-full max-w-sm p-8">
+    <h1 class="font-display text-2xl text-ink">Criar conta</h1>
+    <p class="mt-1 mb-6 text-sm text-muted">Comece a registrar as crônicas do seu mundo.</p>
+    {% include "auth/_google.html" %}
+    <form method="post" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <label class="label" for="name">Nome</label>
+        <input class="input" id="name" name="name" value="{{ form.name }}" required autofocus autocomplete="name">
+      </div>
+      <div>
+        <label class="label" for="email">E-mail</label>
+        <input class="input" id="email" name="email" type="email" value="{{ form.email }}" required autocomplete="email">
+      </div>
+      <div>
+        <label class="label" for="password">Senha</label>
+        <input class="input" id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+        <p class="mt-1 text-xs text-faint">Mínimo de 8 caracteres.</p>
+      </div>
+      <button class="btn btn-primary w-full">Criar conta</button>
+    </form>
+    <p class="mt-6 text-center text-sm text-muted">
+      Já tem conta? <a class="text-accent-ink hover:underline" href="{{ url_for('auth.login', next=request.args.get('next')) }}">Entrar</a>
+    </p>
+  </div>
+</main>
+{% endblock %}

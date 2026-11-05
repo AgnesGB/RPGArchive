@@ -1,0 +1,87 @@
+{% extends "world/_layout.html" %}
+{% block title %}Mapas · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl text-ink">🗺️ Mapas</h1>
+      <p class="mt-1 text-muted">Suba a imagem do mapa, marque locais, anexe livros e mova os tokens dos jogadores.</p>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('new-map').showModal()">+ Novo mapa</button>
+  </div>
+  <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for mp in maps %}
+      <a href="{{ url_for('maps.view', wid=world.id, mid=mp.id) }}" class="group panel overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
+        <div class="h-44 overflow-hidden bg-surface-2">
+          {% if mp.thumb %}<img src="{{ mp.thumb }}" alt="" class="size-full object-cover transition duration-500 group-hover:scale-105" style="image-rendering: pixelated">
+          {% elif mp.file_id %}<img src="{{ url_for('files.serve', fid=mp.file_id) }}" alt="" loading="lazy" class="size-full object-cover transition duration-500 group-hover:scale-105">
+          {% else %}<div class="grid size-full place-items-center text-4xl opacity-50">🗺️</div>{% endif %}
+        </div>
+        <div class="p-4">
+          <h2 class="font-display text-lg text-ink group-hover:text-accent-ink">{{ mp.name }}</h2>
+          <p class="text-sm text-muted">{{ mp.n_pins }} marcador{{ 'es' if mp.n_pins != 1 }} e token{{ 's' if mp.n_pins != 1 }}</p>
+        </div>
+      </a>
+    {% else %}
+      <div class="panel col-span-full p-10 text-center text-muted">Nenhum mapa ainda. Suba a imagem do primeiro!</div>
+    {% endfor %}
+  </div>
+</div>
+
+<dialog id="new-map" class="m-auto w-full max-w-lg rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('maps.create', wid=world.id) }}" class="space-y-4 p-6" id="map-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="mode" value="blank">
+    <h2 class="font-display text-xl">Novo mapa</h2>
+    <div><label class="label">Nome</label><input class="input" name="name" required placeholder="Masmorra do Vau"></div>
+    <div class="grid grid-cols-2 gap-2">
+      <button type="button" data-mm="blank" class="rounded-xl border-2 border-line p-3 text-left">
+        <p class="font-medium text-ink">✏️ Criar do zero</p><p class="text-xs text-muted">Grade + terrenos, paredes e objetos</p></button>
+      <button type="button" data-mm="image" class="rounded-xl border-2 border-line p-3 text-left">
+        <p class="font-medium text-ink">🖼️ A partir de imagem</p><p class="text-xs text-muted">Sobe um mapa pronto (dá para pôr grade depois)</p></button>
+    </div>
+    <div data-ms="blank" class="space-y-3">
+      <div class="grid grid-cols-3 gap-2">
+        <div><label class="label text-xs">Grade</label>
+          <select name="grid" class="input py-1.5 text-sm"><option value="square">Quadrada</option><option value="hex">Hexagonal</option></select></div>
+        <div><label class="label text-xs">Colunas</label><input name="cols" type="number" value="30" min="2" max="150" class="input py-1.5 text-sm"></div>
+        <div><label class="label text-xs">Linhas</label><input name="rows" type="number" value="20" min="2" max="150" class="input py-1.5 text-sm"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="label text-xs">Tamanho do quadrado (px)</label><input name="size" type="number" value="48" min="16" max="160" class="input py-1.5 text-sm"></div>
+        <div><label class="label text-xs">Terreno base</label>
+          <select name="base" class="input py-1.5 text-sm">
+            {% for k, label in [('grama', 'Grama'), ('piso_pedra', 'Piso de pedra (masmorra)'), ('agua', 'Água'), ('areia', 'Areia'), ('terra', 'Terra'), ('madeira', 'Piso de madeira'), ('neve', 'Neve'), ('mar', 'Mar profundo'), ('abismo', 'Abismo'), ('', 'Nenhum')] %}
+              <option value="{{ k }}">{{ label }}</option>{% endfor %}
+          </select></div>
+      </div>
+      <p class="text-xs text-faint">Modelos rápidos:
+        <button type="button" class="underline" data-preset="square,24,16,48,piso_pedra">masmorra</button> ·
+        <button type="button" class="underline" data-preset="hex,30,20,40,grama">reino em hexágonos</button> ·
+        <button type="button" class="underline" data-preset="square,20,14,64,madeira">taverna</button></p>
+    </div>
+    <div data-ms="image" class="hidden">
+      <label class="label">Imagem do mapa</label>
+      <input class="input text-sm file:mr-3 file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-1 file:text-ink" type="file" name="image" accept="image/*">
+    </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn btn-primary">Criar mapa</button>
+    </div>
+  </form>
+</dialog>
+<script>
+  const mf = document.getElementById('map-form'), F = n => mf.elements.namedItem(n);
+  const setMM = m => {
+    F('mode').value = m; F('image').required = m === 'image';
+    mf.querySelectorAll('[data-mm]').forEach(b => b.classList.toggle('!border-accent', b.dataset.mm === m));
+    mf.querySelectorAll('[data-ms]').forEach(d => d.classList.toggle('hidden', d.dataset.ms !== m));
+  };
+  mf.querySelectorAll('[data-mm]').forEach(b => b.addEventListener('click', () => setMM(b.dataset.mm)));
+  mf.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+    const [g, c, r, s, base] = b.dataset.preset.split(',');
+    F('grid').value = g; F('cols').value = c; F('rows').value = r; F('size').value = s; F('base').value = base;
+  }));
+  setMM('blank');
+</script>
+{% endblock %}

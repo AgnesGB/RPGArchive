@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Entrar{% endblock %}
+{% block body %}
+<main class="grid min-h-[calc(100vh-3.5rem)] place-items-center px-4 py-12">
+  <div class="panel w-full max-w-sm p-8">
+    <h1 class="font-display text-2xl text-ink">Bem-vindo de volta</h1>
+    <p class="mt-1 mb-6 text-sm text-muted">O Observador lembra de tudo.</p>
+    {% include "auth/_google.html" %}
+    <form method="post" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <label class="label" for="email">E-mail</label>
+        <input class="input" id="email" name="email" type="email" value="{{ email }}" required autofocus autocomplete="email">
+      </div>
+      <div>
+        <label class="label" for="password">Senha</label>
+        <input class="input" id="password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary w-full">Entrar</button>
+    </form>
+    <p class="mt-6 text-center text-sm text-muted">
+      Novo por aqui? <a class="text-accent-ink hover:underline" href="{{ url_for('auth.register', next=request.args.get('next')) }}">Criar conta</a>
+    </p>
+  </div>
+</main>
+{% endblock %}

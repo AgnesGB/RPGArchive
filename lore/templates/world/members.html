@@ -1,0 +1,55 @@
+{% extends "world/_layout.html" %}
+{% block title %}Pessoas · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-3xl space-y-8 px-6 py-8">
+  <div>
+    <h1 class="font-display text-3xl text-ink">🤝 Pessoas</h1>
+    <p class="mt-1 text-muted">Quem está aqui vê tudo do mundo e pode criar e editar páginas, mapas mentais, mapas e arquivos.</p>
+  </div>
+
+  {% if g.is_owner %}
+    <form method="post" action="{{ url_for('worlds.invite', wid=world.id) }}" class="panel flex flex-wrap items-end gap-3 p-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="min-w-60 flex-1">
+        <label class="label" for="email">Convidar por e-mail</label>
+        <input class="input" id="email" name="email" type="email" placeholder="jogador@email.com" required>
+      </div>
+      <button class="btn btn-primary">Convidar</button>
+      <p class="w-full text-xs text-faint">Se a pessoa ainda não tiver conta, o acesso é liberado assim que ela se cadastrar ou entrar com Google usando esse e-mail.</p>
+    </form>
+  {% endif %}
+
+  <div class="panel divide-y divide-line">
+    {% for p in members %}
+      <div class="flex items-center gap-3 px-5 py-3">
+        {% if p.avatar_url %}<img src="{{ p.avatar_url }}" class="size-10 rounded-full" alt="" referrerpolicy="no-referrer">
+        {% else %}<span class="grid size-10 place-items-center rounded-full bg-accent font-semibold text-on-accent">{{ p.name[:1]|upper }}</span>{% endif %}
+        <div class="min-w-0 flex-1">
+          <p class="font-medium text-ink">{{ p.name }}{% if p.id == g.user.id %} <span class="text-faint">(você)</span>{% endif %}</p>
+          <p class="truncate text-sm text-muted">{{ p.email }}</p>
+        </div>
+        <span class="chip">{{ 'Dono' if p.role == 'owner' else 'Colaborador' }}</span>
+        {% if p.role != 'owner' and (g.is_owner or p.id == g.user.id) %}
+          <form method="post" action="{{ url_for('worlds.remove_member', wid=world.id, uid=p.id) }}"
+                data-confirm="{{ 'Sair deste mundo?' if p.id == g.user.id else 'Remover o acesso de ' ~ p.name ~ '?' }}" onsubmit="return confirm(this.dataset.confirm)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ghost btn-sm text-red-500">{{ 'Sair' if p.id == g.user.id else 'Remover' }}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% for i in invites %}
+      <div class="flex items-center gap-3 px-5 py-3 opacity-70">
+        <span class="grid size-10 place-items-center rounded-full border border-dashed border-line-strong text-faint">✉</span>
+        <div class="min-w-0 flex-1"><p class="truncate text-ink">{{ i.email }}</p><p class="text-sm text-muted">Convite pendente: aguardando a pessoa criar a conta</p></div>
+        {% if g.is_owner %}
+          <form method="post" action="{{ url_for('worlds.remove_invite', wid=world.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="email" value="{{ i.email }}">
+            <button class="btn btn-ghost btn-sm">Cancelar</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

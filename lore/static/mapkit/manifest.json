@@ -1,0 +1,5387 @@
+{
+ "terrains": [
+  {
+   "key": "grama",
+   "label": "Grama",
+   "file": "terrain/grama.png",
+   "color": "#92d682",
+   "px": 16
+  },
+  {
+   "key": "grama_lisa",
+   "label": "Grama lisa",
+   "file": "terrain/grama_lisa.png",
+   "color": "#95d982",
+   "px": 16
+  },
+  {
+   "key": "grama_viva",
+   "label": "Grama viva",
+   "file": "terrain/grama_viva.png",
+   "color": "#3e8948",
+   "px": 16
+  },
+  {
+   "key": "grama_campo",
+   "label": "Grama do campo",
+   "file": "terrain/grama_campo.png",
+   "color": "#72751b",
+   "px": 32
+  },
+  {
+   "key": "grama_pedrinhas",
+   "label": "Grama com pedrinhas",
+   "file": "terrain/grama_pedrinhas.png",
+   "color": "#73761d",
+   "px": 32
+  },
+  {
+   "key": "terra",
+   "label": "Terra",
+   "file": "terrain/terra.png",
+   "color": "#a9958a",
+   "px": 16
+  },
+  {
+   "key": "caminho",
+   "label": "Caminho",
+   "file": "terrain/caminho.png",
+   "color": "#d5af76",
+   "px": 16
+  },
+  {
+   "key": "trilha",
+   "label": "Trilha",
+   "file": "terrain/trilha.png",
+   "color": "#e4a672",
+   "px": 16
+  },
+  {
+   "key": "areia",
+   "label": "Areia",
+   "file": "terrain/areia.png",
+   "color": "#e4a672",
+   "px": 16
+  },
+  {
+   "key": "agua",
+   "label": "Água",
+   "file": "terrain/agua.png",
+   "color": "#82c3de",
+   "px": 16
+  },
+  {
+   "key": "agua_calma",
+   "label": "Água calma",
+   "file": "terrain/agua_calma.png",
+   "color": "#87c7df",
+   "px": 16
+  },
+  {
+   "key": "lago",
+   "label": "Lago",
+   "file": "terrain/lago.png",
+   "color": "#0095e9",
+   "px": 16
+  },
+  {
+   "key": "piso_pedra",
+   "label": "Piso de pedra",
+   "file": "terrain/piso_pedra.png",
+   "color": "#555c6a",
+   "px": 32
+  },
+  {
+   "key": "piso_musgo",
+   "label": "Pedra com musgo",
+   "file": "terrain/piso_musgo.png",
+   "color": "#4f5964",
+   "px": 32
+  },
+  {
+   "key": "lajotas",
+   "label": "Lajotas",
+   "file": "terrain/lajotas.png",
+   "color": "#878579",
+   "px": 32
+  },
+  {
+   "key": "masmorra_1",
+   "label": "Masmorra",
+   "file": "terrain/masmorra_1.png",
+   "color": "#493c3b",
+   "px": 16
+  },
+  {
+   "key": "masmorra_2",
+   "label": "Masmorra rachada",
+   "file": "terrain/masmorra_2.png",
+   "color": "#493c3a",
+   "px": 16
+  },
+  {
+   "key": "masmorra_3",
+   "label": "Masmorra antiga",
+   "file": "terrain/masmorra_3.png",
+   "color": "#493c3a",
+   "px": 16
+  },
+  {
+   "key": "masmorra_6",
+   "label": "Masmorra irregular",
+   "file": "terrain/masmorra_6.png",
+   "color": "#443937",
+   "px": 16
+  },
+  {
+   "key": "acido",
+   "label": "Ácido / pântano",
+   "file": "terrain/acido.png",
+   "color": "#7aa55e",
+   "px": 32
+  },
+  {
+   "key": "floresta",
+   "label": "Floresta",
+   "file": null,
+   "color": "#2f5d34",
+   "color2": "#244a29"
+  },
+  {
+   "key": "montanha",
+   "label": "Montanha",
+   "file": null,
+   "color": "#7b7368",
+   "color2": "#5f5850"
+  },
+  {
+   "key": "neve",
+   "label": "Neve",
+   "file": null,
+   "color": "#eef2f7",
+   "color2": "#d6dee8"
+  },
+  {
+   "key": "gelo",
+   "label": "Gelo",
+   "file": null,
+   "color": "#bfe3f2",
+   "color2": "#9fd0e6"
+  },
+  {
+   "key": "lava",
+   "label": "Lava",
+   "file": null,
+   "color": "#d9480f",
+   "color2": "#f59f00"
+  },
+  {
+   "key": "madeira",
+   "label": "Piso de madeira",
+   "file": null,
+   "color": "#9c6b3c",
+   "color2": "#7d5430"
+  },
+  {
+   "key": "deserto",
+   "label": "Deserto",
+   "file": null,
+   "color": "#e3c48a",
+   "color2": "#cfae70"
+  },
+  {
+   "key": "pantano",
+   "label": "Pântano",
+   "file": null,
+   "color": "#556b2f",
+   "color2": "#3f5222"
+  },
+  {
+   "key": "cinzas",
+   "label": "Cinzas",
+   "file": null,
+   "color": "#4a4a4a",
+   "color2": "#3a3a3a"
+  },
+  {
+   "key": "tapete",
+   "label": "Tapete real",
+   "file": null,
+   "color": "#8b1e2d",
+   "color2": "#6e1622"
+  },
+  {
+   "key": "abismo",
+   "label": "Abismo",
+   "file": null,
+   "color": "#0d0c12",
+   "color2": "#1a1822"
+  },
+  {
+   "key": "mar",
+   "label": "Mar profundo",
+   "file": null,
+   "color": "#1c4f8a",
+   "color2": "#174273"
+  }
+ ],
+ "props": [
+  {
+   "key": "paredes_parede",
+   "label": "Parede de masmorra",
+   "category": "Paredes",
+   "file": "props/paredes_parede.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_parede_esq",
+   "label": "Parede (ponta esquerda)",
+   "category": "Paredes",
+   "file": "props/paredes_parede_esq.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_parede_dir",
+   "label": "Parede (ponta direita)",
+   "category": "Paredes",
+   "file": "props/paredes_parede_dir.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_topo",
+   "label": "Topo de parede",
+   "category": "Paredes",
+   "file": "props/paredes_topo.png",
+   "w": 16,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "paredes_estandarte_blue",
+   "label": "Parede com estandarte azul",
+   "category": "Paredes",
+   "file": "props/paredes_estandarte_blue.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_estandarte_green",
+   "label": "Parede com estandarte verde",
+   "category": "Paredes",
+   "file": "props/paredes_estandarte_green.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_estandarte_red",
+   "label": "Parede com estandarte vermelho",
+   "category": "Paredes",
+   "file": "props/paredes_estandarte_red.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_estandarte_yellow",
+   "label": "Parede com estandarte amarelo",
+   "category": "Paredes",
+   "file": "props/paredes_estandarte_yellow.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_fonte_blue",
+   "label": "Fonte azul",
+   "category": "Paredes",
+   "file": "props/paredes_fonte_blue.png",
+   "w": 16,
+   "h": 40,
+   "u": 16
+  },
+  {
+   "key": "paredes_fonte_red",
+   "label": "Fonte vermelha",
+   "category": "Paredes",
+   "file": "props/paredes_fonte_red.png",
+   "w": 16,
+   "h": 40,
+   "u": 16
+  },
+  {
+   "key": "paredes_limo",
+   "label": "Parede com limo",
+   "category": "Paredes",
+   "file": "props/paredes_limo.png",
+   "w": 16,
+   "h": 36,
+   "u": 16
+  },
+  {
+   "key": "paredes_buraco1",
+   "label": "Parede com buraco",
+   "category": "Paredes",
+   "file": "props/paredes_buraco1.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_buraco2",
+   "label": "Parede rachada",
+   "category": "Paredes",
+   "file": "props/paredes_buraco2.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "paredes_coluna",
+   "label": "Coluna",
+   "category": "Paredes",
+   "file": "props/paredes_coluna.png",
+   "w": 16,
+   "h": 35,
+   "u": 16
+  },
+  {
+   "key": "paredes_coluna_parede",
+   "label": "Coluna na parede",
+   "category": "Paredes",
+   "file": "props/paredes_coluna_parede.png",
+   "w": 16,
+   "h": 44,
+   "u": 16
+  },
+  {
+   "key": "paredes_porta_fechada",
+   "label": "Porta de masmorra",
+   "category": "Paredes",
+   "file": "props/paredes_porta_fechada.png",
+   "w": 64,
+   "h": 35,
+   "u": 16
+  },
+  {
+   "key": "paredes_porta_aberta",
+   "label": "Porta de masmorra aberta",
+   "category": "Paredes",
+   "file": "props/paredes_porta_aberta.png",
+   "w": 64,
+   "h": 35,
+   "u": 16
+  },
+  {
+   "key": "paredes_muro_de_tijolos",
+   "label": "Muro de tijolos",
+   "category": "Paredes",
+   "file": "props/paredes_muro_de_tijolos.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "paredes_muro_com_musgo",
+   "label": "Muro com musgo",
+   "category": "Paredes",
+   "file": "props/paredes_muro_com_musgo.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "paredes_muro_com_grade",
+   "label": "Muro com grade",
+   "category": "Paredes",
+   "file": "props/paredes_muro_com_grade.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "paredes_tijolos",
+   "label": "Tijolos",
+   "category": "Paredes",
+   "file": "props/paredes_tijolos.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "paredes_tijolos_2",
+   "label": "Tijolos 2",
+   "category": "Paredes",
+   "file": "props/paredes_tijolos_2.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_1",
+   "label": "Bloco de pedra 1",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_1.png",
+   "w": 96,
+   "h": 128,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_2",
+   "label": "Bloco de pedra 2",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_2.png",
+   "w": 114,
+   "h": 104,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_3",
+   "label": "Bloco de pedra 3",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_3.png",
+   "w": 10,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_4",
+   "label": "Bloco de pedra 4",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_4.png",
+   "w": 8,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_5",
+   "label": "Bloco de pedra 5",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_5.png",
+   "w": 96,
+   "h": 8,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_6",
+   "label": "Bloco de pedra 6",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_6.png",
+   "w": 64,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_7",
+   "label": "Bloco de pedra 7",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_7.png",
+   "w": 128,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_8",
+   "label": "Bloco de pedra 8",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_8.png",
+   "w": 32,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_9",
+   "label": "Bloco de pedra 9",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_9.png",
+   "w": 64,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_bloco_10",
+   "label": "Bloco de pedra 10",
+   "category": "Paredes",
+   "file": "props/paredes_bloco_10.png",
+   "w": 64,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_1",
+   "label": "Estrutura de pedra 1",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_1.png",
+   "w": 80,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_2",
+   "label": "Estrutura de pedra 2",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_2.png",
+   "w": 64,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_3",
+   "label": "Estrutura de pedra 3",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_3.png",
+   "w": 65,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_4",
+   "label": "Estrutura de pedra 4",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_4.png",
+   "w": 65,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_5",
+   "label": "Estrutura de pedra 5",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_5.png",
+   "w": 64,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_6",
+   "label": "Estrutura de pedra 6",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_6.png",
+   "w": 64,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_7",
+   "label": "Estrutura de pedra 7",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_7.png",
+   "w": 65,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_8",
+   "label": "Estrutura de pedra 8",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_8.png",
+   "w": 65,
+   "h": 96,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_9",
+   "label": "Estrutura de pedra 9",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_9.png",
+   "w": 96,
+   "h": 192,
+   "u": 32
+  },
+  {
+   "key": "paredes_estrutura_10",
+   "label": "Estrutura de pedra 10",
+   "category": "Paredes",
+   "file": "props/paredes_estrutura_10.png",
+   "w": 96,
+   "h": 192,
+   "u": 32
+  },
+  {
+   "key": "paredes_pe_as_wall_left",
+   "label": "left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_left.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_right",
+   "label": "right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_right.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_mid",
+   "label": "mid",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_mid.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_left",
+   "label": "edge left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_left.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_right",
+   "label": "edge right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_right.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_top_left",
+   "label": "edge top left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_top_left.png",
+   "w": 15,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_top_right",
+   "label": "edge top right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_top_right.png",
+   "w": 16,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_bottom_left",
+   "label": "edge bottom left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_bottom_left.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_bottom_right",
+   "label": "edge bottom right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_bottom_right.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_mid_left",
+   "label": "edge mid left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_mid_left.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_edge_mid_right",
+   "label": "edge mid right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_edge_mid_right.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_top_left",
+   "label": "outer top left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_top_left.png",
+   "w": 5,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_top_right",
+   "label": "outer top right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_top_right.png",
+   "w": 5,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_mid_left",
+   "label": "outer mid left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_mid_left.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_mid_right",
+   "label": "outer mid right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_mid_right.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_front_left",
+   "label": "outer front left",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_front_left.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "paredes_pe_as_wall_outer_front_right",
+   "label": "outer front right",
+   "category": "Paredes · peças",
+   "file": "props/paredes_pe_as_wall_outer_front_right.png",
+   "w": 5,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_escada",
+   "label": "Escada",
+   "category": "Masmorra",
+   "file": "props/masmorra_escada.png",
+   "w": 32,
+   "h": 64,
+   "u": 32
+  },
+  {
+   "key": "masmorra_floor_stairs",
+   "label": "Escada para baixo",
+   "category": "Masmorra",
+   "file": "props/masmorra_floor_stairs.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_floor_ladder",
+   "label": "Alçapão",
+   "category": "Masmorra",
+   "file": "props/masmorra_floor_ladder.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_hole",
+   "label": "Buraco",
+   "category": "Masmorra",
+   "file": "props/masmorra_hole.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_edge_down",
+   "label": "Beirada",
+   "category": "Masmorra",
+   "file": "props/masmorra_edge_down.png",
+   "w": 16,
+   "h": 6,
+   "u": 16
+  },
+  {
+   "key": "masmorra_floor_spikes_anim_f3",
+   "label": "Espinhos",
+   "category": "Masmorra",
+   "file": "props/masmorra_floor_spikes_anim_f3.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_chest_full_open_anim_f0",
+   "label": "Baú",
+   "category": "Masmorra",
+   "file": "props/masmorra_chest_full_open_anim_f0.png",
+   "w": 16,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "masmorra_chest_full_open_anim_f2",
+   "label": "Baú aberto",
+   "category": "Masmorra",
+   "file": "props/masmorra_chest_full_open_anim_f2.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_chest_mimic_open_anim_f2",
+   "label": "Mímico",
+   "category": "Masmorra",
+   "file": "props/masmorra_chest_mimic_open_anim_f2.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "masmorra_crate",
+   "label": "Caixote",
+   "category": "Masmorra",
+   "file": "props/masmorra_crate.png",
+   "w": 14,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "masmorra_skull",
+   "label": "Caveira",
+   "category": "Masmorra",
+   "file": "props/masmorra_skull.png",
+   "w": 6,
+   "h": 6,
+   "u": 16
+  },
+  {
+   "key": "masmorra_bomb_f0",
+   "label": "Bomba",
+   "category": "Masmorra",
+   "file": "props/masmorra_bomb_f0.png",
+   "w": 14,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "masmorra_lever_left",
+   "label": "Alavanca",
+   "category": "Masmorra",
+   "file": "props/masmorra_lever_left.png",
+   "w": 14,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "masmorra_button_red_up",
+   "label": "Botão",
+   "category": "Masmorra",
+   "file": "props/masmorra_button_red_up.png",
+   "w": 12,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "masmorra_coin_anim_f0",
+   "label": "Moeda",
+   "category": "Masmorra",
+   "file": "props/masmorra_coin_anim_f0.png",
+   "w": 6,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "masmorra_front_door_closed",
+   "label": "Porta fechada",
+   "category": "Masmorra",
+   "file": "props/masmorra_front_door_closed.png",
+   "w": 31,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "masmorra_front_door_open",
+   "label": "Porta aberta",
+   "category": "Masmorra",
+   "file": "props/masmorra_front_door_open.png",
+   "w": 10,
+   "h": 40,
+   "u": 32
+  },
+  {
+   "key": "masmorra_side_door_closed",
+   "label": "Porta lateral fechada",
+   "category": "Masmorra",
+   "file": "props/masmorra_side_door_closed.png",
+   "w": 15,
+   "h": 57,
+   "u": 32
+  },
+  {
+   "key": "masmorra_side_door_open",
+   "label": "Porta lateral aberta",
+   "category": "Masmorra",
+   "file": "props/masmorra_side_door_open.png",
+   "w": 36,
+   "h": 36,
+   "u": 32
+  },
+  {
+   "key": "masmorra_bones1",
+   "label": "Ossos",
+   "category": "Masmorra",
+   "file": "props/masmorra_bones1.png",
+   "w": 28,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "masmorra_bones2",
+   "label": "Ossos",
+   "category": "Masmorra",
+   "file": "props/masmorra_bones2.png",
+   "w": 25,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "masmorra_bronze_chest_closed",
+   "label": "Baú de bronze",
+   "category": "Masmorra",
+   "file": "props/masmorra_bronze_chest_closed.png",
+   "w": 30,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "masmorra_bronze_chest_open",
+   "label": "Baú de bronze aberto",
+   "category": "Masmorra",
+   "file": "props/masmorra_bronze_chest_open.png",
+   "w": 30,
+   "h": 40,
+   "u": 32
+  },
+  {
+   "key": "masmorra_pocao_vida",
+   "label": "Poção de vida",
+   "category": "Masmorra",
+   "file": "props/masmorra_pocao_vida.png",
+   "w": 19,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "masmorra_pocao_mana",
+   "label": "Poção de mana",
+   "category": "Masmorra",
+   "file": "props/masmorra_pocao_mana.png",
+   "w": 19,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "personagens_angel",
+   "label": "Anjo",
+   "category": "Personagens",
+   "file": "props/personagens_angel.png",
+   "w": 13,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "criaturas_big_demon",
+   "label": "Demônio grande",
+   "category": "Criaturas",
+   "file": "props/criaturas_big_demon.png",
+   "w": 23,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "criaturas_big_zombie",
+   "label": "Zumbi grande",
+   "category": "Criaturas",
+   "file": "props/criaturas_big_zombie.png",
+   "w": 18,
+   "h": 27,
+   "u": 16
+  },
+  {
+   "key": "criaturas_chort",
+   "label": "Chort",
+   "category": "Criaturas",
+   "file": "props/criaturas_chort.png",
+   "w": 11,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "criaturas_doc",
+   "label": "Doutor da peste",
+   "category": "Criaturas",
+   "file": "props/criaturas_doc.png",
+   "w": 15,
+   "h": 17,
+   "u": 16
+  },
+  {
+   "key": "personagens_dwarf_f",
+   "label": "Anã",
+   "category": "Personagens",
+   "file": "props/personagens_dwarf_f.png",
+   "w": 14,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "personagens_dwarf_m",
+   "label": "Anão",
+   "category": "Personagens",
+   "file": "props/personagens_dwarf_m.png",
+   "w": 14,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "personagens_elf_f",
+   "label": "Elfa",
+   "category": "Personagens",
+   "file": "props/personagens_elf_f.png",
+   "w": 15,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "personagens_elf_m",
+   "label": "Elfo",
+   "category": "Personagens",
+   "file": "props/personagens_elf_m.png",
+   "w": 15,
+   "h": 19,
+   "u": 16
+  },
+  {
+   "key": "criaturas_goblin",
+   "label": "Goblin",
+   "category": "Criaturas",
+   "file": "props/criaturas_goblin.png",
+   "w": 10,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "criaturas_ice_zombie",
+   "label": "Zumbi de gelo",
+   "category": "Criaturas",
+   "file": "props/criaturas_ice_zombie.png",
+   "w": 8,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "criaturas_imp",
+   "label": "Diabrete",
+   "category": "Criaturas",
+   "file": "props/criaturas_imp.png",
+   "w": 10,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "personagens_knight_f",
+   "label": "Cavaleira",
+   "category": "Personagens",
+   "file": "props/personagens_knight_f.png",
+   "w": 15,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "personagens_knight_m",
+   "label": "Cavaleiro",
+   "category": "Personagens",
+   "file": "props/personagens_knight_m.png",
+   "w": 15,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "personagens_lizard_f",
+   "label": "Lagarta guerreira",
+   "category": "Personagens",
+   "file": "props/personagens_lizard_f.png",
+   "w": 15,
+   "h": 19,
+   "u": 16
+  },
+  {
+   "key": "personagens_lizard_m",
+   "label": "Lagarto guerreiro",
+   "category": "Personagens",
+   "file": "props/personagens_lizard_m.png",
+   "w": 15,
+   "h": 19,
+   "u": 16
+  },
+  {
+   "key": "criaturas_masked_orc",
+   "label": "Orc mascarado",
+   "category": "Criaturas",
+   "file": "props/criaturas_masked_orc.png",
+   "w": 12,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "criaturas_muddy",
+   "label": "Lodo",
+   "category": "Criaturas",
+   "file": "props/criaturas_muddy.png",
+   "w": 16,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "criaturas_necromancer",
+   "label": "Necromante",
+   "category": "Criaturas",
+   "file": "props/criaturas_necromancer.png",
+   "w": 13,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "criaturas_ogre",
+   "label": "Ogro",
+   "category": "Criaturas",
+   "file": "props/criaturas_ogre.png",
+   "w": 20,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "criaturas_orc_shaman",
+   "label": "Xamã orc",
+   "category": "Criaturas",
+   "file": "props/criaturas_orc_shaman.png",
+   "w": 11,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "criaturas_orc_warrior",
+   "label": "Guerreiro orc",
+   "category": "Criaturas",
+   "file": "props/criaturas_orc_warrior.png",
+   "w": 11,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "criaturas_pumpkin_dude",
+   "label": "Cabeça de abóbora",
+   "category": "Criaturas",
+   "file": "props/criaturas_pumpkin_dude.png",
+   "w": 14,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "criaturas_skelet",
+   "label": "Esqueleto",
+   "category": "Criaturas",
+   "file": "props/criaturas_skelet.png",
+   "w": 10,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "criaturas_slug",
+   "label": "Lesma",
+   "category": "Criaturas",
+   "file": "props/criaturas_slug.png",
+   "w": 13,
+   "h": 17,
+   "u": 16
+  },
+  {
+   "key": "criaturas_swampy",
+   "label": "Criatura do pântano",
+   "category": "Criaturas",
+   "file": "props/criaturas_swampy.png",
+   "w": 16,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "criaturas_tiny_slug",
+   "label": "Lesminha",
+   "category": "Criaturas",
+   "file": "props/criaturas_tiny_slug.png",
+   "w": 12,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "criaturas_tiny_zombie",
+   "label": "Zumbizinho",
+   "category": "Criaturas",
+   "file": "props/criaturas_tiny_zombie.png",
+   "w": 9,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "personagens_wizzard_f",
+   "label": "Maga",
+   "category": "Personagens",
+   "file": "props/personagens_wizzard_f.png",
+   "w": 15,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "personagens_wizzard_m",
+   "label": "Mago",
+   "category": "Personagens",
+   "file": "props/personagens_wizzard_m.png",
+   "w": 14,
+   "h": 19,
+   "u": 16
+  },
+  {
+   "key": "criaturas_wogol",
+   "label": "Wogol",
+   "category": "Criaturas",
+   "file": "props/criaturas_wogol.png",
+   "w": 10,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "criaturas_zombie",
+   "label": "Zumbi",
+   "category": "Criaturas",
+   "file": "props/criaturas_zombie.png",
+   "w": 10,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "personagens_soldado",
+   "label": "Soldado",
+   "category": "Personagens",
+   "file": "props/personagens_soldado.png",
+   "w": 17,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "criaturas_orc",
+   "label": "Orc",
+   "category": "Criaturas",
+   "file": "props/criaturas_orc.png",
+   "w": 22,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "personagens_guerreiro",
+   "label": "Guerreiro",
+   "category": "Personagens",
+   "file": "props/personagens_guerreiro.png",
+   "w": 31,
+   "h": 39,
+   "u": 32
+  },
+  {
+   "key": "personagens_aventureiro",
+   "label": "Aventureiro",
+   "category": "Personagens",
+   "file": "props/personagens_aventureiro.png",
+   "w": 13,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "criaturas_esqueleto_fofo",
+   "label": "Esqueleto (fofo)",
+   "category": "Criaturas",
+   "file": "props/criaturas_esqueleto_fofo.png",
+   "w": 13,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "criaturas_slime",
+   "label": "Slime",
+   "category": "Criaturas",
+   "file": "props/criaturas_slime.png",
+   "w": 19,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "animais_chicken",
+   "label": "Galinha",
+   "category": "Animais",
+   "file": "props/animais_chicken.png",
+   "w": 13,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "animais_cow",
+   "label": "Vaca",
+   "category": "Animais",
+   "file": "props/animais_cow.png",
+   "w": 24,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "animais_pig",
+   "label": "Porco",
+   "category": "Animais",
+   "file": "props/animais_pig.png",
+   "w": 21,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "animais_sheep",
+   "label": "Ovelha",
+   "category": "Animais",
+   "file": "props/animais_sheep.png",
+   "w": 19,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "catalisadores_01_quartzo_ametista",
+   "label": "Quartzo ametista",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_01_quartzo_ametista.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_02_cristal_arcano",
+   "label": "Cristal arcano",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_02_cristal_arcano.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_03_rubi",
+   "label": "Rubi",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_03_rubi.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_04_agua_marinha",
+   "label": "Água marinha",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_04_agua_marinha.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_05_ametista",
+   "label": "Ametista",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_05_ametista.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_06_quartzo",
+   "label": "Quartzo",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_06_quartzo.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_07_ambar",
+   "label": "Âmbar",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_07_ambar.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_08_citrino",
+   "label": "Citrino",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_08_citrino.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_09_cristal_de_gelo",
+   "label": "Cristal de gelo",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_09_cristal_de_gelo.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_10_cristal_da_tempestade",
+   "label": "Cristal da tempestade",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_10_cristal_da_tempestade.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_11_esmeralda",
+   "label": "Esmeralda",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_11_esmeralda.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "catalisadores_12_safira",
+   "label": "Safira",
+   "category": "Catalisadores",
+   "file": "props/catalisadores_12_safira.png",
+   "w": 21,
+   "h": 23,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_tree_emerald_1",
+   "label": "Árvore 1",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_tree_emerald_1.png",
+   "w": 64,
+   "h": 63,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_tree_emerald_2",
+   "label": "Árvore 2",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_tree_emerald_2.png",
+   "w": 46,
+   "h": 63,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_tree_emerald_3",
+   "label": "Árvore 3",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_tree_emerald_3.png",
+   "w": 52,
+   "h": 92,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_tree_emerald_4",
+   "label": "Árvore 4",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_tree_emerald_4.png",
+   "w": 48,
+   "h": 93,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_oak_tree",
+   "label": "Carvalho",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_oak_tree.png",
+   "w": 41,
+   "h": 63,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_bush_emerald_1",
+   "label": "Arbusto 1",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_bush_emerald_1.png",
+   "w": 40,
+   "h": 29,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_bush_emerald_2",
+   "label": "Arbusto 2",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_bush_emerald_2.png",
+   "w": 48,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_bush_emerald_3",
+   "label": "Arbusto 3",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_bush_emerald_3.png",
+   "w": 28,
+   "h": 28,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_bush_emerald_4",
+   "label": "Arbusto 4",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_bush_emerald_4.png",
+   "w": 16,
+   "h": 28,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_bush_emerald_5",
+   "label": "Arbusto 5",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_bush_emerald_5.png",
+   "w": 14,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_chopped_tree_1",
+   "label": "Toco 1",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_chopped_tree_1.png",
+   "w": 32,
+   "h": 31,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_plant_2",
+   "label": "Planta 2",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_plant_2.png",
+   "w": 15,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_arvore_pequena_1",
+   "label": "Árvore pequena 1",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_arvore_pequena_1.png",
+   "w": 23,
+   "h": 34,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_arvore_pequena_2",
+   "label": "Árvore pequena 2",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_arvore_pequena_2.png",
+   "w": 23,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_arvore_pequena_3",
+   "label": "Árvore pequena 3",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_arvore_pequena_3.png",
+   "w": 7,
+   "h": 8,
+   "u": 16
+  },
+  {
+   "key": "rvores_e_plantas_planta_1",
+   "label": "Planta do campo 1",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_1.png",
+   "w": 113,
+   "h": 139,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_2",
+   "label": "Planta do campo 2",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_2.png",
+   "w": 95,
+   "h": 136,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_3",
+   "label": "Planta do campo 3",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_3.png",
+   "w": 79,
+   "h": 120,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_4",
+   "label": "Planta do campo 4",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_4.png",
+   "w": 38,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_5",
+   "label": "Planta do campo 5",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_5.png",
+   "w": 47,
+   "h": 42,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_6",
+   "label": "Planta do campo 6",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_6.png",
+   "w": 39,
+   "h": 45,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_7",
+   "label": "Planta do campo 7",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_7.png",
+   "w": 40,
+   "h": 35,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_8",
+   "label": "Planta do campo 8",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_8.png",
+   "w": 22,
+   "h": 19,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_9",
+   "label": "Planta do campo 9",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_9.png",
+   "w": 27,
+   "h": 25,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_10",
+   "label": "Planta do campo 10",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_10.png",
+   "w": 17,
+   "h": 9,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_11",
+   "label": "Planta do campo 11",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_11.png",
+   "w": 16,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_12",
+   "label": "Planta do campo 12",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_12.png",
+   "w": 15,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_13",
+   "label": "Planta do campo 13",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_13.png",
+   "w": 15,
+   "h": 11,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_14",
+   "label": "Planta do campo 14",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_14.png",
+   "w": 12,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_15",
+   "label": "Planta do campo 15",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_15.png",
+   "w": 13,
+   "h": 9,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_16",
+   "label": "Planta do campo 16",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_16.png",
+   "w": 13,
+   "h": 9,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_17",
+   "label": "Planta do campo 17",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_17.png",
+   "w": 14,
+   "h": 7,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_18",
+   "label": "Planta do campo 18",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_18.png",
+   "w": 12,
+   "h": 8,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_19",
+   "label": "Planta do campo 19",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_19.png",
+   "w": 12,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_20",
+   "label": "Planta do campo 20",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_20.png",
+   "w": 14,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_21",
+   "label": "Planta do campo 21",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_21.png",
+   "w": 12,
+   "h": 9,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_22",
+   "label": "Planta do campo 22",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_22.png",
+   "w": 10,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "rvores_e_plantas_planta_23",
+   "label": "Planta do campo 23",
+   "category": "Árvores e plantas",
+   "file": "props/rvores_e_plantas_planta_23.png",
+   "w": 10,
+   "h": 11,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_1",
+   "label": "Natureza 1",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_1.png",
+   "w": 39,
+   "h": 117,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_2",
+   "label": "Natureza 2",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_2.png",
+   "w": 35,
+   "h": 120,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_3",
+   "label": "Natureza 3",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_3.png",
+   "w": 93,
+   "h": 81,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_4",
+   "label": "Natureza 4",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_4.png",
+   "w": 92,
+   "h": 69,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_5",
+   "label": "Natureza 5",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_5.png",
+   "w": 57,
+   "h": 62,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_6",
+   "label": "Natureza 6",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_6.png",
+   "w": 20,
+   "h": 25,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_7",
+   "label": "Natureza 7",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_7.png",
+   "w": 14,
+   "h": 18,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_8",
+   "label": "Natureza 8",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_8.png",
+   "w": 26,
+   "h": 22,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_9",
+   "label": "Natureza 9",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_9.png",
+   "w": 17,
+   "h": 19,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_10",
+   "label": "Natureza 10",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_10.png",
+   "w": 12,
+   "h": 22,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_11",
+   "label": "Natureza 11",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_11.png",
+   "w": 13,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_12",
+   "label": "Natureza 12",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_12.png",
+   "w": 88,
+   "h": 119,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_13",
+   "label": "Natureza 13",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_13.png",
+   "w": 101,
+   "h": 69,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_14",
+   "label": "Natureza 14",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_14.png",
+   "w": 57,
+   "h": 57,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_15",
+   "label": "Natureza 15",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_15.png",
+   "w": 56,
+   "h": 45,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_16",
+   "label": "Natureza 16",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_16.png",
+   "w": 50,
+   "h": 40,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_17",
+   "label": "Natureza 17",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_17.png",
+   "w": 117,
+   "h": 101,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_18",
+   "label": "Natureza 18",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_18.png",
+   "w": 56,
+   "h": 111,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_19",
+   "label": "Natureza 19",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_19.png",
+   "w": 47,
+   "h": 112,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_20",
+   "label": "Natureza 20",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_20.png",
+   "w": 47,
+   "h": 112,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_natureza_21",
+   "label": "Natureza 21",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_natureza_21.png",
+   "w": 59,
+   "h": 108,
+   "u": 32
+  },
+  {
+   "key": "natureza_selvagem_plat_tree",
+   "label": "Árvore",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_tree.png",
+   "w": 64,
+   "h": 80,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_bush",
+   "label": "Moita",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_bush.png",
+   "w": 16,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_choppedtree",
+   "label": "Tronco cortado",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_choppedtree.png",
+   "w": 22,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_lonetrunk",
+   "label": "Tronco",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_lonetrunk.png",
+   "w": 14,
+   "h": 9,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_stone_1",
+   "label": "Pedra 1",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_stone_1.png",
+   "w": 6,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_stone_2",
+   "label": "Pedra 2",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_stone_2.png",
+   "w": 15,
+   "h": 6,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_stone_3",
+   "label": "Pedra 3",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_stone_3.png",
+   "w": 26,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_flower_1",
+   "label": "Flor 1",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_flower_1.png",
+   "w": 5,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_flower_2",
+   "label": "Flor 2",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_flower_2.png",
+   "w": 4,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_flower_3",
+   "label": "Flor 3",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_flower_3.png",
+   "w": 4,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_tallgrass_1",
+   "label": "Capim 1",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_tallgrass_1.png",
+   "w": 16,
+   "h": 9,
+   "u": 16
+  },
+  {
+   "key": "natureza_selvagem_plat_tallgrass_2",
+   "label": "Capim 2",
+   "category": "Natureza selvagem",
+   "file": "props/natureza_selvagem_plat_tallgrass_2.png",
+   "w": 16,
+   "h": 6,
+   "u": 16
+  },
+  {
+   "key": "pedras_rock1",
+   "label": "Pedra 1",
+   "category": "Pedras",
+   "file": "props/pedras_rock1.png",
+   "w": 28,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "pedras_rock2",
+   "label": "Pedra 2",
+   "category": "Pedras",
+   "file": "props/pedras_rock2.png",
+   "w": 15,
+   "h": 29,
+   "u": 16
+  },
+  {
+   "key": "pedras_rock4",
+   "label": "Pedra 4",
+   "category": "Pedras",
+   "file": "props/pedras_rock4.png",
+   "w": 27,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "pedras_rock6",
+   "label": "Pedra 6",
+   "category": "Pedras",
+   "file": "props/pedras_rock6.png",
+   "w": 14,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "pedras_rock9",
+   "label": "Pedra 9",
+   "category": "Pedras",
+   "file": "props/pedras_rock9.png",
+   "w": 9,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_1",
+   "label": "Decoração 1",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_1.png",
+   "w": 10,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_2",
+   "label": "Decoração 2",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_2.png",
+   "w": 8,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_3",
+   "label": "Decoração 3",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_3.png",
+   "w": 10,
+   "h": 8,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_4",
+   "label": "Decoração 4",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_4.png",
+   "w": 14,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_5",
+   "label": "Decoração 5",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_5.png",
+   "w": 12,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_6",
+   "label": "Decoração 6",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_6.png",
+   "w": 14,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_7",
+   "label": "Decoração 7",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_7.png",
+   "w": 12,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_8",
+   "label": "Decoração 8",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_8.png",
+   "w": 15,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_9",
+   "label": "Decoração 9",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_9.png",
+   "w": 10,
+   "h": 8,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_10",
+   "label": "Decoração 10",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_10.png",
+   "w": 13,
+   "h": 8,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_11",
+   "label": "Decoração 11",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_11.png",
+   "w": 5,
+   "h": 4,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_12",
+   "label": "Decoração 12",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_12.png",
+   "w": 7,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_13",
+   "label": "Decoração 13",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_13.png",
+   "w": 13,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_14",
+   "label": "Decoração 14",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_14.png",
+   "w": 13,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_15",
+   "label": "Decoração 15",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_15.png",
+   "w": 16,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_16",
+   "label": "Decoração 16",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_16.png",
+   "w": 10,
+   "h": 7,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_17",
+   "label": "Decoração 17",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_17.png",
+   "w": 15,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_18",
+   "label": "Decoração 18",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_18.png",
+   "w": 7,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_19",
+   "label": "Decoração 19",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_19.png",
+   "w": 10,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_20",
+   "label": "Decoração 20",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_20.png",
+   "w": 13,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_21",
+   "label": "Decoração 21",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_21.png",
+   "w": 13,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_22",
+   "label": "Decoração 22",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_22.png",
+   "w": 15,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_23",
+   "label": "Decoração 23",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_23.png",
+   "w": 12,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_24",
+   "label": "Decoração 24",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_24.png",
+   "w": 12,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_25",
+   "label": "Decoração 25",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_25.png",
+   "w": 14,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_26",
+   "label": "Decoração 26",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_26.png",
+   "w": 15,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_27",
+   "label": "Decoração 27",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_27.png",
+   "w": 15,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_28",
+   "label": "Decoração 28",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_28.png",
+   "w": 15,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_29",
+   "label": "Decoração 29",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_29.png",
+   "w": 12,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_30",
+   "label": "Decoração 30",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_30.png",
+   "w": 16,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_31",
+   "label": "Decoração 31",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_31.png",
+   "w": 10,
+   "h": 40,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_32",
+   "label": "Decoração 32",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_32.png",
+   "w": 15,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_33",
+   "label": "Decoração 33",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_33.png",
+   "w": 12,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_34",
+   "label": "Decoração 34",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_34.png",
+   "w": 12,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_35",
+   "label": "Decoração 35",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_35.png",
+   "w": 14,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_36",
+   "label": "Decoração 36",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_36.png",
+   "w": 15,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_37",
+   "label": "Decoração 37",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_37.png",
+   "w": 12,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_38",
+   "label": "Decoração 38",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_38.png",
+   "w": 16,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_39",
+   "label": "Decoração 39",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_39.png",
+   "w": 25,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_40",
+   "label": "Decoração 40",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_40.png",
+   "w": 8,
+   "h": 8,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_41",
+   "label": "Decoração 41",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_41.png",
+   "w": 7,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_42",
+   "label": "Decoração 42",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_42.png",
+   "w": 7,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_43",
+   "label": "Decoração 43",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_43.png",
+   "w": 7,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_44",
+   "label": "Decoração 44",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_44.png",
+   "w": 7,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_45",
+   "label": "Decoração 45",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_45.png",
+   "w": 7,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_46",
+   "label": "Decoração 46",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_46.png",
+   "w": 7,
+   "h": 10,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_47",
+   "label": "Decoração 47",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_47.png",
+   "w": 7,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_48",
+   "label": "Decoração 48",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_48.png",
+   "w": 7,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_49",
+   "label": "Decoração 49",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_49.png",
+   "w": 7,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_50",
+   "label": "Decoração 50",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_50.png",
+   "w": 7,
+   "h": 12,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_51",
+   "label": "Decoração 51",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_51.png",
+   "w": 7,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_52",
+   "label": "Decoração 52",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_52.png",
+   "w": 7,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_53",
+   "label": "Decoração 53",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_53.png",
+   "w": 12,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_54",
+   "label": "Decoração 54",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_54.png",
+   "w": 12,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_55",
+   "label": "Decoração 55",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_55.png",
+   "w": 12,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "decora_o_decor_56",
+   "label": "Decoração 56",
+   "category": "Decoração",
+   "file": "props/decora_o_decor_56.png",
+   "w": 12,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "constru_es_house1",
+   "label": "Casa de palha 1",
+   "category": "Construções",
+   "file": "props/constru_es_house1.png",
+   "w": 88,
+   "h": 103,
+   "u": 16
+  },
+  {
+   "key": "constru_es_house2",
+   "label": "Casa de palha 2",
+   "category": "Construções",
+   "file": "props/constru_es_house2.png",
+   "w": 157,
+   "h": 112,
+   "u": 16
+  },
+  {
+   "key": "constru_es_house3",
+   "label": "Casa de palha 3",
+   "category": "Construções",
+   "file": "props/constru_es_house3.png",
+   "w": 180,
+   "h": 128,
+   "u": 16
+  },
+  {
+   "key": "constru_es_house4_purple",
+   "label": "Casa de palha 4",
+   "category": "Construções",
+   "file": "props/constru_es_house4_purple.png",
+   "w": 128,
+   "h": 128,
+   "u": 16
+  },
+  {
+   "key": "constru_es_casa_madeira",
+   "label": "Casa de madeira",
+   "category": "Construções",
+   "file": "props/constru_es_casa_madeira.png",
+   "w": 70,
+   "h": 114,
+   "u": 16
+  },
+  {
+   "key": "constru_es_portao",
+   "label": "Portão da muralha",
+   "category": "Construções",
+   "file": "props/constru_es_portao.png",
+   "w": 80,
+   "h": 92,
+   "u": 16
+  },
+  {
+   "key": "constru_es_poco",
+   "label": "Poço",
+   "category": "Construções",
+   "file": "props/constru_es_poco.png",
+   "w": 56,
+   "h": 75,
+   "u": 16
+  },
+  {
+   "key": "vila_barrel_small_empty",
+   "label": "Barril",
+   "category": "Vila",
+   "file": "props/vila_barrel_small_empty.png",
+   "w": 16,
+   "h": 20,
+   "u": 16
+  },
+  {
+   "key": "vila_crate_large_empty",
+   "label": "Caixote grande",
+   "category": "Vila",
+   "file": "props/vila_crate_large_empty.png",
+   "w": 24,
+   "h": 29,
+   "u": 16
+  },
+  {
+   "key": "vila_crate_medium_closed",
+   "label": "Caixote",
+   "category": "Vila",
+   "file": "props/vila_crate_medium_closed.png",
+   "w": 16,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "vila_crate_water_1",
+   "label": "Caixote com água 1",
+   "category": "Vila",
+   "file": "props/vila_crate_water_1.png",
+   "w": 30,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "vila_sack_3",
+   "label": "Saco 3",
+   "category": "Vila",
+   "file": "props/vila_sack_3.png",
+   "w": 16,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "vila_basket_empty",
+   "label": "Cesto",
+   "category": "Vila",
+   "file": "props/vila_basket_empty.png",
+   "w": 22,
+   "h": 17,
+   "u": 16
+  },
+  {
+   "key": "vila_haystack_2",
+   "label": "Feno 2",
+   "category": "Vila",
+   "file": "props/vila_haystack_2.png",
+   "w": 29,
+   "h": 32,
+   "u": 16
+  },
+  {
+   "key": "vila_sign_1",
+   "label": "Placa 1",
+   "category": "Vila",
+   "file": "props/vila_sign_1.png",
+   "w": 24,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "vila_sign_2",
+   "label": "Placa 2",
+   "category": "Vila",
+   "file": "props/vila_sign_2.png",
+   "w": 24,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "vila_bench_1",
+   "label": "Banco 1",
+   "category": "Vila",
+   "file": "props/vila_bench_1.png",
+   "w": 14,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "vila_bench_3",
+   "label": "Banco 3",
+   "category": "Vila",
+   "file": "props/vila_bench_3.png",
+   "w": 14,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "vila_table_medium_1",
+   "label": "Mesa 1",
+   "category": "Vila",
+   "file": "props/vila_table_medium_1.png",
+   "w": 42,
+   "h": 39,
+   "u": 16
+  },
+  {
+   "key": "vila_fireplace_1",
+   "label": "Fogueira 1",
+   "category": "Vila",
+   "file": "props/vila_fireplace_1.png",
+   "w": 30,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "vila_lamppost_3",
+   "label": "Poste 3",
+   "category": "Vila",
+   "file": "props/vila_lamppost_3.png",
+   "w": 46,
+   "h": 62,
+   "u": 16
+  },
+  {
+   "key": "vila_bulletinboard_1",
+   "label": "Mural de avisos 1",
+   "category": "Vila",
+   "file": "props/vila_bulletinboard_1.png",
+   "w": 44,
+   "h": 42,
+   "u": 16
+  },
+  {
+   "key": "vila_banner_stick_1_purple",
+   "label": "Estandarte",
+   "category": "Vila",
+   "file": "props/vila_banner_stick_1_purple.png",
+   "w": 24,
+   "h": 59,
+   "u": 16
+  },
+  {
+   "key": "vila_bau",
+   "label": "Baú",
+   "category": "Vila",
+   "file": "props/vila_bau.png",
+   "w": 16,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "vila_objeto_1",
+   "label": "Objeto 1",
+   "category": "Vila",
+   "file": "props/vila_objeto_1.png",
+   "w": 26,
+   "h": 52,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_2",
+   "label": "Objeto 2",
+   "category": "Vila",
+   "file": "props/vila_objeto_2.png",
+   "w": 27,
+   "h": 61,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_3",
+   "label": "Objeto 3",
+   "category": "Vila",
+   "file": "props/vila_objeto_3.png",
+   "w": 32,
+   "h": 46,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_4",
+   "label": "Objeto 4",
+   "category": "Vila",
+   "file": "props/vila_objeto_4.png",
+   "w": 32,
+   "h": 31,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_5",
+   "label": "Objeto 5",
+   "category": "Vila",
+   "file": "props/vila_objeto_5.png",
+   "w": 32,
+   "h": 46,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_6",
+   "label": "Objeto 6",
+   "category": "Vila",
+   "file": "props/vila_objeto_6.png",
+   "w": 56,
+   "h": 41,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_7",
+   "label": "Objeto 7",
+   "category": "Vila",
+   "file": "props/vila_objeto_7.png",
+   "w": 37,
+   "h": 72,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_8",
+   "label": "Objeto 8",
+   "category": "Vila",
+   "file": "props/vila_objeto_8.png",
+   "w": 32,
+   "h": 49,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_9",
+   "label": "Objeto 9",
+   "category": "Vila",
+   "file": "props/vila_objeto_9.png",
+   "w": 26,
+   "h": 39,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_10",
+   "label": "Objeto 10",
+   "category": "Vila",
+   "file": "props/vila_objeto_10.png",
+   "w": 26,
+   "h": 66,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_11",
+   "label": "Objeto 11",
+   "category": "Vila",
+   "file": "props/vila_objeto_11.png",
+   "w": 64,
+   "h": 36,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_12",
+   "label": "Objeto 12",
+   "category": "Vila",
+   "file": "props/vila_objeto_12.png",
+   "w": 37,
+   "h": 50,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_13",
+   "label": "Objeto 13",
+   "category": "Vila",
+   "file": "props/vila_objeto_13.png",
+   "w": 27,
+   "h": 61,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_14",
+   "label": "Objeto 14",
+   "category": "Vila",
+   "file": "props/vila_objeto_14.png",
+   "w": 22,
+   "h": 37,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_15",
+   "label": "Objeto 15",
+   "category": "Vila",
+   "file": "props/vila_objeto_15.png",
+   "w": 28,
+   "h": 36,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_16",
+   "label": "Objeto 16",
+   "category": "Vila",
+   "file": "props/vila_objeto_16.png",
+   "w": 32,
+   "h": 57,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_17",
+   "label": "Objeto 17",
+   "category": "Vila",
+   "file": "props/vila_objeto_17.png",
+   "w": 9,
+   "h": 53,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_18",
+   "label": "Objeto 18",
+   "category": "Vila",
+   "file": "props/vila_objeto_18.png",
+   "w": 9,
+   "h": 53,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_19",
+   "label": "Objeto 19",
+   "category": "Vila",
+   "file": "props/vila_objeto_19.png",
+   "w": 27,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_20",
+   "label": "Objeto 20",
+   "category": "Vila",
+   "file": "props/vila_objeto_20.png",
+   "w": 32,
+   "h": 77,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_21",
+   "label": "Objeto 21",
+   "category": "Vila",
+   "file": "props/vila_objeto_21.png",
+   "w": 26,
+   "h": 38,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_22",
+   "label": "Objeto 22",
+   "category": "Vila",
+   "file": "props/vila_objeto_22.png",
+   "w": 32,
+   "h": 57,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_23",
+   "label": "Objeto 23",
+   "category": "Vila",
+   "file": "props/vila_objeto_23.png",
+   "w": 21,
+   "h": 34,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_24",
+   "label": "Objeto 24",
+   "category": "Vila",
+   "file": "props/vila_objeto_24.png",
+   "w": 27,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_25",
+   "label": "Objeto 25",
+   "category": "Vila",
+   "file": "props/vila_objeto_25.png",
+   "w": 30,
+   "h": 41,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_26",
+   "label": "Objeto 26",
+   "category": "Vila",
+   "file": "props/vila_objeto_26.png",
+   "w": 30,
+   "h": 29,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_27",
+   "label": "Objeto 27",
+   "category": "Vila",
+   "file": "props/vila_objeto_27.png",
+   "w": 94,
+   "h": 72,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_28",
+   "label": "Objeto 28",
+   "category": "Vila",
+   "file": "props/vila_objeto_28.png",
+   "w": 25,
+   "h": 27,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_29",
+   "label": "Objeto 29",
+   "category": "Vila",
+   "file": "props/vila_objeto_29.png",
+   "w": 26,
+   "h": 40,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_30",
+   "label": "Objeto 30",
+   "category": "Vila",
+   "file": "props/vila_objeto_30.png",
+   "w": 32,
+   "h": 46,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_31",
+   "label": "Objeto 31",
+   "category": "Vila",
+   "file": "props/vila_objeto_31.png",
+   "w": 21,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_32",
+   "label": "Objeto 32",
+   "category": "Vila",
+   "file": "props/vila_objeto_32.png",
+   "w": 55,
+   "h": 49,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_33",
+   "label": "Objeto 33",
+   "category": "Vila",
+   "file": "props/vila_objeto_33.png",
+   "w": 57,
+   "h": 42,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_34",
+   "label": "Objeto 34",
+   "category": "Vila",
+   "file": "props/vila_objeto_34.png",
+   "w": 11,
+   "h": 10,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_35",
+   "label": "Objeto 35",
+   "category": "Vila",
+   "file": "props/vila_objeto_35.png",
+   "w": 16,
+   "h": 14,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_36",
+   "label": "Objeto 36",
+   "category": "Vila",
+   "file": "props/vila_objeto_36.png",
+   "w": 24,
+   "h": 19,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_37",
+   "label": "Objeto 37",
+   "category": "Vila",
+   "file": "props/vila_objeto_37.png",
+   "w": 24,
+   "h": 19,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_38",
+   "label": "Objeto 38",
+   "category": "Vila",
+   "file": "props/vila_objeto_38.png",
+   "w": 27,
+   "h": 22,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_39",
+   "label": "Objeto 39",
+   "category": "Vila",
+   "file": "props/vila_objeto_39.png",
+   "w": 27,
+   "h": 27,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_40",
+   "label": "Objeto 40",
+   "category": "Vila",
+   "file": "props/vila_objeto_40.png",
+   "w": 18,
+   "h": 16,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_41",
+   "label": "Objeto 41",
+   "category": "Vila",
+   "file": "props/vila_objeto_41.png",
+   "w": 19,
+   "h": 16,
+   "u": 32
+  },
+  {
+   "key": "vila_objeto_42",
+   "label": "Objeto 42",
+   "category": "Vila",
+   "file": "props/vila_objeto_42.png",
+   "w": 31,
+   "h": 19,
+   "u": 32
+  },
+  {
+   "key": "interior_interior_1",
+   "label": "Móvel 1",
+   "category": "Interior",
+   "file": "props/interior_interior_1.png",
+   "w": 8,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_2",
+   "label": "Móvel 2",
+   "category": "Interior",
+   "file": "props/interior_interior_2.png",
+   "w": 12,
+   "h": 15,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_3",
+   "label": "Móvel 3",
+   "category": "Interior",
+   "file": "props/interior_interior_3.png",
+   "w": 11,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_4",
+   "label": "Móvel 4",
+   "category": "Interior",
+   "file": "props/interior_interior_4.png",
+   "w": 18,
+   "h": 34,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_5",
+   "label": "Móvel 5",
+   "category": "Interior",
+   "file": "props/interior_interior_5.png",
+   "w": 26,
+   "h": 40,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_6",
+   "label": "Móvel 6",
+   "category": "Interior",
+   "file": "props/interior_interior_6.png",
+   "w": 13,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_7",
+   "label": "Móvel 7",
+   "category": "Interior",
+   "file": "props/interior_interior_7.png",
+   "w": 13,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_8",
+   "label": "Móvel 8",
+   "category": "Interior",
+   "file": "props/interior_interior_8.png",
+   "w": 16,
+   "h": 23,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_9",
+   "label": "Móvel 9",
+   "category": "Interior",
+   "file": "props/interior_interior_9.png",
+   "w": 48,
+   "h": 17,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_10",
+   "label": "Móvel 10",
+   "category": "Interior",
+   "file": "props/interior_interior_10.png",
+   "w": 14,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_11",
+   "label": "Móvel 11",
+   "category": "Interior",
+   "file": "props/interior_interior_11.png",
+   "w": 32,
+   "h": 24,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_12",
+   "label": "Móvel 12",
+   "category": "Interior",
+   "file": "props/interior_interior_12.png",
+   "w": 48,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_13",
+   "label": "Móvel 13",
+   "category": "Interior",
+   "file": "props/interior_interior_13.png",
+   "w": 11,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_14",
+   "label": "Móvel 14",
+   "category": "Interior",
+   "file": "props/interior_interior_14.png",
+   "w": 11,
+   "h": 16,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_15",
+   "label": "Móvel 15",
+   "category": "Interior",
+   "file": "props/interior_interior_15.png",
+   "w": 10,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_16",
+   "label": "Móvel 16",
+   "category": "Interior",
+   "file": "props/interior_interior_16.png",
+   "w": 10,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_17",
+   "label": "Móvel 17",
+   "category": "Interior",
+   "file": "props/interior_interior_17.png",
+   "w": 24,
+   "h": 23,
+   "u": 16
+  },
+  {
+   "key": "interior_interior_18",
+   "label": "Móvel 18",
+   "category": "Interior",
+   "file": "props/interior_interior_18.png",
+   "w": 64,
+   "h": 18,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_big_blue",
+   "label": "frasco big blue",
+   "category": "Itens",
+   "file": "props/itens_flask_big_blue.png",
+   "w": 10,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_big_green",
+   "label": "frasco big green",
+   "category": "Itens",
+   "file": "props/itens_flask_big_green.png",
+   "w": 10,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_big_red",
+   "label": "frasco big red",
+   "category": "Itens",
+   "file": "props/itens_flask_big_red.png",
+   "w": 10,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_big_yellow",
+   "label": "frasco big yellow",
+   "category": "Itens",
+   "file": "props/itens_flask_big_yellow.png",
+   "w": 10,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_blue",
+   "label": "frasco blue",
+   "category": "Itens",
+   "file": "props/itens_flask_blue.png",
+   "w": 8,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_green",
+   "label": "frasco green",
+   "category": "Itens",
+   "file": "props/itens_flask_green.png",
+   "w": 8,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_red",
+   "label": "frasco red",
+   "category": "Itens",
+   "file": "props/itens_flask_red.png",
+   "w": 8,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_flask_yellow",
+   "label": "frasco yellow",
+   "category": "Itens",
+   "file": "props/itens_flask_yellow.png",
+   "w": 8,
+   "h": 11,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_anime_sword",
+   "label": "anime sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_anime_sword.png",
+   "w": 12,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_arrow",
+   "label": "arrow",
+   "category": "Itens",
+   "file": "props/itens_weapon_arrow.png",
+   "w": 7,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_axe",
+   "label": "axe",
+   "category": "Itens",
+   "file": "props/itens_weapon_axe.png",
+   "w": 9,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_baton_with_spikes",
+   "label": "baton with spikes",
+   "category": "Itens",
+   "file": "props/itens_weapon_baton_with_spikes.png",
+   "w": 10,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_big_hammer",
+   "label": "big hammer",
+   "category": "Itens",
+   "file": "props/itens_weapon_big_hammer.png",
+   "w": 10,
+   "h": 37,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_bow",
+   "label": "bow",
+   "category": "Itens",
+   "file": "props/itens_weapon_bow.png",
+   "w": 7,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_bow_2",
+   "label": "bow 2",
+   "category": "Itens",
+   "file": "props/itens_weapon_bow_2.png",
+   "w": 14,
+   "h": 26,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_cleaver",
+   "label": "cleaver",
+   "category": "Itens",
+   "file": "props/itens_weapon_cleaver.png",
+   "w": 8,
+   "h": 19,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_double_axe",
+   "label": "double axe",
+   "category": "Itens",
+   "file": "props/itens_weapon_double_axe.png",
+   "w": 16,
+   "h": 24,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_duel_sword",
+   "label": "duel sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_duel_sword.png",
+   "w": 9,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_golden_sword",
+   "label": "golden sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_golden_sword.png",
+   "w": 10,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_green_magic_staff",
+   "label": "green magic staff",
+   "category": "Itens",
+   "file": "props/itens_weapon_green_magic_staff.png",
+   "w": 8,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_hammer",
+   "label": "hammer",
+   "category": "Itens",
+   "file": "props/itens_weapon_hammer.png",
+   "w": 10,
+   "h": 24,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_katana",
+   "label": "katana",
+   "category": "Itens",
+   "file": "props/itens_weapon_katana.png",
+   "w": 6,
+   "h": 29,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_knife",
+   "label": "knife",
+   "category": "Itens",
+   "file": "props/itens_weapon_knife.png",
+   "w": 6,
+   "h": 13,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_knight_sword",
+   "label": "knight sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_knight_sword.png",
+   "w": 10,
+   "h": 29,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_lavish_sword",
+   "label": "lavish sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_lavish_sword.png",
+   "w": 10,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_mace",
+   "label": "mace",
+   "category": "Itens",
+   "file": "props/itens_weapon_mace.png",
+   "w": 10,
+   "h": 24,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_machete",
+   "label": "machete",
+   "category": "Itens",
+   "file": "props/itens_weapon_machete.png",
+   "w": 5,
+   "h": 22,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_red_gem_sword",
+   "label": "red gem sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_red_gem_sword.png",
+   "w": 10,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_red_magic_staff",
+   "label": "red magic staff",
+   "category": "Itens",
+   "file": "props/itens_weapon_red_magic_staff.png",
+   "w": 8,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_regular_sword",
+   "label": "regular sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_regular_sword.png",
+   "w": 10,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_rusty_sword",
+   "label": "rusty sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_rusty_sword.png",
+   "w": 10,
+   "h": 21,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_saw_sword",
+   "label": "saw sword",
+   "category": "Itens",
+   "file": "props/itens_weapon_saw_sword.png",
+   "w": 10,
+   "h": 25,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_spear",
+   "label": "spear",
+   "category": "Itens",
+   "file": "props/itens_weapon_spear.png",
+   "w": 6,
+   "h": 30,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_throwing_axe",
+   "label": "throwing axe",
+   "category": "Itens",
+   "file": "props/itens_weapon_throwing_axe.png",
+   "w": 10,
+   "h": 14,
+   "u": 16
+  },
+  {
+   "key": "itens_weapon_waraxe",
+   "label": "waraxe",
+   "category": "Itens",
+   "file": "props/itens_weapon_waraxe.png",
+   "w": 12,
+   "h": 23,
+   "u": 16
+  },
+  {
+   "key": "itens_icone_1",
+   "label": "Item 1",
+   "category": "Itens",
+   "file": "props/itens_icone_1.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_2",
+   "label": "Item 2",
+   "category": "Itens",
+   "file": "props/itens_icone_2.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_3",
+   "label": "Item 3",
+   "category": "Itens",
+   "file": "props/itens_icone_3.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_4",
+   "label": "Item 4",
+   "category": "Itens",
+   "file": "props/itens_icone_4.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_5",
+   "label": "Item 5",
+   "category": "Itens",
+   "file": "props/itens_icone_5.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_6",
+   "label": "Item 6",
+   "category": "Itens",
+   "file": "props/itens_icone_6.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_7",
+   "label": "Item 7",
+   "category": "Itens",
+   "file": "props/itens_icone_7.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_8",
+   "label": "Item 8",
+   "category": "Itens",
+   "file": "props/itens_icone_8.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_9",
+   "label": "Item 9",
+   "category": "Itens",
+   "file": "props/itens_icone_9.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_10",
+   "label": "Item 10",
+   "category": "Itens",
+   "file": "props/itens_icone_10.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_11",
+   "label": "Item 11",
+   "category": "Itens",
+   "file": "props/itens_icone_11.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_12",
+   "label": "Item 12",
+   "category": "Itens",
+   "file": "props/itens_icone_12.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_13",
+   "label": "Item 13",
+   "category": "Itens",
+   "file": "props/itens_icone_13.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_14",
+   "label": "Item 14",
+   "category": "Itens",
+   "file": "props/itens_icone_14.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_15",
+   "label": "Item 15",
+   "category": "Itens",
+   "file": "props/itens_icone_15.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_16",
+   "label": "Item 16",
+   "category": "Itens",
+   "file": "props/itens_icone_16.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_17",
+   "label": "Item 17",
+   "category": "Itens",
+   "file": "props/itens_icone_17.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_18",
+   "label": "Item 18",
+   "category": "Itens",
+   "file": "props/itens_icone_18.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_19",
+   "label": "Item 19",
+   "category": "Itens",
+   "file": "props/itens_icone_19.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_20",
+   "label": "Item 20",
+   "category": "Itens",
+   "file": "props/itens_icone_20.png",
+   "w": 28,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_21",
+   "label": "Item 21",
+   "category": "Itens",
+   "file": "props/itens_icone_21.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_22",
+   "label": "Item 22",
+   "category": "Itens",
+   "file": "props/itens_icone_22.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_23",
+   "label": "Item 23",
+   "category": "Itens",
+   "file": "props/itens_icone_23.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_24",
+   "label": "Item 24",
+   "category": "Itens",
+   "file": "props/itens_icone_24.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_25",
+   "label": "Item 25",
+   "category": "Itens",
+   "file": "props/itens_icone_25.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_26",
+   "label": "Item 26",
+   "category": "Itens",
+   "file": "props/itens_icone_26.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_27",
+   "label": "Item 27",
+   "category": "Itens",
+   "file": "props/itens_icone_27.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_28",
+   "label": "Item 28",
+   "category": "Itens",
+   "file": "props/itens_icone_28.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_29",
+   "label": "Item 29",
+   "category": "Itens",
+   "file": "props/itens_icone_29.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_30",
+   "label": "Item 30",
+   "category": "Itens",
+   "file": "props/itens_icone_30.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_31",
+   "label": "Item 31",
+   "category": "Itens",
+   "file": "props/itens_icone_31.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_32",
+   "label": "Item 32",
+   "category": "Itens",
+   "file": "props/itens_icone_32.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_33",
+   "label": "Item 33",
+   "category": "Itens",
+   "file": "props/itens_icone_33.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_34",
+   "label": "Item 34",
+   "category": "Itens",
+   "file": "props/itens_icone_34.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_35",
+   "label": "Item 35",
+   "category": "Itens",
+   "file": "props/itens_icone_35.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_36",
+   "label": "Item 36",
+   "category": "Itens",
+   "file": "props/itens_icone_36.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_37",
+   "label": "Item 37",
+   "category": "Itens",
+   "file": "props/itens_icone_37.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_38",
+   "label": "Item 38",
+   "category": "Itens",
+   "file": "props/itens_icone_38.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_39",
+   "label": "Item 39",
+   "category": "Itens",
+   "file": "props/itens_icone_39.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_40",
+   "label": "Item 40",
+   "category": "Itens",
+   "file": "props/itens_icone_40.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_41",
+   "label": "Item 41",
+   "category": "Itens",
+   "file": "props/itens_icone_41.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_42",
+   "label": "Item 42",
+   "category": "Itens",
+   "file": "props/itens_icone_42.png",
+   "w": 32,
+   "h": 30,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_43",
+   "label": "Item 43",
+   "category": "Itens",
+   "file": "props/itens_icone_43.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_44",
+   "label": "Item 44",
+   "category": "Itens",
+   "file": "props/itens_icone_44.png",
+   "w": 24,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_45",
+   "label": "Item 45",
+   "category": "Itens",
+   "file": "props/itens_icone_45.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_46",
+   "label": "Item 46",
+   "category": "Itens",
+   "file": "props/itens_icone_46.png",
+   "w": 20,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_47",
+   "label": "Item 47",
+   "category": "Itens",
+   "file": "props/itens_icone_47.png",
+   "w": 24,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_48",
+   "label": "Item 48",
+   "category": "Itens",
+   "file": "props/itens_icone_48.png",
+   "w": 28,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_49",
+   "label": "Item 49",
+   "category": "Itens",
+   "file": "props/itens_icone_49.png",
+   "w": 24,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_50",
+   "label": "Item 50",
+   "category": "Itens",
+   "file": "props/itens_icone_50.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_51",
+   "label": "Item 51",
+   "category": "Itens",
+   "file": "props/itens_icone_51.png",
+   "w": 28,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_52",
+   "label": "Item 52",
+   "category": "Itens",
+   "file": "props/itens_icone_52.png",
+   "w": 26,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_53",
+   "label": "Item 53",
+   "category": "Itens",
+   "file": "props/itens_icone_53.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_54",
+   "label": "Item 54",
+   "category": "Itens",
+   "file": "props/itens_icone_54.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_55",
+   "label": "Item 55",
+   "category": "Itens",
+   "file": "props/itens_icone_55.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_56",
+   "label": "Item 56",
+   "category": "Itens",
+   "file": "props/itens_icone_56.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_57",
+   "label": "Item 57",
+   "category": "Itens",
+   "file": "props/itens_icone_57.png",
+   "w": 22,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_58",
+   "label": "Item 58",
+   "category": "Itens",
+   "file": "props/itens_icone_58.png",
+   "w": 32,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_59",
+   "label": "Item 59",
+   "category": "Itens",
+   "file": "props/itens_icone_59.png",
+   "w": 28,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_60",
+   "label": "Item 60",
+   "category": "Itens",
+   "file": "props/itens_icone_60.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_61",
+   "label": "Item 61",
+   "category": "Itens",
+   "file": "props/itens_icone_61.png",
+   "w": 24,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_62",
+   "label": "Item 62",
+   "category": "Itens",
+   "file": "props/itens_icone_62.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_63",
+   "label": "Item 63",
+   "category": "Itens",
+   "file": "props/itens_icone_63.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_64",
+   "label": "Item 64",
+   "category": "Itens",
+   "file": "props/itens_icone_64.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_65",
+   "label": "Item 65",
+   "category": "Itens",
+   "file": "props/itens_icone_65.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_66",
+   "label": "Item 66",
+   "category": "Itens",
+   "file": "props/itens_icone_66.png",
+   "w": 32,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_67",
+   "label": "Item 67",
+   "category": "Itens",
+   "file": "props/itens_icone_67.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_68",
+   "label": "Item 68",
+   "category": "Itens",
+   "file": "props/itens_icone_68.png",
+   "w": 32,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_69",
+   "label": "Item 69",
+   "category": "Itens",
+   "file": "props/itens_icone_69.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_70",
+   "label": "Item 70",
+   "category": "Itens",
+   "file": "props/itens_icone_70.png",
+   "w": 30,
+   "h": 30,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_71",
+   "label": "Item 71",
+   "category": "Itens",
+   "file": "props/itens_icone_71.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_72",
+   "label": "Item 72",
+   "category": "Itens",
+   "file": "props/itens_icone_72.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_73",
+   "label": "Item 73",
+   "category": "Itens",
+   "file": "props/itens_icone_73.png",
+   "w": 30,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_74",
+   "label": "Item 74",
+   "category": "Itens",
+   "file": "props/itens_icone_74.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_75",
+   "label": "Item 75",
+   "category": "Itens",
+   "file": "props/itens_icone_75.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_76",
+   "label": "Item 76",
+   "category": "Itens",
+   "file": "props/itens_icone_76.png",
+   "w": 26,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_77",
+   "label": "Item 77",
+   "category": "Itens",
+   "file": "props/itens_icone_77.png",
+   "w": 30,
+   "h": 30,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_78",
+   "label": "Item 78",
+   "category": "Itens",
+   "file": "props/itens_icone_78.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_79",
+   "label": "Item 79",
+   "category": "Itens",
+   "file": "props/itens_icone_79.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_80",
+   "label": "Item 80",
+   "category": "Itens",
+   "file": "props/itens_icone_80.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_81",
+   "label": "Item 81",
+   "category": "Itens",
+   "file": "props/itens_icone_81.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_82",
+   "label": "Item 82",
+   "category": "Itens",
+   "file": "props/itens_icone_82.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_83",
+   "label": "Item 83",
+   "category": "Itens",
+   "file": "props/itens_icone_83.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_84",
+   "label": "Item 84",
+   "category": "Itens",
+   "file": "props/itens_icone_84.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_85",
+   "label": "Item 85",
+   "category": "Itens",
+   "file": "props/itens_icone_85.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_86",
+   "label": "Item 86",
+   "category": "Itens",
+   "file": "props/itens_icone_86.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_87",
+   "label": "Item 87",
+   "category": "Itens",
+   "file": "props/itens_icone_87.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_88",
+   "label": "Item 88",
+   "category": "Itens",
+   "file": "props/itens_icone_88.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_89",
+   "label": "Item 89",
+   "category": "Itens",
+   "file": "props/itens_icone_89.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_90",
+   "label": "Item 90",
+   "category": "Itens",
+   "file": "props/itens_icone_90.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_91",
+   "label": "Item 91",
+   "category": "Itens",
+   "file": "props/itens_icone_91.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_92",
+   "label": "Item 92",
+   "category": "Itens",
+   "file": "props/itens_icone_92.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_93",
+   "label": "Item 93",
+   "category": "Itens",
+   "file": "props/itens_icone_93.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_94",
+   "label": "Item 94",
+   "category": "Itens",
+   "file": "props/itens_icone_94.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_95",
+   "label": "Item 95",
+   "category": "Itens",
+   "file": "props/itens_icone_95.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_96",
+   "label": "Item 96",
+   "category": "Itens",
+   "file": "props/itens_icone_96.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_97",
+   "label": "Item 97",
+   "category": "Itens",
+   "file": "props/itens_icone_97.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_98",
+   "label": "Item 98",
+   "category": "Itens",
+   "file": "props/itens_icone_98.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_99",
+   "label": "Item 99",
+   "category": "Itens",
+   "file": "props/itens_icone_99.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_100",
+   "label": "Item 100",
+   "category": "Itens",
+   "file": "props/itens_icone_100.png",
+   "w": 24,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_101",
+   "label": "Item 101",
+   "category": "Itens",
+   "file": "props/itens_icone_101.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_102",
+   "label": "Item 102",
+   "category": "Itens",
+   "file": "props/itens_icone_102.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_103",
+   "label": "Item 103",
+   "category": "Itens",
+   "file": "props/itens_icone_103.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_104",
+   "label": "Item 104",
+   "category": "Itens",
+   "file": "props/itens_icone_104.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_105",
+   "label": "Item 105",
+   "category": "Itens",
+   "file": "props/itens_icone_105.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_106",
+   "label": "Item 106",
+   "category": "Itens",
+   "file": "props/itens_icone_106.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_107",
+   "label": "Item 107",
+   "category": "Itens",
+   "file": "props/itens_icone_107.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_108",
+   "label": "Item 108",
+   "category": "Itens",
+   "file": "props/itens_icone_108.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_109",
+   "label": "Item 109",
+   "category": "Itens",
+   "file": "props/itens_icone_109.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_110",
+   "label": "Item 110",
+   "category": "Itens",
+   "file": "props/itens_icone_110.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_111",
+   "label": "Item 111",
+   "category": "Itens",
+   "file": "props/itens_icone_111.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_112",
+   "label": "Item 112",
+   "category": "Itens",
+   "file": "props/itens_icone_112.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_113",
+   "label": "Item 113",
+   "category": "Itens",
+   "file": "props/itens_icone_113.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_114",
+   "label": "Item 114",
+   "category": "Itens",
+   "file": "props/itens_icone_114.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_115",
+   "label": "Item 115",
+   "category": "Itens",
+   "file": "props/itens_icone_115.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_116",
+   "label": "Item 116",
+   "category": "Itens",
+   "file": "props/itens_icone_116.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_117",
+   "label": "Item 117",
+   "category": "Itens",
+   "file": "props/itens_icone_117.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_118",
+   "label": "Item 118",
+   "category": "Itens",
+   "file": "props/itens_icone_118.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_119",
+   "label": "Item 119",
+   "category": "Itens",
+   "file": "props/itens_icone_119.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_120",
+   "label": "Item 120",
+   "category": "Itens",
+   "file": "props/itens_icone_120.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_121",
+   "label": "Item 121",
+   "category": "Itens",
+   "file": "props/itens_icone_121.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_122",
+   "label": "Item 122",
+   "category": "Itens",
+   "file": "props/itens_icone_122.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_123",
+   "label": "Item 123",
+   "category": "Itens",
+   "file": "props/itens_icone_123.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_124",
+   "label": "Item 124",
+   "category": "Itens",
+   "file": "props/itens_icone_124.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_125",
+   "label": "Item 125",
+   "category": "Itens",
+   "file": "props/itens_icone_125.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_126",
+   "label": "Item 126",
+   "category": "Itens",
+   "file": "props/itens_icone_126.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_127",
+   "label": "Item 127",
+   "category": "Itens",
+   "file": "props/itens_icone_127.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_128",
+   "label": "Item 128",
+   "category": "Itens",
+   "file": "props/itens_icone_128.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_129",
+   "label": "Item 129",
+   "category": "Itens",
+   "file": "props/itens_icone_129.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_130",
+   "label": "Item 130",
+   "category": "Itens",
+   "file": "props/itens_icone_130.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_131",
+   "label": "Item 131",
+   "category": "Itens",
+   "file": "props/itens_icone_131.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_132",
+   "label": "Item 132",
+   "category": "Itens",
+   "file": "props/itens_icone_132.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_133",
+   "label": "Item 133",
+   "category": "Itens",
+   "file": "props/itens_icone_133.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_134",
+   "label": "Item 134",
+   "category": "Itens",
+   "file": "props/itens_icone_134.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_135",
+   "label": "Item 135",
+   "category": "Itens",
+   "file": "props/itens_icone_135.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_136",
+   "label": "Item 136",
+   "category": "Itens",
+   "file": "props/itens_icone_136.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_137",
+   "label": "Item 137",
+   "category": "Itens",
+   "file": "props/itens_icone_137.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_138",
+   "label": "Item 138",
+   "category": "Itens",
+   "file": "props/itens_icone_138.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_139",
+   "label": "Item 139",
+   "category": "Itens",
+   "file": "props/itens_icone_139.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_140",
+   "label": "Item 140",
+   "category": "Itens",
+   "file": "props/itens_icone_140.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_141",
+   "label": "Item 141",
+   "category": "Itens",
+   "file": "props/itens_icone_141.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_142",
+   "label": "Item 142",
+   "category": "Itens",
+   "file": "props/itens_icone_142.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_143",
+   "label": "Item 143",
+   "category": "Itens",
+   "file": "props/itens_icone_143.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_144",
+   "label": "Item 144",
+   "category": "Itens",
+   "file": "props/itens_icone_144.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_145",
+   "label": "Item 145",
+   "category": "Itens",
+   "file": "props/itens_icone_145.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_146",
+   "label": "Item 146",
+   "category": "Itens",
+   "file": "props/itens_icone_146.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_147",
+   "label": "Item 147",
+   "category": "Itens",
+   "file": "props/itens_icone_147.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_148",
+   "label": "Item 148",
+   "category": "Itens",
+   "file": "props/itens_icone_148.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_149",
+   "label": "Item 149",
+   "category": "Itens",
+   "file": "props/itens_icone_149.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_150",
+   "label": "Item 150",
+   "category": "Itens",
+   "file": "props/itens_icone_150.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_151",
+   "label": "Item 151",
+   "category": "Itens",
+   "file": "props/itens_icone_151.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_152",
+   "label": "Item 152",
+   "category": "Itens",
+   "file": "props/itens_icone_152.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_153",
+   "label": "Item 153",
+   "category": "Itens",
+   "file": "props/itens_icone_153.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_154",
+   "label": "Item 154",
+   "category": "Itens",
+   "file": "props/itens_icone_154.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_155",
+   "label": "Item 155",
+   "category": "Itens",
+   "file": "props/itens_icone_155.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_156",
+   "label": "Item 156",
+   "category": "Itens",
+   "file": "props/itens_icone_156.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_157",
+   "label": "Item 157",
+   "category": "Itens",
+   "file": "props/itens_icone_157.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_158",
+   "label": "Item 158",
+   "category": "Itens",
+   "file": "props/itens_icone_158.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_159",
+   "label": "Item 159",
+   "category": "Itens",
+   "file": "props/itens_icone_159.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_160",
+   "label": "Item 160",
+   "category": "Itens",
+   "file": "props/itens_icone_160.png",
+   "w": 32,
+   "h": 32,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_161",
+   "label": "Item 161",
+   "category": "Itens",
+   "file": "props/itens_icone_161.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_162",
+   "label": "Item 162",
+   "category": "Itens",
+   "file": "props/itens_icone_162.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_163",
+   "label": "Item 163",
+   "category": "Itens",
+   "file": "props/itens_icone_163.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_164",
+   "label": "Item 164",
+   "category": "Itens",
+   "file": "props/itens_icone_164.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_165",
+   "label": "Item 165",
+   "category": "Itens",
+   "file": "props/itens_icone_165.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_166",
+   "label": "Item 166",
+   "category": "Itens",
+   "file": "props/itens_icone_166.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_167",
+   "label": "Item 167",
+   "category": "Itens",
+   "file": "props/itens_icone_167.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_168",
+   "label": "Item 168",
+   "category": "Itens",
+   "file": "props/itens_icone_168.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_169",
+   "label": "Item 169",
+   "category": "Itens",
+   "file": "props/itens_icone_169.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_170",
+   "label": "Item 170",
+   "category": "Itens",
+   "file": "props/itens_icone_170.png",
+   "w": 32,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_171",
+   "label": "Item 171",
+   "category": "Itens",
+   "file": "props/itens_icone_171.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_172",
+   "label": "Item 172",
+   "category": "Itens",
+   "file": "props/itens_icone_172.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_173",
+   "label": "Item 173",
+   "category": "Itens",
+   "file": "props/itens_icone_173.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_174",
+   "label": "Item 174",
+   "category": "Itens",
+   "file": "props/itens_icone_174.png",
+   "w": 20,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_175",
+   "label": "Item 175",
+   "category": "Itens",
+   "file": "props/itens_icone_175.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_176",
+   "label": "Item 176",
+   "category": "Itens",
+   "file": "props/itens_icone_176.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_177",
+   "label": "Item 177",
+   "category": "Itens",
+   "file": "props/itens_icone_177.png",
+   "w": 18,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_178",
+   "label": "Item 178",
+   "category": "Itens",
+   "file": "props/itens_icone_178.png",
+   "w": 24,
+   "h": 26,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_179",
+   "label": "Item 179",
+   "category": "Itens",
+   "file": "props/itens_icone_179.png",
+   "w": 28,
+   "h": 24,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_180",
+   "label": "Item 180",
+   "category": "Itens",
+   "file": "props/itens_icone_180.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_181",
+   "label": "Item 181",
+   "category": "Itens",
+   "file": "props/itens_icone_181.png",
+   "w": 28,
+   "h": 28,
+   "u": 32
+  },
+  {
+   "key": "itens_icone_182",
+   "label": "Item 182",
+   "category": "Itens",
+   "file": "props/itens_icone_182.png",
+   "w": 26,
+   "h": 26,
+   "u": 32
+  }
+ ],
+ "walls": {
+  "stone": {
+   "file": "walls/stone.png",
+   "px": 16
+  },
+  "brick": {
+   "file": "walls/brick.png",
+   "px": 32
+  },
+  "block": {
+   "file": "walls/block.png",
+   "px": 32
+  },
+  "door": {
+   "file": "walls/door.png",
+   "px": 32
+  }
+ }
+}

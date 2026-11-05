@@ -1,0 +1,29 @@
+{# Capa: imagem ou gradiente na cor de destaque #}
+{% macro cover(url, pos=50, cls='h-56') %}
+  <div class="relative w-full overflow-hidden {{ cls }}">
+    {% if url %}
+      <img src="{{ url }}" alt="" class="size-full object-cover" style="object-position: center {{ pos }}%" referrerpolicy="no-referrer">
+    {% else %}
+      <div class="size-full" style="background: radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--a400) 70%, transparent), transparent 55%), linear-gradient(135deg, var(--a600), color-mix(in oklab, var(--a700) 45%, black))"></div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{# Card de página com capa (grade estilo galeria do Notion) #}
+{% macro page_card(world, a) %}
+  {% set c = CATEGORY_MAP.get(a.category, CATEGORY_MAP.nota) %}
+  <a href="{{ url_for('pages.view', wid=world.id, aid=a.id) }}" class="group panel flex flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
+    <div class="relative h-32 overflow-hidden bg-surface-2">
+      {% if a.image_url %}
+        <img src="{{ a.image_url }}" alt="" loading="lazy" class="size-full object-cover transition duration-500 group-hover:scale-105" style="object-position: center {{ a.cover_pos }}%" referrerpolicy="no-referrer">
+      {% else %}
+        <div class="grid size-full place-items-center text-5xl opacity-60" style="background: linear-gradient(135deg, color-mix(in oklab, var(--a500) 18%, transparent), transparent)">{{ a.icon or c.icon }}</div>
+      {% endif %}
+    </div>
+    <div class="flex flex-1 flex-col p-4">
+      <p class="text-[11px] uppercase tracking-wider text-faint">{{ c.single }}{% if a.year is not none %} · ano {{ a.year }}{% endif %}</p>
+      <h3 class="mt-0.5 truncate font-semibold text-ink group-hover:text-accent-ink">{{ a.icon or c.icon }} {{ a.title }}</h3>
+      <p class="mt-1 line-clamp-2 text-sm text-muted">{{ a.summary or ' ' }}</p>
+    </div>
+  </a>
+{% endmacro %}

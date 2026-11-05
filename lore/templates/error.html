@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Erro {{ code }}{% endblock %}
+{% block body %}
+<main class="grid min-h-[calc(100vh-3.5rem)] place-items-center px-4 text-center">
+  <div>
+    <p class="font-display text-6xl text-accent-ink">{{ code }}</p>
+    <p class="mt-4 text-muted">{{ message }}</p>
+    <a href="{{ url_for('index') }}" class="btn btn-outline mt-8">Voltar ao início</a>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,37 @@
+<div class="relative" id="theme-picker">
+  <button type="button" class="btn btn-ghost px-2.5" title="Aparência" onclick="document.getElementById('theme-pop').classList.toggle('hidden')">
+    <span class="size-4 rounded-full bg-accent ring-2 ring-line-strong"></span>
+  </button>
+  <div id="theme-pop" class="absolute right-0 top-11 hidden w-64 rounded-xl border border-line bg-surface p-4 shadow-2xl">
+    <p class="section-title px-0">Modo</p>
+    <div class="mb-4 grid grid-cols-2 gap-2">
+      <button type="button" data-theme-set="dark" class="btn btn-outline btn-sm">🌙 Escuro</button>
+      <button type="button" data-theme-set="light" class="btn btn-outline btn-sm">☀️ Claro</button>
+    </div>
+    <p class="section-title px-0">Cor</p>
+    <div class="grid grid-cols-6 gap-2">
+      {% for key, label in ACCENTS.items() %}
+        <button type="button" data-accent-set="{{ key }}" title="{{ label }}"
+                class="size-8 rounded-full ring-offset-2 ring-offset-surface transition hover:scale-110"
+                style="background: {{ ACCENT_SWATCH[key] }}"></button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const mark = () => {
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.classList.toggle('!border-accent', b.dataset.themeSet === root.dataset.theme));
+    document.querySelectorAll('[data-accent-set]').forEach(b => b.classList.toggle('ring-2', b.dataset.accentSet === root.dataset.accent));
+    document.querySelectorAll('[data-accent-set]').forEach(b => b.style.setProperty('--tw-ring-color', 'var(--n-ink)'));
+  };
+  const save = (body) => fetch('{{ url_for("auth.prefs") }}', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
+    body: JSON.stringify(body) });
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => { root.dataset.theme = b.dataset.themeSet; mark(); save({ theme: b.dataset.themeSet }); }));
+  document.querySelectorAll('[data-accent-set]').forEach(b => b.addEventListener('click', () => { root.dataset.accent = b.dataset.accentSet; mark(); save({ accent: b.dataset.accentSet }); }));
+  document.addEventListener('click', e => { if (!e.target.closest('#theme-picker')) document.getElementById('theme-pop').classList.add('hidden'); });
+  mark();
+})();
+</script>

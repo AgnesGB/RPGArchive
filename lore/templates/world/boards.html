@@ -1,0 +1,35 @@
+{% extends "world/_layout.html" %}
+{% block title %}Mapas mentais · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl text-ink">🕸️ Mapas mentais</h1>
+      <p class="mt-1 text-muted">Quadros livres para ligar páginas, ideias, imagens e arquivos.</p>
+    </div>
+    <form method="post" action="{{ url_for('boards.create', wid=world.id) }}" class="flex gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input class="input py-2" name="name" placeholder="Nome do novo mapa mental" required>
+      <button class="btn btn-primary">Criar</button>
+    </form>
+  </div>
+  <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for b in boards %}
+      <a href="{{ url_for('boards.view', wid=world.id, bid=b.id) }}"
+         class="panel group relative h-40 overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+         style="background-image: radial-gradient(circle, var(--n-line-strong) 1px, transparent 1px); background-size: 18px 18px">
+        <svg class="absolute inset-0 size-full opacity-60" viewBox="0 0 300 160" preserveAspectRatio="none">
+          <path d="M60 50 L170 95 L250 40 M170 95 L230 130" stroke="var(--a500)" stroke-width="2" fill="none"/>
+          <circle cx="60" cy="50" r="7" fill="var(--a500)"/><circle cx="170" cy="95" r="9" fill="var(--a500)"/><circle cx="250" cy="40" r="6" fill="var(--a500)"/><circle cx="230" cy="130" r="5" fill="var(--a500)"/>
+        </svg>
+        <div class="relative">
+          <h2 class="font-display text-lg text-ink group-hover:text-accent-ink">{{ b.name }}</h2>
+          <p class="text-sm text-muted">{{ b.n_cards }} card{{ 's' if b.n_cards != 1 }}</p>
+        </div>
+      </a>
+    {% else %}
+      <p class="text-muted">Nenhum mapa mental ainda.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

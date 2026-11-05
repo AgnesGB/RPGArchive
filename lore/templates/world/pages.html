@@ -1,0 +1,52 @@
+{% extends "world/_layout.html" %}
+{% import "world/_macros.html" as m %}
+{% block title %}{{ CATEGORY_MAP[cat].label if cat in CATEGORY_MAP else 'Páginas' }} · {{ world.name }}{% endblock %}
+{% block world_content %}
+{% set current_cat = CATEGORY_MAP.get(cat) %}
+<div class="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl text-ink">
+        {% if current_cat %}{{ current_cat.icon }} {{ current_cat.label }}{% else %}📚 Todas as páginas{% endif %}
+      </h1>
+      {% if q %}<p class="mt-1 text-muted">Resultados para “{{ q }}” · <a class="text-accent-ink hover:underline" href="{{ url_for('pages.index', wid=world.id, cat=cat) }}">limpar</a></p>{% endif %}
+    </div>
+    <div class="flex gap-2">
+      <div class="flex rounded-lg border border-line p-0.5 text-sm" id="view-toggle">
+        <button data-view="grid" class="rounded-md px-3 py-1">Galeria</button>
+        <button data-view="list" class="rounded-md px-3 py-1">Lista</button>
+      </div>
+      <a href="{{ url_for('pages.new', wid=world.id, cat=cat) }}" class="btn btn-primary">+ Nova{{ ' página' if not current_cat }}{{ ' (' ~ current_cat.single|lower ~ ')' if current_cat }}</a>
+    </div>
+  </div>
+
+  {% if pages %}
+    <div id="view-grid" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      {% for a in pages %}{{ m.page_card(world, a) }}{% endfor %}
+    </div>
+    <div id="view-list" class="panel mt-6 hidden divide-y divide-line">
+      {% for a in pages %}
+        {% set c = CATEGORY_MAP.get(a.category, CATEGORY_MAP.nota) %}
+        <a href="{{ url_for('pages.view', wid=world.id, aid=a.id) }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2">
+          <span class="text-lg">{{ a.icon or c.icon }}</span>
+          <span class="font-medium text-ink">{{ a.title }}</span>
+          <span class="hidden truncate text-sm text-muted md:block">{{ a.summary }}</span>
+          <span class="chip ml-auto shrink-0">{{ c.single }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="panel mt-6 p-10 text-center text-muted">Nada por aqui ainda.</div>
+  {% endif %}
+</div>
+<script>
+  const setView = v => {
+    localStorage.setItem('pagesView', v);
+    document.getElementById('view-grid')?.classList.toggle('hidden', v !== 'grid');
+    document.getElementById('view-list')?.classList.toggle('hidden', v !== 'list');
+    document.querySelectorAll('#view-toggle button').forEach(b => b.classList.toggle('bg-surface-2', b.dataset.view === v));
+  };
+  document.querySelectorAll('#view-toggle button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  setView(localStorage.getItem('pagesView') || 'grid');
+</script>
+{% endblock %}

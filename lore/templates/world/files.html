@@ -1,0 +1,62 @@
+{% extends "world/_layout.html" %}
+{% block title %}Acervo · {{ world.name }}{% endblock %}
+{% block world_content %}
+<div class="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl text-ink">🗃️ Acervo</h1>
+      <p class="mt-1 text-muted">Imagens, livros e documentos do mundo. Use-os em páginas, mapas mentais e mapas.</p>
+    </div>
+    <div class="flex rounded-lg border border-line p-0.5 text-sm">
+      {% for k, label in [(None, 'Tudo'), ('images', 'Imagens'), ('docs', 'Livros e arquivos')] %}
+        <a href="{{ url_for('files.library', wid=world.id, kind=k) }}" class="rounded-md px-3 py-1 {{ 'bg-surface-2 text-ink' if kind == k else 'text-muted' }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('files.upload', wid=world.id) }}" id="drop"
+        class="mt-6 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-8 text-center transition">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="text-3xl">⬆️</div>
+    <p class="text-ink">Arraste arquivos aqui ou
+      <label class="cursor-pointer text-accent-ink underline">escolha no computador<input type="file" name="files" multiple class="hidden" onchange="this.form.submit()"></label></p>
+    <p class="text-xs text-faint">Imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP · até 40 MB</p>
+  </form>
+
+  {% if files %}
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+      {% for f in files %}
+        <div class="group panel relative overflow-hidden">
+          <a href="{{ url_for('files.serve', fid=f.id) }}" target="_blank" rel="noopener" class="block">
+            {% if is_image(f.mime) %}
+              <img src="{{ url_for('files.serve', fid=f.id) }}" alt="" loading="lazy" class="h-40 w-full object-cover">
+            {% else %}
+              <div class="grid h-40 place-items-center bg-surface-2 text-5xl">{{ '📕' if f.mime == 'application/pdf' else '📘' if 'epub' in f.mime else '📄' }}</div>
+            {% endif %}
+            <div class="p-3">
+              <p class="truncate text-sm font-medium text-ink" title="{{ f.original_name }}">{{ f.original_name }}</p>
+              <p class="text-xs text-faint">{{ f.size|filesize }}{% if f.uploader %} · {{ f.uploader }}{% endif %}</p>
+            </div>
+          </a>
+          <form method="post" action="{{ url_for('files.delete', wid=world.id, fid=f.id) }}" class="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100"
+                data-confirm="Apagar “{{ f.original_name }}”? Cards e marcadores que usam este arquivo também somem." onsubmit="return confirm(this.dataset.confirm)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="grid size-8 place-items-center rounded-full bg-black/60 text-white hover:bg-red-600" title="Apagar">✕</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="mt-8 text-center text-muted">O acervo está vazio.</p>
+  {% endif %}
+</div>
+<script>
+  const drop = document.getElementById('drop');
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('border-accent', 'bg-accent/5'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('border-accent', 'bg-accent/5'); }));
+  drop.addEventListener('drop', e => {
+    if (!e.dataTransfer.files.length) return;
+    const input = drop.querySelector('input[type=file]'); input.files = e.dataTransfer.files; drop.submit();
+  });
+</script>
+{% endblock %}

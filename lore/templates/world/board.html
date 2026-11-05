@@ -1,0 +1,94 @@
+{% extends "world/_layout.html" %}
+{% block title %}{{ board.name }} · {{ world.name }}{% endblock %}
+{% block head %}
+<style>
+  #viewport { touch-action: none; }
+  #viewport.panning { cursor: grabbing; }
+  #world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .node { position: absolute; user-select: none; }
+  .node.selected { outline: 3px solid var(--a500); outline-offset: 2px; }
+  .node.target { outline: 3px dashed var(--a500); outline-offset: 4px; }
+  .node .handle { position: absolute; right: -9px; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 9999px;
+                  background: var(--a500); border: 3px solid white; cursor: crosshair; opacity: 0; transition: opacity .15s, transform .15s; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .node:hover .handle, .node.selected .handle { opacity: 1; }
+  .node .handle:hover { transform: scale(1.25); }
+  .edge-line { stroke: var(--n-muted); stroke-width: 2.2; fill: none; }
+  .edge-hit { stroke: transparent; stroke-width: 16; fill: none; cursor: pointer; pointer-events: stroke; }
+  .edge.selected .edge-line { stroke: var(--a500); stroke-width: 3.2; }
+  .edge-label { font: 500 12px Inter, sans-serif; fill: var(--n-ink-2); }
+  .edge-label-bg { fill: var(--n-surface); stroke: var(--n-line-strong); }
+</style>
+{% endblock %}
+{% block world_content %}
+<div class="flex h-[calc(100vh-3.5rem)] flex-col">
+  {# ---------- Barra superior ---------- #}
+  <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-3 py-2">
+    <form method="post" action="{{ url_for('boards.rename', wid=world.id, bid=board.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="name" value="{{ board.name }}" onchange="this.form.submit()"
+             class="w-72 max-w-[50vw] rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
+    </form>
+    <div class="ml-auto flex flex-wrap items-center gap-1">
+      <button id="add-note" class="btn btn-primary btn-sm">💡 Ideia</button>
+      <label class="btn btn-outline btn-sm cursor-pointer">🖼️ Imagem / arquivo<input type="file" multiple id="file-input" class="hidden"></label>
+      <button id="toggle-panel" class="btn btn-outline btn-sm">📚 Páginas</button>
+      <span class="mx-1 h-6 w-px bg-line"></span>
+      <button data-zoom="0.8" class="btn btn-ghost btn-sm" title="Afastar">−</button>
+      <span id="zoom-level" class="w-11 text-center text-xs text-muted">100%</span>
+      <button data-zoom="1.25" class="btn btn-ghost btn-sm" title="Aproximar">+</button>
+      <button id="fit" class="btn btn-ghost btn-sm" title="Enquadrar tudo">⤢</button>
+      <span id="sync" class="ml-1 w-16 text-xs text-faint"></span>
+      <form method="post" action="{{ url_for('boards.delete', wid=world.id, bid=board.id) }}"
+            data-confirm="Apagar o mapa mental “{{ board.name }}” e todos os cards?" onsubmit="return confirm(this.dataset.confirm)">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost btn-sm text-red-500" title="Apagar mapa mental">🗑</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="relative flex min-h-0 flex-1">
+    {# ---------- Canvas ---------- #}
+    <div id="viewport" class="relative flex-1 overflow-hidden bg-canvas"
+         style="background-image: radial-gradient(circle, var(--n-line-strong) 1px, transparent 1px); background-size: 24px 24px">
+      <div id="world">
+        <svg id="edges" class="absolute left-0 top-0 overflow-visible" width="1" height="1">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--n-muted)"/></marker>
+            <marker id="arrow-sel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--a500)"/></marker>
+          </defs>
+          <g id="edge-group"></g>
+          <line id="temp-line" class="edge-line" stroke-dasharray="6 4" style="display:none"/>
+        </svg>
+        <div id="nodes"></div>
+      </div>
+      <div id="empty" class="pointer-events-none absolute inset-0 hidden place-items-center text-center text-muted">
+        <div>
+          <p class="text-4xl">🕸️</p>
+          <p class="mt-2">Dê dois cliques para criar uma ideia, arraste páginas da lateral<br>ou cole/solte imagens e arquivos aqui.</p>
+          <p class="mt-1 text-sm text-faint">Puxe a bolinha na borda de um card até outro para ligá-los.</p>
+        </div>
+      </div>
+      {# barra contextual da seleção #}
+      <div id="sel-bar" class="absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-2xl"></div>
+      <div class="pointer-events-none absolute bottom-3 left-3 text-[11px] text-faint">Arraste o fundo para mover · roda do mouse = zoom · Del apaga</div>
+    </div>
+
+    {# ---------- Painel de páginas ---------- #}
+    <aside id="panel" class="hidden w-72 shrink-0 flex-col border-l border-line bg-surface">
+      <div class="border-b border-line p-3">
+        <p class="text-sm font-medium text-ink">Páginas do mundo</p>
+        <p class="text-xs text-faint">Arraste para o quadro ou clique para adicionar.</p>
+        <input id="page-search" class="input mt-2 py-1.5 text-sm" placeholder="Filtrar…">
+      </div>
+      <ul id="page-list" class="flex-1 space-y-0.5 overflow-y-auto p-2"></ul>
+    </aside>
+  </div>
+</div>
+
+<script id="board-data" type="application/json">{{ {'state': state, 'pages': page_list, 'colors': CARD_COLORS,
+  'api': url_for('boards.state', wid=world.id, bid=board.id)[:-6], 'newPage': url_for('pages.new', wid=world.id),
+  'boardId': board.id}|tojson }}</script>
+<script src="{{ url_for('static', filename='board.js') }}"></script>
+{% endblock %}
