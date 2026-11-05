@@ -94,7 +94,9 @@ lore/templates/         Jinja + Tailwind
 
 ## Para produção
 
-- Defina `SECRET_KEY` no `.env` e rode com um servidor WSGI (ex.: `waitress-serve --port=5000 app:app`) atrás de HTTPS.
+Passo a passo do PythonAnywhere (midiri.pythonanywhere.com): veja [DEPLOY.md](DEPLOY.md).
+
+- Defina `SECRET_KEY` e `APP_ENV=production` no `.env` e rode com um servidor WSGI (ex.: `waitress-serve --port=5000 app:app`) atrás de HTTPS.
 - Faça backup de `instance/` (banco + uploads).
 - Troque o Tailwind via CDN pelo Tailwind CLI se quiser CSS compilado.
 - Cadastre a URI de callback do Google com o domínio real.

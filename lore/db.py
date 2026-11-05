@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 from flask import current_app, g
@@ -243,7 +244,11 @@ def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
         db = get_db()
-        db.execute("PRAGMA journal_mode = WAL")
+        # WAL é ótimo localmente, mas não funciona bem em disco de rede (PythonAnywhere): use DELETE lá
+        mode = os.environ.get("SQLITE_JOURNAL_MODE", "WAL").upper()
+        if mode not in ("WAL", "DELETE", "TRUNCATE", "PERSIST"):
+            mode = "WAL"
+        db.execute(f"PRAGMA journal_mode = {mode}")
         db.executescript(SCHEMA)
         _migrate(db)
         db.commit()

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, abort, g, redirect, render_template, request, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import constants as C
 
@@ -19,8 +20,17 @@ def _dev_secret(instance_path: str) -> str:
 
 
 def create_app() -> Flask:
-    load_dotenv()
+    # .env da raiz do projeto (não depende da pasta atual — no PythonAnywhere o WSGI roda de outro lugar)
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     app = Flask(__name__, instance_relative_config=True)
+    production = os.environ.get("APP_ENV") == "production"
+
+    if production:
+        # atrás do proxy HTTPS (PythonAnywhere etc.): respeita X-Forwarded-Proto/For/Host,
+        # assim url_for(..., _external=True) gera https:// (callback do Google)
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        if not os.environ.get("SECRET_KEY"):
+            raise RuntimeError("Defina SECRET_KEY no .env em produção.")
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
     app.config.update(
@@ -30,6 +40,8 @@ def create_app() -> Flask:
         MAX_CONTENT_LENGTH=40 * 1024 * 1024,  # 40 MB por requisição
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=production,
+        PREFERRED_URL_SCHEME="https" if production else "http",
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         GOOGLE_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
         GOOGLE_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET"),
