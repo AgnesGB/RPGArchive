@@ -392,7 +392,7 @@
       if ((cat && p.category !== cat) || (q && !p.label.toLowerCase().includes(q))) continue;
       const b = el('button', 'asset grid aspect-square place-items-center rounded-md bg-canvas p-1 hover:ring-1 hover:ring-accent');
       b.dataset.asset = p.key; b.title = p.label;
-      const im = el('img', 'max-h-full max-w-full'); im.src = D.kit + p.file; im.loading = 'lazy'; im.style.imageRendering = 'pixelated';
+      const im = el('img', 'max-h-full max-w-full'); im.src = p.url || D.kit + p.file; im.loading = 'lazy'; im.style.imageRendering = 'pixelated';
       b.append(im);
       b.addEventListener('click', () => { assetSel = p.key; selectedProp = null; showPropSel(); markActive(); drawObjects(); });
       list.append(b);
@@ -408,6 +408,159 @@
     document.querySelectorAll('[data-brush]').forEach(b => b.classList.toggle('bg-accent', Number(b.dataset.brush) === brush));
   }
   document.querySelectorAll('[data-brush]').forEach(b => b.addEventListener('click', () => { brush = Number(b.dataset.brush); markActive(); }));
+
+  // ================================================================== aba "Meus": conjuntos de imagens
+  // Conjunto = categoria em Objetos (kind props) ou grupo de terrenos (kind terrain).
+  // Cada imagem do conjunto é um tileset: inteira ou fatiada em tiles; o recorte é feito aqui, em <canvas>.
+  // Chaves: "c<id>" (imagem inteira) ou "c<id>_<col>_<lin>" (um tile).
+  const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  function crop(im, x, y, w, h) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(im, x, y, w, h, 0, 0, w, h); return c;
+  }
+  const customKeys = new Set();
+  async function loadSets() {
+    // tira tudo o que era personalizado e carrega de novo a partir de D.sets
+    KIT.terrains = KIT.terrains.filter(t => !t.custom); KIT.props = KIT.props.filter(p => !p.custom);
+    customKeys.forEach(k => { delete KIT.terrainMap[k]; delete KIT.patterns[k]; delete KIT.propMap[k]; delete KIT.images[k]; });
+    customKeys.clear();
+    for (const set of D.sets) for (const ts of set.tilesets) await loadTileset(set, ts);
+  }
+  async function loadTileset(set, ts) {
+    let im; try { im = await loadImage(ts.url); } catch { return; }
+    const parts = ts.tile ? ts.tiles.map(([c, r]) => ({ key: `c${ts.id}_${c}_${r}`, cv: crop(im, c * ts.tile, r * ts.tile, ts.tile, ts.tile) }))
+                          : [{ key: `c${ts.id}`, cv: crop(im, 0, 0, im.naturalWidth, im.naturalHeight) }];
+    ts.keys = parts.map(p => p.key);
+    parts.forEach(({ key: k, cv }, i) => {
+      customKeys.add(k);
+      const label = parts.length > 1 ? `${ts.name} ${i + 1}` : ts.name;
+      if (set.kind === 'terrain') {
+        const t = { key: k, label: `${set.name} · ${label}`, px: ts.tile || cv.width, src: cv, color: '#888', custom: true };
+        KIT.terrains.push(t); KIT.terrainMap[k] = t; KIT.patterns[k] = ctx.terrain.createPattern(cv, 'repeat');
+      } else {
+        // tile fatiado = 1 quadrado da grade; imagem inteira = cerca de 2 quadrados no lado maior
+        const u = ts.tile || Math.max(8, Math.round(Math.max(cv.width, cv.height) / 2));
+        const p = { key: k, label, category: set.name, w: cv.width, h: cv.height, u, url: cv.toDataURL(), custom: true };
+        KIT.props.push(p); KIT.propMap[k] = p;
+        const img = new Image(); img.onload = () => drawObjects(); img.src = p.url; KIT.images[k] = img;
+      }
+    });
+  }
+  async function refreshSets(sets) {
+    D.sets = sets; await loadSets(); buildPalette(); buildSetsPanel(); redrawAll();
+  }
+  function useSet(set) {
+    if (set.kind === 'terrain') { const k = set.tilesets[0]?.keys?.[0]; if (k) terrainSel = k; setTool('terrain'); markActive(); }
+    else { setTool('props'); $('prop-cat').value = set.name; renderProps(); }
+  }
+  function buildSetsPanel() {
+    const list = $('ts-list'); list.replaceChildren();
+    if (!D.sets.length) { list.append(el('p', 'rounded-lg border border-dashed border-line p-3 text-center text-xs text-faint', 'Nenhum conjunto ainda. Clique no + para enviar uma imagem: ela vai para o conjunto “Meus”.')); return; }
+    for (const set of D.sets) {
+      const box = el('div', 'rounded-lg border border-line');
+      const head = el('div', 'flex items-center gap-2 border-b border-line px-2 py-1.5');
+      const use = el('button', 'min-w-0 flex-1 text-left'); use.title = 'Usar este conjunto';
+      use.append(el('span', 'block truncate text-sm font-medium text-ink', set.name),
+                 el('span', 'block text-[11px] text-faint', `${set.kind === 'terrain' ? 'Terreno' : 'Objetos'} · ${set.tilesets.length} imagem${set.tilesets.length === 1 ? '' : 's'}`));
+      use.addEventListener('click', () => useSet(set));
+      const add = el('label', 'btn btn-ghost btn-sm btn-icon cursor-pointer'); add.append(ui('plus', 'size-3.5'));
+      add.title = `Adicionar imagem em “${set.name}”`; add.setAttribute('aria-label', add.title);
+      const fi = el('input', 'hidden'); fi.type = 'file'; fi.accept = 'image/*'; add.append(fi);
+      fi.addEventListener('change', () => { if (fi.files[0]) startAdd(fi.files[0], set.id); fi.value = ''; });
+      const del = el('button', 'btn btn-ghost btn-sm btn-icon btn-quiet-danger'); del.append(ui('trash', 'size-3.5'));
+      del.title = 'Apagar conjunto'; del.setAttribute('aria-label', `Apagar conjunto ${set.name}`);
+      del.addEventListener('click', async () => {
+        if (!confirm(`Apagar o conjunto “${set.name}”? O que já foi pintado ou colocado com ele deixa de aparecer nos mapas. As imagens continuam no Acervo.`)) return;
+        refreshSets((await api('DELETE', `${D.setApi}/${set.id}`)).sets);
+      });
+      head.append(use, add, del); box.append(head);
+      const body = el('div', 'space-y-0.5 p-1');
+      if (!set.tilesets.length) body.append(el('p', 'px-1.5 py-1 text-[11px] text-faint', 'Vazio.'));
+      for (const ts of set.tilesets) {
+        const row = el('div', 'group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-surface-2');
+        const th = el('img', 'size-8 shrink-0 rounded bg-canvas object-contain'); th.src = ts.url; th.style.imageRendering = 'pixelated'; th.alt = '';
+        const info = el('div', 'min-w-0 flex-1');
+        info.append(el('p', 'truncate text-xs text-ink-2', ts.name), el('p', 'text-[10px] text-faint', ts.tile ? `${ts.tiles.length} tiles de ${ts.tile} px` : 'imagem inteira'));
+        const x = el('button', 'btn btn-ghost btn-sm btn-icon btn-quiet-danger opacity-0 group-hover:opacity-100 focus:opacity-100'); x.append(ui('x', 'size-3.5'));
+        x.title = 'Tirar do conjunto (a imagem continua no Acervo)'; x.setAttribute('aria-label', `Tirar ${ts.name}`);
+        x.addEventListener('click', async () => {
+          if (!confirm(`Tirar “${ts.name}” do conjunto? O que já foi colocado com ela deixa de aparecer nos mapas.`)) return;
+          refreshSets((await api('DELETE', `${D.tilesetApi}/${ts.id}`)).sets);
+        });
+        row.append(th, info, x); body.append(row);
+      }
+      box.append(body); list.append(box);
+    }
+  }
+
+  // ---------- enviar imagem: sempre pergunta o conjunto (padrão: "Meus")
+  let tsImage = null, tsFile = null, tsTiles = [];
+  function fillSetSelect(preferId) {
+    const sel = $('ts-set'); sel.replaceChildren();
+    const kindLabel = k => k === 'terrain' ? 'terreno' : 'objetos';
+    if (!D.sets.some(x => x.name === 'Meus' && x.kind === 'props')) sel.append(new Option('Meus (objetos)', ''));
+    D.sets.forEach(x => sel.append(new Option(`${x.name} (${kindLabel(x.kind)})`, x.id)));
+    sel.append(new Option('＋ Novo conjunto…', 'new'));
+    const meus = D.sets.find(x => x.name === 'Meus' && x.kind === 'props');
+    sel.value = preferId ? String(preferId) : (meus ? String(meus.id) : '');
+    $('ts-newset').classList.toggle('hidden', sel.value !== 'new');
+  }
+  function startAdd(file, preferSetId) {
+    tsFile = file;
+    loadImage(URL.createObjectURL(file)).then(im => {
+      tsImage = im;
+      $('ts-name').value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 60);
+      fillSetSelect(preferSetId);
+      $('ts-add').classList.remove('hidden');
+      analyzeTileset();
+      $('ts-set').focus();
+    });
+  }
+  function closeAdd() { $('ts-add').classList.add('hidden'); tsImage = tsFile = null; tsTiles = []; $('ts-setname').value = ''; }
+  function analyzeTileset() {
+    const cv = $('ts-preview'), info = $('ts-info'), send = $('ts-send');
+    if (!tsImage) return;
+    const w = tsImage.naturalWidth, h = tsImage.naturalHeight, t = Number($('ts-tile').value);
+    cv.width = w; cv.height = h;
+    const g = cv.getContext('2d'); g.clearRect(0, 0, w, h); g.drawImage(tsImage, 0, 0);
+    tsTiles = [];
+    if (t) {
+      const px = g.getImageData(0, 0, w, h).data, cols = Math.floor(w / t), rows = Math.floor(h / t);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        let filled = false;
+        for (let y = r * t; y < (r + 1) * t && !filled; y++) for (let x = c * t; x < (c + 1) * t; x++) if (px[(y * w + x) * 4 + 3] > 8) { filled = true; break; }
+        if (filled) tsTiles.push([c, r]);
+      }
+      g.strokeStyle = 'rgba(245,158,11,.7)'; g.lineWidth = Math.max(1, w / 400);
+      for (let x = 0; x <= cols; x++) { g.beginPath(); g.moveTo(x * t, 0); g.lineTo(x * t, rows * t); g.stroke(); }
+      for (let y = 0; y <= rows; y++) { g.beginPath(); g.moveTo(0, y * t); g.lineTo(cols * t, y * t); g.stroke(); }
+      const extra = (w % t || h % t) ? ` A sobra fora de ${t} px fica de fora.` : '';
+      info.textContent = `${tsTiles.length} tiles com conteúdo (grade ${cols}×${rows}).${extra}` + (tsTiles.length > 4096 ? ' Máximo 4096: use um recorte maior.' : '');
+      send.disabled = !tsTiles.length || tsTiles.length > 4096;
+    } else { info.textContent = `Imagem ${w}×${h}: vira um item só.`; send.disabled = false; }
+  }
+  $('ts-file').addEventListener('change', e => { if (e.target.files[0]) startAdd(e.target.files[0]); e.target.value = ''; });
+  $('ts-tile').addEventListener('change', analyzeTileset);
+  $('ts-set').addEventListener('change', () => { $('ts-newset').classList.toggle('hidden', $('ts-set').value !== 'new'); if ($('ts-set').value === 'new') $('ts-setname').focus(); });
+  $('ts-cancel').addEventListener('click', closeAdd);
+  $('ts-send').addEventListener('click', async () => {
+    if (!tsFile) return;
+    const fd = new FormData(), sv = $('ts-set').value;
+    fd.append('image', tsFile); fd.append('name', $('ts-name').value);
+    fd.append('tile', $('ts-tile').value); fd.append('tiles', JSON.stringify(tsTiles));
+    if (sv === 'new') {
+      if (!$('ts-setname').value.trim()) { $('ts-setname').focus(); return toast('Dê um nome ao conjunto novo.', true); }
+      fd.append('new_set_name', $('ts-setname').value); fd.append('new_set_kind', $('ts-setkind').value);
+    } else if (sv) fd.append('set_id', sv);
+    $('ts-send').disabled = true; $('ts-send').textContent = 'Enviando…';
+    try {
+      const res = await api('POST', D.tilesetApi, fd);
+      closeAdd(); await refreshSets(res.sets);
+      const set = D.sets.find(x => x.tilesets.some(t => t.id === res.id));
+      toast(`Adicionado em “${set?.name || 'Meus'}”.`);
+      if (set) useSet(set);
+    } catch { /* api() já mostrou o erro */ } finally { $('ts-send').textContent = 'Adicionar'; $('ts-send').disabled = false; }
+  });
 
   // configurações de grade / fundo
   const gf = $('grid-form');
@@ -695,6 +848,7 @@
   let action = null, spaceDown = false;
   vp.addEventListener('contextmenu', e => e.preventDefault());
   vp.addEventListener('pointerdown', async e => {
+    if (!e.target.closest('input, textarea, select, button, a, #side')) { document.body.classList.add('select-none'); getSelection()?.removeAllRanges(); }
     if (!view) return;
     const p = toWorld(e.clientX, e.clientY);
     const wantsPan = e.button === 1 || spaceDown || (mode === 'edit' && tool === 'move') || (mode === 'play' && e.button === 0 && !e.target.closest('.pin') && !placing);
@@ -788,6 +942,7 @@
     }
   });
   window.addEventListener('pointerup', () => {
+    document.body.classList.remove('select-none');
     if (!action) return;
     const a = action; action = null; vp.classList.remove('panning');
     if (a.type === 'paint' || a.type === 'walls') { stroke = null; markDirty(); }
@@ -838,10 +993,11 @@
   // ================================================================== início
   async function start() {
     await loadKit();
+    await loadSets();
     computeSize();
     if (!view) fit(); else applyView();
     drawTerrainAll(); drawGrid(); drawObjects(); renderPins();
-    buildPalette(); setTool('terrain'); setMode(D.startEdit ? 'edit' : 'play');
+    buildPalette(); buildSetsPanel(); setTool('terrain'); setMode(D.startEdit ? 'edit' : 'play');
     window.addEventListener('resize', () => applyView());
     // mapa novo (ou antigo sem miniatura): salva uma vez para a lista de mapas mostrar a prévia
     if (!D.hasThumb) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);

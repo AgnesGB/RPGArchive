@@ -1,4 +1,4 @@
-// Mapa mental: cards (ideia, página, imagem, arquivo) ligados por setas com rótulo.
+// Mapa mental: cards (ideia, página, imagem, arquivo, mapa, outro mapa mental) ligados por setas com rótulo.
 // Pan/zoom no canvas, arrastar páginas da lateral, colar/soltar imagens, sincronização entre colaboradores.
 (() => {
   const DATA = JSON.parse(document.getElementById('board-data').textContent);
@@ -19,6 +19,13 @@
   // ------------------------------------------------------------------ helpers
   const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const touched = () => { lastLocalChange = Date.now(); };
+  // botão do canto que abre o destino do card com um clique (o resto do card continua arrastável)
+  const goButton = (url, label) => {
+    const go = el('a', 'absolute right-1.5 top-3 grid h-7 w-7 place-items-center rounded-lg bg-white/85 text-sm font-bold text-stone-700 shadow ring-1 ring-black/10 hover:bg-white hover:text-stone-950');
+    go.append(ui('external', 'size-3.5')); go.href = url; go.title = label; go.setAttribute('aria-label', label); go.draggable = false;
+    return go;
+  };
+  const cardUrl = c => c.article?.url || c.map?.url || c.board?.url || null;
   const patchCard = (c, fields) => { touched(); return api('PATCH', `${API}/cards/${c.id}`, fields).then(u => { Object.assign(c, u); }); };
 
   // ------------------------------------------------------------------ view (pan/zoom)
@@ -97,6 +104,32 @@
         n.append(go);
         n.title = 'Clique no botão do canto (ou dois cliques) para abrir a página';
       }
+    } else if (c.kind === 'map') {
+      const m = c.map;
+      if (!m) n.append(el('p', 'p-3 text-sm italic text-stone-500', 'Mapa apagado.'));
+      else {
+        n.classList.add('overflow-hidden');
+        n.append(el('div', 'h-1.5 bg-emerald-600'));
+        if (m.thumb) {
+          const img = el('img', 'h-32 w-full object-cover pointer-events-none'); img.src = m.thumb; img.draggable = false;
+          img.style.imageRendering = 'pixelated'; img.addEventListener('load', renderEdges); n.append(img);
+        }
+        const body = el('div', 'p-3 pr-10');
+        body.append(el('p', 'text-[10px] font-semibold uppercase tracking-wider text-stone-500', 'Mapa'));
+        const h = el('p', 'mt-0.5 flex items-center gap-1.5 font-bold leading-snug text-stone-900'); h.append(ri('map'), el('span', '', m.name));
+        body.append(h); n.append(body, goButton(m.url, `Abrir o mapa ${m.name}`));
+        n.title = 'Clique no botão do canto (ou dois cliques) para abrir o mapa';
+      }
+    } else if (c.kind === 'board') {
+      const b = c.board;
+      if (!b) n.append(el('p', 'p-3 text-sm italic text-stone-500', 'Mapa mental apagado.'));
+      else {
+        const body = el('div', 'p-3 pr-10');
+        body.append(el('p', 'text-[10px] font-semibold uppercase tracking-wider text-stone-500', 'Mapa mental'));
+        const h = el('p', 'mt-0.5 flex items-center gap-1.5 font-bold leading-snug text-stone-900'); h.append(ri('web'), el('span', '', b.name));
+        body.append(h); n.append(body, goButton(b.url, `Abrir o mapa mental ${b.name}`));
+        n.title = 'Clique no botão do canto (ou dois cliques) para abrir o mapa mental';
+      }
     } else if (c.kind === 'image') {
       n.classList.add('overflow-hidden', 'p-1.5');
       if (c.file) {
@@ -125,6 +158,37 @@
       body.append(el('p', 'mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-700', c.body || (c.title ? '' : 'Dois cliques para escrever…')));
       if (!c.body && !c.title) body.lastChild.classList.add('italic', 'text-stone-400');
       n.append(body);
+    }
+    // lista "Relacionados" (assuntos dentro do card, que dá para mostrar ou ocultar)
+    if (c.items?.length) {
+      const sec = el('div', 'border-t border-black/10 px-1.5 pb-1.5 pt-1 text-stone-700');
+      const tg = el('button', 'flex w-full items-center gap-1 rounded px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-stone-500 hover:bg-black/5');
+      const ch = ui('chevron', 'size-3 transition'); if (c.items_open) ch.style.transform = 'rotate(90deg)';
+      tg.append(ch, el('span', 'flex-1 text-left', 'Relacionados'), el('span', 'rounded-full bg-black/10 px-1.5 font-normal', String(c.items.length)));
+      tg.title = c.items_open ? 'Ocultar a lista' : 'Mostrar a lista'; tg.setAttribute('aria-expanded', c.items_open ? 'true' : 'false');
+      tg.addEventListener('click', () => patchCard(c, { items_open: !c.items_open }).then(() => rerenderCard(c)));
+      sec.append(tg);
+      if (c.items_open) {
+        const ul = el('ul', 'mt-0.5 space-y-px');
+        for (const it of c.items) {
+          const li = el('li', 'group/it flex items-center gap-1.5 rounded px-1 py-0.5 text-xs hover:bg-black/5');
+          li.append(it.icon ? glyph(it.icon) : el('span', 'w-4 text-center text-stone-400', '•'));
+          if (it.url) {
+            const a = el('a', 'min-w-0 flex-1 truncate text-stone-800 underline decoration-black/20 underline-offset-2 hover:decoration-black/60', it.text);
+            a.href = it.url; a.draggable = false; if (it.kind === 'file') { a.target = '_blank'; a.rel = 'noopener'; }
+            li.append(a);
+          } else li.append(el('span', 'min-w-0 flex-1 break-words', it.text));
+          const x = el('button', 'grid size-5 place-items-center rounded text-stone-400 opacity-0 hover:bg-red-500/10 hover:text-red-600 group-hover/it:opacity-100 focus:opacity-100');
+          x.append(ui('x', 'size-3')); x.title = 'Tirar da lista'; x.setAttribute('aria-label', `Tirar ${it.text} da lista`);
+          x.addEventListener('click', async () => { touched(); Object.assign(c, await api('DELETE', `${API}/cards/${c.id}/items/${it.id}`)); rerenderCard(c); });
+          li.append(x); ul.append(li);
+        }
+        const add = el('button', 'mt-0.5 flex w-full items-center gap-1 rounded px-1 py-0.5 text-[11px] text-stone-500 hover:bg-black/5 hover:text-stone-800');
+        add.append(ui('plus', 'size-3'), el('span', '', 'adicionar'));
+        add.addEventListener('click', () => { select({ type: 'card', id: c.id }); openChildMenu(c, true); });
+        sec.append(ul, add);
+      }
+      n.append(sec);
     }
     n.append(el('div', 'handle'));
     const grip = el('div', 'grip absolute bottom-0 right-0 h-4 w-4 cursor-ew-resize opacity-0 hover:opacity-60');
@@ -193,6 +257,7 @@
 
   // ------------------------------------------------------------------ seleção e barra contextual
   function select(s) {
+    if (s?.id !== selection?.id) { const m = document.getElementById('child-menu'); m.classList.add('hidden'); m.replaceChildren(); }
     selection = s;
     document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected'));
     if (s?.type === 'card') els.get(s.id)?.classList.add('selected');
@@ -215,7 +280,11 @@
         bar.append(b);
       }
       bar.append(el('span', 'mx-1 h-6 w-px bg-line'));
-      if (c.kind === 'article' && c.article) bar.append(barButton('Abrir página', () => { location.href = c.article.url; }, '', 'external'));
+      bar.append(barButton('Filho', () => openChildMenu(c), 'font-medium text-ink', 'plus'));
+      bar.lastChild.title = 'Adicionar um card ligado a este (Tab cria uma ideia)';
+      bar.append(barButton('Lista', () => openChildMenu(c, true), '', 'list'));
+      bar.lastChild.title = 'Guardar assuntos relacionados dentro deste card (lista que abre e fecha)';
+      if (cardUrl(c)) bar.append(barButton('Abrir', () => { location.href = cardUrl(c); }, '', 'external'));
       if (c.kind === 'note') bar.append(barButton('Escrever', () => editCard(c), '', 'pencil'));
       if (c.kind === 'image' || c.kind === 'file') {
         bar.append(barButton('Legenda', () => editCard(c), '', 'pencil'));
@@ -328,8 +397,113 @@
       res.cards.forEach(c => cards.set(c.id, c));
       if (res.errors?.length) toast(res.errors.join(' '), true);
       renderAll();
+      return res.cards;
     } finally { $('sync').textContent = ''; }
   }
+
+  // ------------------------------------------------------------------ filhos: card novo ligado ao selecionado
+  function childPos(parent) {
+    const pw = els.get(parent.id)?.offsetWidth || parent.w;
+    const x = parent.x + pw + 90;
+    let y = parent.y;
+    for (const l of links) {
+      const k = l.from_card === parent.id && cards.get(l.to_card);
+      if (k && Math.abs(k.x - x) < 220) y = Math.max(y, k.y + (els.get(k.id)?.offsetHeight || 80) + 24);
+    }
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+  async function linkChild(parent, child) {
+    touched();
+    const l = await api('POST', `${API}/links`, { from_card: parent.id, to_card: child.id });
+    if (!links.some(x => x.id === l.id)) links.push(l);
+    renderEdges(); select({ type: 'card', id: child.id });
+  }
+  async function addChild(parent, body) {
+    const c = await createCard({ ...childPos(parent), ...body });
+    await linkChild(parent, c);
+    return c;
+  }
+  const menu = $('child-menu');
+  function closeChildMenu() { menu.classList.add('hidden'); menu.replaceChildren(); }
+  async function addItem(c, body) {
+    touched();
+    Object.assign(c, await api('POST', `${API}/cards/${c.id}/items`, body));
+    rerenderCard(c);
+    if (selection?.id !== c.id) select({ type: 'card', id: c.id }); else els.get(c.id)?.classList.add('selected');
+  }
+  const openChildMenuKeep = () => menu.classList.remove('hidden');
+  function openChildMenu(parent, asItem = false) {
+    const add = body => asItem ? addItem(parent, body) : addChild(parent, body);
+    menu.replaceChildren(); menu.classList.remove('hidden');
+    const head = el('p', 'px-2 pb-1 pt-1 text-xs font-semibold uppercase tracking-wider text-faint', asItem ? 'Adicionar na lista do card' : 'Adicionar filho');
+    const opts = el('div', 'grid gap-0.5');
+    const opt = (icon, label, hint, fn) => {
+      const b = el('button', 'flex items-center gap-3 rounded-lg px-2 py-2 text-left text-sm text-ink-2 hover:bg-surface-2');
+      const t = el('span', 'flex-1'); t.append(el('span', 'block text-ink', label), el('span', 'block text-xs text-faint', hint));
+      b.append(ri(icon), t); b.addEventListener('click', fn); opts.append(b);
+    };
+    // lista com busca (páginas, mapas, mapas mentais)
+    const picker = (title, items, make) => {
+      menu.replaceChildren();
+      const top = el('div', 'flex items-center gap-1 pb-2');
+      const back = el('button', 'btn btn-ghost btn-sm btn-icon'); back.append(ui('arrow-left')); back.title = 'Voltar'; back.setAttribute('aria-label', 'Voltar');
+      back.addEventListener('click', () => openChildMenu(parent, asItem));
+      const q = el('input', 'input py-1.5 text-sm'); q.placeholder = `Buscar ${title}…`;
+      top.append(back, q);
+      const ul = el('ul', 'max-h-64 space-y-0.5 overflow-y-auto');
+      const draw = () => {
+        ul.replaceChildren();
+        const s = q.value.trim().toLowerCase();
+        const list = items.filter(i => !s || i.label.toLowerCase().includes(s));
+        if (!list.length) ul.append(el('li', 'p-2 text-sm text-faint', items.length ? 'Nada encontrado.' : `Nenhum ${title} neste mundo ainda.`));
+        for (const i of list) {
+          const li = el('li'); const b = el('button', 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-ink-2 hover:bg-surface-2');
+          b.append(i.icon, el('span', 'truncate', i.label));
+          b.addEventListener('click', async () => { closeChildMenu(); await add(make(i)); });
+          li.append(b); ul.append(li);
+        }
+      };
+      q.addEventListener('input', draw);
+      q.addEventListener('keydown', e => { if (e.key === 'Enter') ul.querySelector('button')?.click(); });
+      menu.append(top, ul); draw(); q.focus();
+    };
+    if (asItem) opt('quill', 'Assunto', 'Um texto curto na lista', () => {
+      menu.replaceChildren();
+      const f = el('form', 'flex gap-1');
+      const q = el('input', 'input py-1.5 text-sm'); q.placeholder = 'Ex.: rivalidade com a Ordem'; q.maxLength = 300;
+      const ok = el('button', 'btn btn-primary btn-sm', 'Adicionar');
+      f.append(q, ok); menu.append(el('p', 'px-1 pb-1.5 text-xs text-faint', 'Enter adiciona e deixa o campo pronto para o próximo.'), f);
+      f.addEventListener('submit', async e => { e.preventDefault(); if (!q.value.trim()) return; await addItem(parent, { kind: 'note', text: q.value }); q.value = ''; q.focus(); openChildMenuKeep(); });
+      q.focus();
+    });
+    else opt('candle', 'Ideia', 'Um card de texto (atalho: Tab)', async () => { closeChildMenu(); editCard(await addChild(parent, { kind: 'note' })); });
+    opt('tome', 'Página', 'Personagem, local, livro…', () => picker('página', DATA.pages.map(p => ({ id: p.id, label: p.title, icon: glyph(p.icon) })), i => ({ kind: 'article', article_id: i.id })));
+    opt('map', 'Mapa', 'Um dos mapas do mundo', () => picker('mapa', DATA.maps.map(m => ({ id: m.id, label: m.name, icon: ri('map') })), i => ({ kind: 'map', map_id: i.id })));
+    opt('web', 'Mapa mental', 'Outro mapa mental do mundo', () => picker('mapa mental', DATA.boards.map(b => ({ id: b.id, label: b.name, icon: ri('web') })), i => ({ kind: 'board', ref_board_id: i.id })));
+    opt('picture', 'Imagem ou arquivo', 'Envia do computador', () => {
+      closeChildMenu(); const fi = $('child-file'); fi.dataset.parent = parent.id; fi.dataset.asItem = asItem ? '1' : ''; fi.click();
+    });
+    if (!asItem) {
+      const sw = el('button', 'mt-1 flex w-full items-center gap-2 rounded-lg border-t border-line px-2 pb-1 pt-2 text-left text-xs text-muted hover:text-ink');
+      sw.append(ui('list', 'size-3.5'), el('span', '', 'Ou guardar na lista “Relacionados” do card, sem espalhar no quadro'));
+      sw.addEventListener('click', () => openChildMenu(parent, true)); opts.append(sw);
+    }
+    menu.append(head, opts);
+  }
+  $('child-file').addEventListener('change', async e => {
+    const parent = cards.get(Number(e.target.dataset.parent)); const files = e.target.files;
+    if (parent && files.length && e.target.dataset.asItem) {
+      const fd = new FormData(); [...files].forEach(f => fd.append('files', f));
+      $('sync').textContent = 'enviando…';
+      try { const r = await api('POST', DATA.upload, fd); for (const f of r.files) await addItem(parent, { kind: 'file', file_id: f.id }); }
+      finally { $('sync').textContent = ''; }
+    } else if (parent && files.length) {
+      const made = await uploadFiles(files, childPos(parent)) || [];
+      for (const c of made) await linkChild(parent, c);
+    }
+    e.target.value = '';
+  });
+  document.addEventListener('pointerdown', e => { if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !e.target.closest?.('#sel-bar')) closeChildMenu(); });
 
   $('add-note').addEventListener('click', async () => { const c = await createCard({ kind: 'note', ...screenCenter() }); editCard(c); });
   $('file-input').addEventListener('change', e => { uploadFiles(e.target.files); e.target.value = ''; });
@@ -384,9 +558,12 @@
 
   // ------------------------------------------------------------------ ponteiro
   let target = null;
+  // arrastar o quadro/cards não seleciona texto da página (nem fora do quadro)
+  const noSelect = on => { document.body.classList.toggle('select-none', on); if (on) getSelection()?.removeAllRanges(); };
   viewport.addEventListener('pointerdown', e => {
     if (e.button !== 0 || editing) return;
     if (e.target.closest('input, textarea, a, button, #sel-bar')) return;
+    noSelect(true);
     const node = e.target.closest('.node');
     const edge = e.target.closest('.edge');
     if (node && e.target.classList.contains('handle')) {
@@ -437,6 +614,7 @@
     }
   });
   const endAction = async () => {
+    noSelect(false);
     if (!action) return;
     const a = action; action = null;
     viewport.classList.remove('panning');
@@ -462,7 +640,7 @@
     const node = e.target.closest('.node'), edge = e.target.closest('.edge');
     if (node) {
       const c = cards.get(Number(node.dataset.id));
-      if (c.kind === 'article' && c.article) location.href = c.article.url;
+      if (cardUrl(c)) location.href = cardUrl(c);
       else editCard(c);
     } else if (edge) {
       editLabel(links.find(l => l.id === Number(edge.dataset.id)));
@@ -477,9 +655,13 @@
     zoomAt(f, e.clientX, e.clientY);
   }, { passive: false });
   document.addEventListener('keydown', e => {
-    if (editing || e.target.closest('input, textarea, select')) return;
+    if (editing || e.target.closest?.('input, textarea, select')) return;
     if ((e.key === 'Delete' || e.key === 'Backspace') && selection) { e.preventDefault(); removeSelection(); }
-    if (e.key === 'Escape') select(null);
+    if (e.key === 'Escape') { if (!menu.classList.contains('hidden')) closeChildMenu(); else select(null); }
+    // Tab: nova ideia filha do card selecionado
+    if (e.key === 'Tab' && selection?.type === 'card' && cards.get(selection.id)) {
+      e.preventDefault(); addChild(cards.get(selection.id), { kind: 'note' }).then(editCard);
+    }
   });
 
   // ------------------------------------------------------------------ sincronização com colaboradores

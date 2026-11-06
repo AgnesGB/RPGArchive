@@ -128,6 +128,20 @@ CREATE TABLE IF NOT EXISTS cards (
 );
 CREATE INDEX IF NOT EXISTS idx_cards_board ON cards(board_id);
 
+-- lista "Relacionados" dentro de um card do mapa mental (pode ficar aberta ou recolhida)
+CREATE TABLE IF NOT EXISTS card_items (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id      INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    kind         TEXT NOT NULL DEFAULT 'note',
+    text         TEXT NOT NULL DEFAULT '',
+    article_id   INTEGER REFERENCES articles(id) ON DELETE CASCADE,
+    map_id       INTEGER REFERENCES maps(id) ON DELETE CASCADE,
+    ref_board_id INTEGER REFERENCES boards(id) ON DELETE CASCADE,
+    file_id      INTEGER REFERENCES files(id) ON DELETE CASCADE,
+    created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_card_items_card ON card_items(card_id);
+
 CREATE TABLE IF NOT EXISTS board_links (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     board_id   INTEGER NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
@@ -146,6 +160,30 @@ CREATE TABLE IF NOT EXISTS maps (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_maps_world ON maps(world_id);
+
+-- conjuntos da aba "Meus" do editor de mapas: agrupam imagens; cada conjunto vira uma categoria
+-- em Objetos (kind = props) ou um grupo de terrenos (kind = terrain). Valem para todos os mapas do mundo.
+CREATE TABLE IF NOT EXISTS map_sets (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    kind       TEXT NOT NULL DEFAULT 'props',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- imagens (tilesets) enviadas para um conjunto.
+-- tile = tamanho do recorte em px (0 = a imagem inteira é um único asset); tiles = JSON [[col, lin], ...] não vazios
+CREATE TABLE IF NOT EXISTS map_tilesets (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
+    file_id    INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    kind       TEXT NOT NULL DEFAULT 'props',
+    tile       INTEGER NOT NULL DEFAULT 0,
+    tiles      TEXT NOT NULL DEFAULT '[]',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 -- kind: pin | token. x/y em fração (0..1) da imagem
 CREATE TABLE IF NOT EXISTS map_pins (
@@ -202,7 +240,12 @@ _ADDED_COLUMNS = {
                  "year": "INTEGER", "date_label": "TEXT NOT NULL DEFAULT ''",
                  "created_by": "INTEGER REFERENCES users(id) ON DELETE SET NULL",
                  "updated_by": "INTEGER REFERENCES users(id) ON DELETE SET NULL"},
-    "cards": {"file_id": "INTEGER REFERENCES files(id) ON DELETE CASCADE"},
+    "map_tilesets": {"set_id": "INTEGER REFERENCES map_sets(id) ON DELETE CASCADE"},
+    "cards": {"file_id": "INTEGER REFERENCES files(id) ON DELETE CASCADE",
+              # cards que apontam para um mapa ou para outro mapa mental
+              "map_id": "INTEGER REFERENCES maps(id) ON DELETE CASCADE",
+              "ref_board_id": "INTEGER REFERENCES boards(id) ON DELETE CASCADE",
+              "items_open": "INTEGER NOT NULL DEFAULT 1"},
     # mapa editável: grade, terrenos, paredes e objetos (JSON) + versão p/ edição simultânea
     "maps": {"data": "TEXT NOT NULL DEFAULT '{}'", "version": "INTEGER NOT NULL DEFAULT 0",
              "thumb": "TEXT NOT NULL DEFAULT ''"},
@@ -232,6 +275,14 @@ def _migrate(db):
     # Todo mundo antigo ganha o dono como membro
     db.execute("""INSERT OR IGNORE INTO world_members (world_id, user_id, role)
                   SELECT id, user_id, 'owner' FROM worlds""")
+    # tilesets de antes dos conjuntos: vão para "Meus" (objetos) ou "Meus terrenos"
+    for t in db.execute("SELECT id, world_id, kind FROM map_tilesets WHERE set_id IS NULL").fetchall():
+        name = "Meus terrenos" if t["kind"] == "terrain" else "Meus"
+        row = db.execute("SELECT id FROM map_sets WHERE world_id = ? AND name = ? AND kind = ?",
+                         (t["world_id"], name, t["kind"])).fetchone()
+        sid = row["id"] if row else db.execute("INSERT INTO map_sets (world_id, name, kind) VALUES (?, ?, ?)",
+                                               (t["world_id"], name, t["kind"])).lastrowid
+        db.execute("UPDATE map_tilesets SET set_id = ? WHERE id = ?", (sid, t["id"]))
     # o antigo ícone padrão (emoji do globo) vira "sem ícone" = ícone pixel padrão do site
     db.execute("UPDATE worlds SET icon = '' WHERE icon IN ('🌍', '🌍️')")
 

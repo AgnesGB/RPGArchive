@@ -64,10 +64,11 @@
   <div class="relative flex min-h-0 flex-1">
     {# ---------- paleta do editor ---------- #}
     <aside id="palette" class="hidden w-72 shrink-0 flex-col overflow-hidden border-r border-line bg-surface">
-      <div class="grid grid-cols-6 gap-1 border-b border-line p-2">
+      <div class="grid grid-cols-7 gap-0.5 border-b border-line p-2">
         {% for key, icon, label, tip in [('terrain', ui('brush', 'size-4'), 'Pincel', 'Pincel de terreno (B)'), ('fill', ri('bucket'), 'Balde', 'Preencher área (F)'),
                                          ('walls', ri('brick'), 'Paredes', 'Paredes nas bordas (W)'), ('props', ri('tree'), 'Objetos', 'Objetos (O)'),
-                                         ('move', ui('hand', 'size-4'), 'Mover', 'Mover a vista (espaço)'), ('grid', ri('gear'), 'Grade', 'Grade e fundo')] %}
+                                         ('move', ui('hand', 'size-4'), 'Mover', 'Mover a vista (espaço)'), ('grid', ri('gear'), 'Grade', 'Grade e fundo'),
+                                         ('custom', ri('bag'), 'Meus', 'Meus tilesets: adicione os seus')] %}
           <button class="tool flex flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] text-muted hover:bg-surface-2 hover:text-ink" data-tool="{{ key }}" title="{{ tip }}" aria-label="{{ tip }}">{{ icon }}<span>{{ label }}</span></button>
         {% endfor %}
       </div>
@@ -113,6 +114,43 @@
           <div id="prop-list" class="grid grid-cols-4 gap-1.5"></div>
           <p class="text-xs text-faint">Escolha um objeto e clique no mapa. Clique num objeto para selecionar e arrastar · botão direito apaga.</p>
         </div>
+        {# meus conjuntos #}
+        <div data-panel="custom" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-ink">Meus conjuntos</p>
+            <label class="btn btn-primary btn-sm btn-icon cursor-pointer" title="Adicionar imagem (tileset)" aria-label="Adicionar imagem">
+              {{ ui('plus') }}<input type="file" id="ts-file" accept="image/*" class="hidden"></label>
+          </div>
+
+          {# aparece depois de escolher a imagem: pergunta o conjunto (padrão: Meus) #}
+          <div id="ts-add" class="hidden space-y-2 rounded-lg border border-accent/60 bg-surface-2/50 p-2.5">
+            <canvas id="ts-preview" class="max-h-48 w-full rounded bg-canvas object-contain" style="image-rendering: pixelated"></canvas>
+            <p id="ts-info" class="text-[11px] text-faint"></p>
+            <label class="block text-[11px] text-muted">Conjunto
+              <select id="ts-set" class="input mt-0.5 py-1 text-xs"></select></label>
+            <div id="ts-newset" class="hidden grid grid-cols-[1fr_auto] gap-1">
+              <input id="ts-setname" class="input py-1 text-xs" placeholder="Nome do conjunto (ex.: Floresta)" maxlength="60" aria-label="Nome do conjunto">
+              <select id="ts-setkind" class="input py-1 text-xs" aria-label="Tipo do conjunto"><option value="props">Objetos</option><option value="terrain">Terreno</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-1">
+              <label class="text-[11px] text-muted">Nome da imagem
+                <input id="ts-name" class="input mt-0.5 py-1 text-xs" maxlength="60"></label>
+              <label class="text-[11px] text-muted">Recorte
+                <select id="ts-tile" class="input mt-0.5 py-1 text-xs">
+                  <option value="0">Imagem inteira</option>
+                  {% for n in [8, 16, 24, 32, 48, 64] %}<option value="{{ n }}" {{ 'selected' if n == 16 }}>Tiles de {{ n }} px</option>{% endfor %}
+                </select></label>
+            </div>
+            <div class="flex justify-end gap-1 pt-1">
+              <button id="ts-cancel" type="button" class="btn btn-ghost btn-sm">Cancelar</button>
+              <button id="ts-send" type="button" class="btn btn-primary btn-sm">Adicionar</button>
+            </div>
+          </div>
+
+          <div id="ts-list" class="space-y-2"></div>
+          <p class="text-xs text-faint">Cada conjunto de objetos vira uma categoria em <strong>Objetos</strong>; conjuntos de terreno aparecem no Pincel e no Balde.
+            Valem para todos os mapas deste mundo.</p>
+        </div>
         {# grade #}
         <div data-panel="grid" class="hidden space-y-3" id="grid-form">
           <div><span class="label text-xs">Tipo de grade</span>
@@ -143,7 +181,7 @@
     </aside>
 
     {# ---------- mapa ---------- #}
-    <div id="mviewport" class="relative flex-1 overflow-hidden bg-canvas">
+    <div id="mviewport" class="relative flex-1 select-none overflow-hidden bg-canvas">
       <div id="mworld">
         {% if image %}<img id="map-img" src="{{ image }}" alt="{{ map.name }}" draggable="false" class="block max-w-none select-none">{% endif %}
         <canvas id="cv-terrain"></canvas>
@@ -164,6 +202,8 @@
   'api': url_for('maps.pins', wid=world.id, mid=map.id), 'upload': url_for('files.upload', wid=world.id),
   'dataUrl': url_for('maps.data', wid=world.id, mid=map.id), 'data': mapdata, 'version': version,
   'kit': url_for('static', filename='mapkit/'), 'image': image, 'startEdit': start_edit, 'hasThumb': has_thumb,
+  'sets': tile_sets, 'tilesetApi': url_for('maps.tileset_create', wid=world.id),
+  'setApi': url_for('maps.set_delete', wid=world.id, sid=0)[:-2],
   'mapId': map.id }|tojson }}</script>
 <script src="{{ url_for('static', filename='map.js') }}"></script>
 {% endblock %}

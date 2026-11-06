@@ -177,7 +177,102 @@ def view(wid, mid):
         mapdata=json.loads(m["data"] or "{}"), version=m["version"],
         start_edit=bool(request.args.get("edit")),
         has_thumb=bool(m["thumb"]),
+        tile_sets=sets_of(wid),
     )
+
+
+# --------------------------------------------------------------------------- aba "Meus": conjuntos e imagens
+
+SET_KINDS = ("props", "terrain")
+DEFAULT_SET = "Meus"
+MAX_TILES = 4096
+
+
+def tileset_dict(r):
+    return {"id": r["id"], "set_id": r["set_id"], "name": r["name"], "tile": r["tile"],
+            "tiles": json.loads(r["tiles"] or "[]"), "url": url_for("files.serve", fid=r["file_id"])}
+
+
+def sets_of(wid):
+    """Conjuntos do mundo com as imagens de cada um (o padrão "Meus" primeiro)."""
+    db = get_db()
+    sets = [{"id": r["id"], "name": r["name"], "kind": r["kind"], "tilesets": []} for r in db.execute(
+        "SELECT * FROM map_sets WHERE world_id = ? ORDER BY name != ?, name COLLATE NOCASE, id", (wid, DEFAULT_SET))]
+    by_id = {x["id"]: x for x in sets}
+    for r in db.execute("SELECT * FROM map_tilesets WHERE world_id = ? ORDER BY id", (wid,)):
+        if r["set_id"] in by_id:
+            by_id[r["set_id"]]["tilesets"].append(tileset_dict(r))
+    return sets
+
+
+def _set_for_upload(wid):
+    """Conjunto escolhido no envio: um existente, um novo, ou o padrão "Meus" (criado se preciso)."""
+    db = get_db()
+    sid = request.form.get("set_id", type=int)
+    if sid:
+        row = db.execute("SELECT * FROM map_sets WHERE id = ? AND world_id = ?", (sid, wid)).fetchone()
+        if row is None:
+            abort(404)
+        return row
+    name = request.form.get("new_set_name", "").strip()[:60] or DEFAULT_SET
+    kind = request.form.get("new_set_kind") if request.form.get("new_set_kind") in SET_KINDS else "props"
+    row = db.execute("SELECT * FROM map_sets WHERE world_id = ? AND name = ? AND kind = ?", (wid, name, kind)).fetchone()
+    if row is None:
+        new_id = db.execute("INSERT INTO map_sets (world_id, name, kind) VALUES (?, ?, ?)", (wid, name, kind)).lastrowid
+        row = db.execute("SELECT * FROM map_sets WHERE id = ?", (new_id,)).fetchone()
+    return row
+
+
+@bp.post("/w/<int:wid>/tilesets")
+@login_required
+def tileset_create(wid):
+    """Recebe a imagem + como recortar (o recorte em si é feito no navegador, com <canvas>)."""
+    get_world(wid)
+    tile = _num(request.form.get("tile"), 0, 0, 512)
+    if tile and tile < 4:
+        abort(400, "Tamanho de tile muito pequeno.")
+    tiles = []
+    if tile:
+        try:
+            raw = json.loads(request.form.get("tiles") or "[]")
+            tiles = [[int(c), int(r)] for c, r in raw[:MAX_TILES] if 0 <= int(c) < 1024 and 0 <= int(r) < 1024]
+        except (TypeError, ValueError):
+            abort(400, "Lista de tiles inválida.")
+        if not tiles:
+            abort(400, "Nenhum tile com conteúdo nessa imagem.")
+    try:
+        fid = save_upload(wid, request.files.get("image"), images_only=True)
+    except UploadError as e:
+        return jsonify(error=str(e)), 400
+    st = _set_for_upload(wid)
+    name = request.form.get("name", "").strip()[:60] or "Imagem"
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO map_tilesets (world_id, set_id, file_id, name, kind, tile, tiles, created_by) VALUES (?,?,?,?,?,?,?,?)",
+        (wid, st["id"], fid, name, st["kind"], tile, json.dumps(tiles), g.user["id"]))
+    db.commit()
+    return jsonify(sets=sets_of(wid), id=cur.lastrowid), 201
+
+
+@bp.delete("/w/<int:wid>/tilesets/<int:tid>")
+@login_required
+def tileset_delete(wid, tid):
+    """Tira a imagem do conjunto (ela continua no Acervo). Objetos já colocados somem do desenho."""
+    get_world(wid)
+    db = get_db()
+    db.execute("DELETE FROM map_tilesets WHERE id = ? AND world_id = ?", (tid, wid))
+    db.commit()
+    return jsonify(sets=sets_of(wid))
+
+
+@bp.delete("/w/<int:wid>/sets/<int:sid>")
+@login_required
+def set_delete(wid, sid):
+    get_world(wid)
+    db = get_db()
+    db.execute("DELETE FROM map_sets WHERE id = ? AND world_id = ?", (sid, wid))
+    db.commit()
+    return jsonify(sets=sets_of(wid))
 
 
 @bp.post("/w/<int:wid>/m/<int:mid>/settings")
