@@ -23,7 +23,7 @@ Aba **Consoles** › **Bash**:
 
 ```bash
 cd ~
-git clone https://github.com/AgnesGB/RPGArchive.git
+git clone https://github.com/YggdrasilGeekNetwork/RPGArchive.git
 ```
 
 > O repositório tem os assets do `mapkit/`, cuja licença não permite redistribuir — deixe o repo **privado** no GitHub.
