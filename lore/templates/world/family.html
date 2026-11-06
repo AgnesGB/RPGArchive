@@ -4,20 +4,20 @@
 {% macro people_select(name, characters, required=True) %}
   <select name="{{ name }}" class="input py-1.5 text-sm" {{ 'required' if required }}>
     <option value="">Escolha…</option>
-    {% for p in characters %}<option value="{{ p.id }}">{{ p.icon or CATEGORY_MAP.get(p.category, CATEGORY_MAP.nota).icon }} {{ p.title }}</option>{% endfor %}
+    {% for p in characters %}<option value="{{ p.id }}">{{ page_icon(p)|glyph_text }} {{ p.title }}</option>{% endfor %}
   </select>
 {% endmacro %}
 <div class="px-6 py-8 lg:px-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl text-ink">🌳 Árvores genealógicas</h1>
+      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('tree', 32) }} Árvores genealógicas</h1>
       <p class="mt-1 text-muted">Uma árvore por família ou dinastia. Os laços (<em>pai/mãe</em>, <em>cônjuge</em>) valem para o mundo todo,
         então quem casa entre famílias aparece nas duas.</p>
     </div>
     <form method="post" action="{{ url_for('history.tree_create', wid=world.id) }}" class="flex gap-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input class="input py-2" name="name" placeholder="Nome da nova árvore" required>
-      <button class="btn btn-primary">+ Árvore</button>
+      <button class="btn btn-primary">{{ ui('plus') }} Árvore</button>
     </form>
   </div>
 
@@ -26,7 +26,7 @@
       {% for t in trees %}
         <a href="{{ url_for('history.trees', wid=world.id, t=t.id) }}"
            class="rounded-full px-3 py-1 text-sm {{ 'bg-ink text-bg' if current and current.id == t.id else 'text-muted hover:bg-surface-2' }}">
-          🌳 {{ t.name }} <span class="text-xs opacity-60">{{ t.n }}</span></a>
+          {{ ri('tree') }} {{ t.name }} <span class="text-xs opacity-60">{{ t.n }}</span></a>
       {% endfor %}
     </div>
   {% endif %}
@@ -51,8 +51,8 @@
       <form method="post" action="{{ url_for('history.tree_update', wid=world.id, tid=current.id) }}" class="panel flex items-end gap-2 p-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div><label class="label text-xs">Nome da árvore</label><input name="name" value="{{ current.name }}" class="input w-48 py-1.5 text-sm" onchange="this.form.submit()"></div>
-        <button name="delete" value="1" class="btn btn-ghost text-red-500" title="Apagar árvore"
-                onclick="return confirm('Apagar a árvore “{{ current.name|e }}”? Pessoas e laços continuam nas páginas.')">🗑</button>
+        <button name="delete" value="1" class="btn btn-ghost btn-icon btn-quiet-danger" title="Apagar árvore" aria-label="Apagar árvore"
+                onclick="return confirm('Apagar a árvore “{{ current.name|e }}”? Pessoas e laços continuam nas páginas.')">{{ ui('trash') }}</button>
       </form>
     </div>
   {% endif %}
@@ -63,7 +63,7 @@
         <svg id="tree-lines" class="pointer-events-none absolute inset-0 overflow-visible"></svg>
       </div>
     </div>
-    <p class="mt-2 text-xs text-faint">Passe o mouse numa pessoa e clique no ✕ para tirá-la desta árvore (os laços continuam nas páginas).</p>
+    <p class="mt-2 text-xs text-faint">Passe o mouse numa pessoa e clique no X para tirá-la desta árvore (os laços continuam nas páginas).</p>
     <form method="post" id="remove-member" action="{{ url_for('history.tree_member', wid=world.id, tid=current.id) }}" class="hidden">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="remove" value="1"><input type="hidden" name="a_id">
     </form>
@@ -153,11 +153,11 @@
     Object.assign(a.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
     const av = document.createElement(p.cover ? 'img' : 'div');
     av.className = 'size-16 shrink-0 rounded-full object-cover ring-2 ring-accent grid place-items-center text-3xl bg-surface-2';
-    if (p.cover) { av.src = p.cover; av.referrerPolicy = 'no-referrer'; } else av.textContent = p.icon;
+    if (p.cover) { av.src = p.cover; av.referrerPolicy = 'no-referrer'; } else av.append(glyph(p.icon, 32));
     const t = document.createElement('p'); t.className = 'line-clamp-2 text-sm font-semibold text-ink'; t.textContent = p.title;
     const s = document.createElement('p'); s.className = 'line-clamp-1 text-xs text-muted'; s.textContent = p.summary || '';
     const x = document.createElement('button');
-    x.type = 'button'; x.textContent = '✕'; x.title = 'Tirar desta árvore';
+    x.type = 'button'; x.append(ui('x', 'size-3.5')); x.title = 'Tirar desta árvore'; x.setAttribute('aria-label', 'Tirar desta árvore');
     x.className = 'absolute right-1.5 top-1.5 hidden size-6 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-red-600 group-hover:grid';
     x.addEventListener('click', ev => { ev.preventDefault(); if (!confirm('Tirar ' + p.title + ' desta árvore?')) return;
       const f = document.getElementById('remove-member'); f.a_id.value = p.id; f.submit(); });
@@ -181,7 +181,7 @@
     const y = l.y + H / 2;
     line(`M${l.x + W} ${y} H${r.x}`);
     const heart = document.createElement('span');
-    heart.className = 'absolute -translate-x-1/2 -translate-y-1/2 text-sm'; heart.textContent = '💍';
+    heart.className = 'absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center'; heart.append(ri('ring')); heart.title = 'Cônjuges';
     Object.assign(heart.style, { left: (l.x + W + r.x) / 2 + 'px', top: y + 'px' }); box.append(heart);
   }
   // filhos: sai do meio dos pais, desce até uma barra e vai até cada filho

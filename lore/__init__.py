@@ -52,9 +52,10 @@ def create_app() -> Flask:
     app.json.sort_keys = False
     app.jinja_env.policies["json.dumps_kwargs"] = {"sort_keys": False}
 
-    from . import auth, boards, db, files, history, maps, pages, worlds
+    from . import auth, boards, db, files, history, icons, maps, pages, worlds
 
     db.init_app(app)
+    icons.init_app(app)
     auth.init_app(app)
     for mod in (auth, worlds, pages, history, boards, maps, files):
         app.register_blueprint(mod.bp)
@@ -87,7 +88,10 @@ def create_app() -> Flask:
             theme, accent = request.cookies.get("theme"), request.cookies.get("accent")
         return (theme if theme in C.THEMES else "dark", accent if accent in C.ACCENTS else "yellow")
 
+    from .access import page_icon
+
     app.jinja_env.globals.update(
+        page_icon=page_icon,
         csrf_token=csrf_token,
         ui_prefs=ui_prefs,
         SITE_NAME=C.SITE_NAME,

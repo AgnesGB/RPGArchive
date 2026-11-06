@@ -34,28 +34,29 @@
              class="w-64 max-w-[40vw] rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
     </form>
     <div class="flex rounded-lg bg-surface-2 p-0.5 text-sm">
-      <button data-mode="play" class="rounded-md px-3 py-1">🎲 Jogar</button>
-      <button data-mode="edit" class="rounded-md px-3 py-1">✏️ Editar mapa</button>
+      <button data-mode="play" class="flex items-center gap-1.5 rounded-md px-3 py-1">{{ ri('sword') }} Jogar</button>
+      <button data-mode="edit" class="flex items-center gap-1.5 rounded-md px-3 py-1">{{ ri('quill') }} Editar mapa</button>
     </div>
     <div class="ml-auto flex flex-wrap items-center gap-1">
       <span data-only="play" class="flex gap-1">
-        <button id="add-pin" class="btn btn-primary btn-sm">📍 Marcador</button>
-        <button id="add-token" class="btn btn-outline btn-sm">🪙 Token</button>
+        <button id="add-pin" class="btn btn-primary btn-sm">{{ ri('flag') }} Marcador</button>
+        <button id="add-token" class="btn btn-outline btn-sm">{{ ri('coin') }} Token</button>
       </span>
       <span data-only="edit" class="hidden items-center gap-1">
-        <button id="undo" class="btn btn-ghost btn-sm" title="Desfazer (Ctrl+Z)">↶</button>
-        <button id="redo" class="btn btn-ghost btn-sm" title="Refazer (Ctrl+Y)">↷</button>
+        <button id="undo" class="btn btn-ghost btn-sm btn-icon" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">{{ ui('undo') }}</button>
+        <button id="redo" class="btn btn-ghost btn-sm btn-icon" title="Refazer (Ctrl+Y)" aria-label="Refazer">{{ ui('redo') }}</button>
         <span id="save-state" class="w-20 text-xs text-faint"></span>
       </span>
       <span class="mx-1 h-6 w-px bg-line"></span>
-      <button data-zoom="0.8" class="btn btn-ghost btn-sm">−</button>
+      <button data-zoom="0.8" class="btn btn-ghost btn-sm btn-icon" title="Afastar" aria-label="Afastar">{{ ui('minus') }}</button>
       <span id="zoom-level" class="w-11 text-center text-xs text-muted">100%</span>
-      <button data-zoom="1.25" class="btn btn-ghost btn-sm">+</button>
-      <button id="fit" class="btn btn-ghost btn-sm" title="Enquadrar">⤢</button>
+      <button data-zoom="1.25" class="btn btn-ghost btn-sm btn-icon" title="Aproximar" aria-label="Aproximar">{{ ui('plus') }}</button>
+      <button id="fit" class="btn btn-ghost btn-sm btn-icon" title="Enquadrar tudo" aria-label="Enquadrar tudo">{{ ui('fit') }}</button>
+      <span class="mx-1 h-6 w-px bg-line"></span>
       <form method="post" action="{{ url_for('maps.delete', wid=world.id, mid=map.id) }}"
             data-confirm="Apagar o mapa “{{ map.name }}” com todos os marcadores?" onsubmit="return confirm(this.dataset.confirm)">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="btn btn-ghost btn-sm text-red-500">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-icon btn-quiet-danger" title="Apagar mapa" aria-label="Apagar mapa">{{ ui('trash') }}</button>
       </form>
     </div>
   </div>
@@ -64,8 +65,10 @@
     {# ---------- paleta do editor ---------- #}
     <aside id="palette" class="hidden w-72 shrink-0 flex-col overflow-hidden border-r border-line bg-surface">
       <div class="grid grid-cols-6 gap-1 border-b border-line p-2">
-        {% for key, icon, tip in [('terrain','🖌️','Pincel de terreno (B)'),('fill','🪣','Preencher área (F)'),('walls','🧱','Paredes nas bordas (W)'),('props','🌳','Objetos (O)'),('move','✋','Mover a vista (espaço)'),('grid','⚙️','Grade e fundo')] %}
-          <button class="tool rounded-lg py-2 text-lg hover:bg-surface-2" data-tool="{{ key }}" title="{{ tip }}">{{ icon }}</button>
+        {% for key, icon, label, tip in [('terrain', ui('brush', 'size-4'), 'Pincel', 'Pincel de terreno (B)'), ('fill', ri('bucket'), 'Balde', 'Preencher área (F)'),
+                                         ('walls', ri('brick'), 'Paredes', 'Paredes nas bordas (W)'), ('props', ri('tree'), 'Objetos', 'Objetos (O)'),
+                                         ('move', ui('hand', 'size-4'), 'Mover', 'Mover a vista (espaço)'), ('grid', ri('gear'), 'Grade', 'Grade e fundo')] %}
+          <button class="tool flex flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] text-muted hover:bg-surface-2 hover:text-ink" data-tool="{{ key }}" title="{{ tip }}" aria-label="{{ tip }}">{{ icon }}<span>{{ label }}</span></button>
         {% endfor %}
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto p-3 text-sm">
@@ -102,9 +105,9 @@
               <span id="prop-rot-val" class="w-8 text-right">0°</span>
             </div>
             <div class="flex gap-1">
-              <button id="prop-flip" class="btn btn-outline btn-sm flex-1">⇋ Espelhar</button>
+              <button id="prop-flip" class="btn btn-outline btn-sm flex-1">{{ ui('flip', 'size-3.5') }} Espelhar</button>
               <button id="prop-dup" class="btn btn-outline btn-sm flex-1">⧉ Duplicar</button>
-              <button id="prop-del" class="btn btn-ghost btn-sm text-red-500">🗑</button>
+              <button id="prop-del" class="btn btn-ghost btn-sm btn-icon btn-quiet-danger" title="Apagar objeto (Del)" aria-label="Apagar objeto">{{ ui('trash') }}</button>
             </div>
           </div>
           <div id="prop-list" class="grid grid-cols-4 gap-1.5"></div>
@@ -132,7 +135,7 @@
           <div data-image-only><span class="label text-xs">Opacidade da imagem de fundo</span><input type="range" data-m="imageOpacity" min="0" max="1" step="0.05" class="w-full accent-accent"></div>
           <form method="post" enctype="multipart/form-data" action="{{ url_for('maps.settings', wid=world.id, mid=map.id) }}" class="border-t border-line pt-3">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label class="btn btn-outline btn-sm w-full cursor-pointer">🖼️ {{ 'Trocar' if image else 'Usar' }} imagem de fundo<input type="file" name="image" accept="image/*" class="hidden" onchange="this.form.submit()"></label>
+            <label class="btn btn-outline btn-sm w-full cursor-pointer">{{ ri('picture') }} {{ 'Trocar' if image else 'Usar' }} imagem de fundo<input type="file" name="image" accept="image/*" class="hidden" onchange="this.form.submit()"></label>
           </form>
           <p class="text-xs text-faint">Mudar o tipo ou tamanho da grade reposiciona o terreno e as paredes já pintados.</p>
         </div>

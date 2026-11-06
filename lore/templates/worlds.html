@@ -7,7 +7,7 @@
       <h1 class="font-display text-3xl text-ink">Meus mundos</h1>
       <p class="mt-1 text-muted">Os seus e os que compartilharam com você.</p>
     </div>
-    <button class="btn btn-primary" onclick="document.getElementById('new-world').showModal()">+ Novo mundo</button>
+    <button class="btn btn-primary" onclick="document.getElementById('new-world').showModal()">{{ ui('plus') }} Novo mundo</button>
   </div>
 
   {% if worlds %}
@@ -21,7 +21,7 @@
               <div class="size-full" style="background: linear-gradient(135deg, var(--a500), color-mix(in oklab, var(--a700) 60%, black))"></div>
             {% endif %}
             {% if w.role != 'owner' %}<span class="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-white backdrop-blur">Compartilhado por {{ w.owner_name }}</span>{% endif %}
-            <span class="absolute -bottom-6 left-5 grid size-12 place-items-center rounded-xl border border-line bg-surface text-2xl shadow">{{ w.icon or '🌍' }}</span>
+            <span class="absolute -bottom-6 left-5 grid size-12 place-items-center rounded-xl border border-line bg-surface text-2xl shadow">{{ (w.icon or 'ri:world')|glyph(32) }}</span>
           </div>
           <div class="p-5 pt-8">
             <h2 class="font-display text-lg text-ink group-hover:text-accent-ink">{{ w.name }}</h2>
@@ -33,7 +33,7 @@
     </div>
   {% else %}
     <div class="panel mt-8 grid place-items-center px-6 py-20 text-center">
-      <div class="text-5xl">👁️</div>
+      {{ ri('orb', 64) }}
       <h2 class="mt-4 font-display text-xl text-ink">Nenhum mundo ainda</h2>
       <p class="mt-2 max-w-sm text-muted">Crie o primeiro mundo da sua campanha. Se alguém te convidar, ele aparece aqui também.</p>
       <button class="btn btn-primary mt-6" onclick="document.getElementById('new-world').showModal()">Criar meu primeiro mundo</button>
@@ -48,7 +48,7 @@
     <div class="flex gap-3">
       <div class="w-20">
         <label class="label" for="w-icon">Ícone</label>
-        <input class="input text-center text-xl" id="w-icon" name="icon" value="🌍" maxlength="8">
+        <input class="input text-center text-xl" id="w-icon" name="icon" value="" maxlength="8" placeholder="—" title="Um emoji (opcional). Vazio usa o ícone padrão.">
       </div>
       <div class="flex-1">
         <label class="label" for="w-name">Nome</label>

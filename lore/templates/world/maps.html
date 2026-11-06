@@ -4,10 +4,10 @@
 <div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl text-ink">🗺️ Mapas</h1>
+      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('map', 32) }} Mapas</h1>
       <p class="mt-1 text-muted">Suba a imagem do mapa, marque locais, anexe livros e mova os tokens dos jogadores.</p>
     </div>
-    <button class="btn btn-primary" onclick="document.getElementById('new-map').showModal()">+ Novo mapa</button>
+    <button class="btn btn-primary" onclick="document.getElementById('new-map').showModal()">{{ ui('plus') }} Novo mapa</button>
   </div>
   <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
     {% for mp in maps %}
@@ -15,7 +15,7 @@
         <div class="h-44 overflow-hidden bg-surface-2">
           {% if mp.thumb %}<img src="{{ mp.thumb }}" alt="" class="size-full object-cover transition duration-500 group-hover:scale-105" style="image-rendering: pixelated">
           {% elif mp.file_id %}<img src="{{ url_for('files.serve', fid=mp.file_id) }}" alt="" loading="lazy" class="size-full object-cover transition duration-500 group-hover:scale-105">
-          {% else %}<div class="grid size-full place-items-center text-4xl opacity-50">🗺️</div>{% endif %}
+          {% else %}<div class="grid size-full place-items-center opacity-70">{{ ri('map', 64) }}</div>{% endif %}
         </div>
         <div class="p-4">
           <h2 class="font-display text-lg text-ink group-hover:text-accent-ink">{{ mp.name }}</h2>
@@ -36,9 +36,9 @@
     <div><label class="label">Nome</label><input class="input" name="name" required placeholder="Masmorra do Vau"></div>
     <div class="grid grid-cols-2 gap-2">
       <button type="button" data-mm="blank" class="rounded-xl border-2 border-line p-3 text-left">
-        <p class="font-medium text-ink">✏️ Criar do zero</p><p class="text-xs text-muted">Grade + terrenos, paredes e objetos</p></button>
+        <p class="flex items-center gap-1.5 font-medium text-ink">{{ ri('quill') }} Criar do zero</p><p class="text-xs text-muted">Grade + terrenos, paredes e objetos</p></button>
       <button type="button" data-mm="image" class="rounded-xl border-2 border-line p-3 text-left">
-        <p class="font-medium text-ink">🖼️ A partir de imagem</p><p class="text-xs text-muted">Sobe um mapa pronto (dá para pôr grade depois)</p></button>
+        <p class="flex items-center gap-1.5 font-medium text-ink">{{ ri('picture') }} A partir de imagem</p><p class="text-xs text-muted">Sobe um mapa pronto (dá para pôr grade depois)</p></button>
     </div>
     <div data-ms="blank" class="space-y-3">
       <div class="grid grid-cols-3 gap-2">

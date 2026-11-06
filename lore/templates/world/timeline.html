@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-5xl px-6 py-8 lg:px-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl text-ink">⏳ Linhas do tempo</h1>
+      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('scroll', 32) }} Linhas do tempo</h1>
       <p class="mt-1 text-muted">Crie quantas quiser: a história do reino, a vida de um personagem, as sessões da mesa…</p>
     </div>
     <div class="flex gap-2">
@@ -30,11 +30,11 @@
       <input name="name" value="{{ current.name }}" class="input w-64 py-1.5 text-sm" onchange="this.form.submit()">
       <div class="flex gap-1">
         {% for c in colors %}
-          <button name="color" value="{{ c }}" class="size-6 rounded-full ring-offset-2 ring-offset-bg {{ 'ring-2 ring-ink' if c == current.color }}" style="background: {{ c }}" title="Cor"></button>
+          <button name="color" value="{{ c }}" class="size-6 rounded-full ring-offset-2 ring-offset-bg {{ 'ring-2 ring-ink' if c == current.color }}" style="background: {{ c }}" title="Cor da linha" aria-label="Cor {{ c }}"></button>
         {% endfor %}
       </div>
-      <button name="delete" value="1" class="btn btn-ghost btn-sm ml-auto text-red-500"
-              onclick="return confirm('Apagar a linha do tempo “{{ current.name|e }}”? As páginas continuam existindo.')">🗑 Apagar linha</button>
+      <button name="delete" value="1" class="btn btn-ghost btn-sm btn-quiet-danger ml-auto"
+              onclick="return confirm('Apagar a linha do tempo “{{ current.name|e }}”? As páginas continuam existindo.')">{{ ui('trash', 'size-3.5') }} Apagar linha</button>
     </form>
   {% endif %}
 
@@ -62,7 +62,7 @@
               {% endif %}
               <div class="min-w-0 p-4">
                 <p class="text-xs uppercase tracking-wider text-faint">{{ e.date_label or ('Ano ' ~ e.year) }}</p>
-                <h3 class="mt-0.5 font-semibold text-ink">{{ e.icon or c.icon }} {{ e.title }}</h3>
+                <h3 class="mt-0.5 font-semibold text-ink">{{ (e.icon or c.icon)|glyph }} {{ e.title }}</h3>
                 {% if e.summary %}<p class="mt-1 line-clamp-3 text-sm text-muted">{{ e.summary }}</p>{% endif %}
                 {% if not current and lines_of %}
                   <div class="mt-2 flex flex-wrap gap-1">
@@ -73,9 +73,9 @@
             </a>
             {% if current %}
               <form method="post" action="{{ url_for('history.timeline_remove', wid=world.id, tid=current.id, aid=e.id) }}"
-                    class="absolute top-2 hidden group-hover:block md:top-12 {{ 'right-2 md:right-16' if left else 'right-2' }}">
+                    class="absolute top-2 hidden group-hover:block group-focus-within:block md:top-12 {{ 'right-2 md:right-16' if left else 'right-2' }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="grid size-7 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-red-600" title="Tirar desta linha do tempo">✕</button>
+                <button class="grid size-7 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-red-600" title="Tirar desta linha do tempo" aria-label="Tirar desta linha do tempo">{{ ui('x', 'size-3.5') }}</button>
               </form>
             {% endif %}
           </div>
@@ -125,7 +125,7 @@
       <label class="label">Página</label>
       <select class="input" name="page_id">
         <option value="">Escolha…</option>
-        {% for p in pages %}<option value="{{ p.id }}">{{ p.icon or CATEGORY_MAP.get(p.category, CATEGORY_MAP.nota).icon }} {{ p.title }}{% if p.year is not none %} (ano {{ p.year }}){% endif %}</option>{% endfor %}
+        {% for p in pages %}<option value="{{ p.id }}">{{ page_icon(p)|glyph_text }} {{ p.title }}{% if p.year is not none %} (ano {{ p.year }}){% endif %}</option>{% endfor %}
       </select>
     </div>
     <div class="flex gap-3">

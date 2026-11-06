@@ -36,7 +36,7 @@ def create_world():
     cur = db.execute(
         "INSERT INTO worlds (user_id, name, description, icon) VALUES (?, ?, ?, ?)",
         (g.user["id"], name, request.form.get("description", "").strip()[:2000],
-         request.form.get("icon", "").strip()[:8] or "🌍"),
+         request.form.get("icon", "").strip()[:8]),
     )
     wid = cur.lastrowid
     db.execute("INSERT INTO world_members (world_id, user_id, role) VALUES (?, ?, 'owner')", (wid, g.user["id"]))

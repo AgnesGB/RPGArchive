@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}{% endblock %}{% if self.title() %} · {% endif %}{{ SITE_NAME }}</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='icons/raven.css') }}">
+  <script src="{{ url_for('static', filename='icons.js') }}" data-ui-sprite="{{ url_for('static', filename='icons/ui.svg') }}"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -61,15 +63,22 @@
       .btn-ghost { @apply text-ink-2 hover:bg-surface-2 hover:text-ink; }
       .btn-outline { @apply border border-line-strong text-ink-2 hover:bg-surface-2; }
       .btn-danger { @apply bg-red-600 text-white hover:bg-red-500; }
+      /* ação destrutiva secundária: neutra até o hover, para não chamar o clique */
+      .btn-quiet-danger { @apply text-faint hover:bg-red-500/10 hover:text-red-500; }
+      /* botão só com ícone (sempre com title + aria-label) */
+      .btn-icon { @apply px-0 size-8; }
       .btn-sm { @apply px-2.5 py-1.5 text-xs; }
       .input { @apply w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-ink placeholder:text-faint outline-none focus:border-accent focus:ring-2 focus:ring-accent/20; }
       .label { @apply mb-1 block text-sm font-medium text-ink-2; }
       .panel { @apply rounded-2xl border border-line bg-surface; }
       .chip { @apply inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted; }
-      .nav-link { @apply flex items-center gap-2 rounded-md px-2 py-1 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink; }
+      .nav-link { @apply flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink; }
       .nav-link.active { @apply bg-surface-2 text-ink font-medium; }
       .section-title { @apply mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-faint; }
     }
+    /* Foco visível só para teclado (heurística: visibilidade do estado) */
+    :where(a, button, summary, [tabindex], label.btn):focus-visible { outline: 2px solid var(--a500); outline-offset: 2px; border-radius: 0.5rem; }
+    svg.ui { flex: none; }
     /* Conteúdo das páginas (markdown renderizado) */
     .lore { @apply text-ink-2 leading-relaxed text-[1.02rem]; }
     .lore > * + * { @apply mt-4; }
@@ -98,11 +107,11 @@
   <header class="sticky top-0 z-40 h-14 border-b border-line bg-bg/85 backdrop-blur">
     <div class="flex h-full items-center gap-3 px-4">
       <a href="{{ url_for('index') }}" class="flex shrink-0 items-center gap-2 font-display text-base font-semibold tracking-wide text-accent-ink sm:text-lg">
-        <span class="text-xl">👁️</span> <span class="hidden sm:inline">{{ SITE_NAME }}</span>
+        {{ ri('orb', 32) }} <span class="hidden sm:inline">{{ SITE_NAME }}</span>
       </a>
       {% if g.world %}
         <span class="text-faint">/</span>
-        <a href="{{ url_for('worlds.world_home', wid=g.world.id) }}" class="truncate font-medium text-ink-2 hover:text-ink">{{ g.world.icon }} {{ g.world.name }}</a>
+        <a href="{{ url_for('worlds.world_home', wid=g.world.id) }}" class="flex min-w-0 items-center gap-1.5 font-medium text-ink-2 hover:text-ink">{{ (g.world.icon or 'ri:world')|glyph }} <span class="truncate">{{ g.world.name }}</span></a>
       {% endif %}
       <div class="ml-auto flex items-center gap-1">
         {% include "_theme_picker.html" %}
@@ -117,7 +126,7 @@
           </div>
           <form method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-ghost" title="Sair">Sair</button>
+            <button class="btn btn-ghost" title="Sair da conta">{{ ui('logout') }}<span class="hidden sm:inline">Sair</span></button>
           </form>
         {% else %}
           <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Entrar</a>

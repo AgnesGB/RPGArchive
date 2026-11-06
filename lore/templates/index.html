@@ -3,7 +3,7 @@
 <main class="relative overflow-hidden">
   <div class="pointer-events-none absolute inset-0 opacity-40" style="background: radial-gradient(ellipse at top, color-mix(in oklab, var(--a500) 35%, transparent), transparent 60%)"></div>
   <section class="relative mx-auto max-w-5xl px-6 pt-24 pb-16 text-center">
-    <div class="mx-auto mb-6 grid size-20 place-items-center rounded-full border border-line-strong bg-surface text-4xl shadow-xl">👁️</div>
+    <div class="mx-auto mb-6 grid size-20 place-items-center rounded-full border border-line-strong bg-surface shadow-xl">{{ ri('orb', 48) }}</div>
     <p class="mb-4 text-sm uppercase tracking-[0.35em] text-accent-ink">{{ SITE_NAME }}</p>
     <h1 class="font-display text-4xl font-semibold leading-tight text-ink sm:text-6xl">
       Tudo que acontece no seu mundo,<br><span class="text-accent-ink">alguém registra.</span>
@@ -20,15 +20,15 @@
 
   <section class="relative mx-auto grid max-w-6xl gap-4 px-6 pb-24 sm:grid-cols-2 lg:grid-cols-3">
     {% for icon, title, text in [
-      ('📚', 'Páginas com capa', 'Personagens, locais, facções e livros com foto de capa, ícone e subpáginas, no estilo Notion.'),
-      ('🕸️', 'Mapa mental', 'Ligue cards entre si com setas e rótulos. Arraste páginas, imagens e arquivos para o quadro.'),
-      ('🗺️', 'Mapas e tokens', 'Suba o mapa da campanha, marque locais, anexe livros e mova os tokens dos jogadores.'),
-      ('⏳', 'Linha do tempo', 'Eventos e eras em ordem, com anos negativos e calendários próprios do seu mundo.'),
-      ('🌳', 'Árvore genealógica', 'Dinastias e famílias desenhadas a partir das relações entre personagens.'),
-      ('🤝', 'Colaborativo', 'Convide sua mesa: todos veem tudo e podem criar e editar páginas e mapas.'),
+      ('tome', 'Páginas com capa', 'Personagens, locais, facções e livros com foto de capa, ícone e subpáginas, no estilo Notion.'),
+      ('web', 'Mapa mental', 'Ligue cards entre si com setas e rótulos. Arraste páginas, imagens e arquivos para o quadro.'),
+      ('map', 'Mapas e tokens', 'Suba o mapa da campanha, marque locais, anexe livros e mova os tokens dos jogadores.'),
+      ('scroll', 'Linha do tempo', 'Eventos e eras em ordem, com anos negativos e calendários próprios do seu mundo.'),
+      ('tree', 'Árvore genealógica', 'Dinastias e famílias desenhadas a partir das relações entre personagens.'),
+      ('people', 'Colaborativo', 'Convide sua mesa: todos veem tudo e podem criar e editar páginas e mapas.'),
     ] %}
       <div class="panel p-6">
-        <div class="text-3xl">{{ icon }}</div>
+        {{ ri(icon, 32) }}
         <h3 class="mt-3 font-display text-lg text-ink">{{ title }}</h3>
         <p class="mt-2 text-sm text-muted">{{ text }}</p>
       </div>

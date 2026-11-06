@@ -88,14 +88,14 @@
         }
         const body = el('div', a.cover ? 'p-3' : 'p-3 pr-10');
         body.append(el('p', 'text-[10px] font-semibold uppercase tracking-wider text-stone-500', a.category));
-        body.append(el('p', 'mt-0.5 font-bold leading-snug text-stone-900', `${a.icon} ${a.title}`));
+        const h = el('p', 'mt-0.5 flex items-center gap-1.5 font-bold leading-snug text-stone-900'); h.append(glyph(a.icon), el('span', '', a.title)); body.append(h);
         if (a.summary) body.append(el('p', 'mt-1 text-xs leading-relaxed text-stone-600', a.summary));
         n.append(body);
-        // atalho: um clique no ↗ abre a página (o resto do card continua arrastável)
-        const go = el('a', 'absolute right-1.5 top-3 grid h-7 w-7 place-items-center rounded-lg bg-white/85 text-sm font-bold text-stone-700 shadow ring-1 ring-black/10 hover:bg-white hover:text-stone-950', '↗');
-        go.href = a.url; go.title = 'Abrir a página'; go.draggable = false;
+        // atalho: um clique no botão do canto abre a página (o resto do card continua arrastável)
+        const go = el('a', 'absolute right-1.5 top-3 grid h-7 w-7 place-items-center rounded-lg bg-white/85 text-sm font-bold text-stone-700 shadow ring-1 ring-black/10 hover:bg-white hover:text-stone-950');
+        go.append(ui('external', 'size-3.5')); go.href = a.url; go.title = 'Abrir a página'; go.setAttribute('aria-label', `Abrir a página ${a.title}`); go.draggable = false;
         n.append(go);
-        n.title = 'Clique em ↗ (ou dois cliques) para abrir a página';
+        n.title = 'Clique no botão do canto (ou dois cliques) para abrir a página';
       }
     } else if (c.kind === 'image') {
       n.classList.add('overflow-hidden', 'p-1.5');
@@ -109,7 +109,7 @@
     } else if (c.kind === 'file') {
       const f = c.file;
       const row = el('div', 'flex items-center gap-3 p-3');
-      row.append(el('div', 'text-3xl', f && f.name.toLowerCase().endsWith('.pdf') ? '📕' : '📘'));
+      row.append(ri(f && f.name.toLowerCase().endsWith('.pdf') ? 'redbook' : 'parchment', 32));
       const info = el('div', 'min-w-0');
       info.append(el('p', 'truncate text-sm font-semibold text-stone-900', f ? f.name : 'Arquivo apagado'));
       if (f) {
@@ -198,8 +198,9 @@
     if (s?.type === 'card') els.get(s.id)?.classList.add('selected');
     renderEdges(); renderSelBar();
   }
-  function barButton(label, fn, cls = '') {
-    const b = el('button', 'whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm text-ink-2 hover:bg-surface-2 ' + cls, label);
+  function barButton(label, fn, cls = '', icon = null) {
+    const b = el('button', 'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm text-ink-2 hover:bg-surface-2 ' + cls);
+    b.append(iconLabel(icon ? ui(icon, 'size-3.5') : document.createTextNode(''), label));
     b.addEventListener('click', fn); return b;
   }
   function renderSelBar() {
@@ -210,22 +211,22 @@
       const c = cards.get(selection.id); if (!c) return select(null);
       for (const [name, [, dot]] of Object.entries(COLORS)) {
         const b = el('button', `size-5 rounded-full ${dot} ring-1 ring-black/20 mx-0.5 hover:scale-125 transition ${c.color === name ? 'ring-2 ring-[var(--a500)]' : ''}`);
-        b.title = name; b.addEventListener('click', async () => { await patchCard(c, { color: name }); rerenderCard(c); renderSelBar(); });
+        b.title = 'Cor: ' + name; b.setAttribute('aria-label', 'Cor ' + name); b.addEventListener('click', async () => { await patchCard(c, { color: name }); rerenderCard(c); renderSelBar(); });
         bar.append(b);
       }
       bar.append(el('span', 'mx-1 h-6 w-px bg-line'));
-      if (c.kind === 'article' && c.article) bar.append(barButton('↗ Abrir página', () => { location.href = c.article.url; }));
-      if (c.kind === 'note') bar.append(barButton('✎ Escrever', () => editCard(c)));
+      if (c.kind === 'article' && c.article) bar.append(barButton('Abrir página', () => { location.href = c.article.url; }, '', 'external'));
+      if (c.kind === 'note') bar.append(barButton('Escrever', () => editCard(c), '', 'pencil'));
       if (c.kind === 'image' || c.kind === 'file') {
-        bar.append(barButton('✎ Legenda', () => editCard(c)));
-        if (c.file) bar.append(barButton('↗ Abrir', () => window.open(c.file.url, '_blank', 'noopener')));
+        bar.append(barButton('Legenda', () => editCard(c), '', 'pencil'));
+        if (c.file) bar.append(barButton('Abrir', () => window.open(c.file.url, '_blank', 'noopener'), '', 'external'));
       }
-      bar.append(barButton('🗑 Apagar', () => removeSelection(), 'text-red-500'));
+      bar.append(barButton('Apagar', () => removeSelection(), 'hover:!bg-red-500/10 hover:!text-red-500', 'trash'));
     } else {
       const l = links.find(x => x.id === selection.id); if (!l) return select(null);
-      bar.append(barButton('🏷️ Rótulo', () => editLabel(l)));
-      bar.append(barButton('⇄ Inverter seta', async () => { touched(); Object.assign(l, await api('PATCH', `${API}/links/${l.id}`, { reverse: true })); renderEdges(); }));
-      bar.append(barButton('🗑 Apagar ligação', () => removeSelection(), 'text-red-500'));
+      bar.append(barButton('Rótulo', () => editLabel(l), '', 'tag'));
+      bar.append(barButton('Inverter seta', async () => { touched(); Object.assign(l, await api('PATCH', `${API}/links/${l.id}`, { reverse: true })); renderEdges(); }, '', 'swap'));
+      bar.append(barButton('Apagar ligação', () => removeSelection(), 'hover:!bg-red-500/10 hover:!text-red-500', 'trash'));
     }
   }
   async function removeSelection() {
@@ -352,7 +353,7 @@
     for (const p of list) {
       const li = el('li', 'flex cursor-grab items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink-2 hover:bg-surface-2');
       li.draggable = true;
-      li.append(el('span', '', p.icon), el('span', 'flex-1 truncate', p.title));
+      li.append(glyph(p.icon), el('span', 'flex-1 truncate', p.title));
       if (onBoard.has(p.id)) li.append(el('span', 'text-[10px] text-faint', 'no mapa'));
       li.title = p.category;
       li.addEventListener('dragstart', e => { e.dataTransfer.setData('text/page-id', String(p.id)); e.dataTransfer.effectAllowed = 'copy'; });

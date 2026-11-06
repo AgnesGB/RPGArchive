@@ -11,12 +11,12 @@
     {{ m.cover(page.image_url, page.cover_pos, 'h-48 md:h-64') }}
     <div class="absolute bottom-3 right-3 flex flex-wrap justify-end gap-2 opacity-90 transition group-hover:opacity-100">
       <label class="btn btn-sm cursor-pointer bg-black/60 text-white backdrop-blur hover:bg-black/75">
-        🖼️ {{ 'Trocar capa' if page.image_url else 'Adicionar capa' }}
+        {{ ri('picture') }} {{ 'Trocar capa' if page.image_url else 'Adicionar capa' }}
         <input type="file" name="cover" accept="image/*" class="hidden" id="cover-file">
       </label>
-      <button type="button" class="btn btn-sm bg-black/60 text-white backdrop-blur hover:bg-black/75" onclick="document.getElementById('cover-link-box').classList.toggle('hidden')">🔗 Link</button>
+      <button type="button" class="btn btn-sm bg-black/60 text-white backdrop-blur hover:bg-black/75" onclick="document.getElementById('cover-link-box').classList.toggle('hidden')">{{ ui('link', 'size-3.5') }} Link</button>
       <label class="btn btn-sm bg-black/60 text-white backdrop-blur hover:bg-black/75" title="Posição vertical">
-        ↕ <input type="range" name="cover_pos" id="cover-pos" min="0" max="100" value="{{ page.cover_pos }}" class="w-20 accent-white">
+        {{ ui('move-v', 'size-3.5') }} <input type="range" name="cover_pos" id="cover-pos" min="0" max="100" value="{{ page.cover_pos }}" class="w-20 accent-white">
       </label>
       {% if page.image_url %}
         <label class="btn btn-sm cursor-pointer bg-black/60 text-white backdrop-blur hover:bg-black/75"><input type="checkbox" name="remove_cover" value="1"> Remover</label>
@@ -30,9 +30,9 @@
   <div class="mx-auto max-w-4xl px-6 pb-16 lg:px-12">
     {# ---------- Ícone + título ---------- #}
     <div class="relative -mt-12 flex items-end gap-3">
-      <input name="icon" value="{{ page.icon }}" maxlength="8" placeholder="{{ CATEGORY_MAP.get(page.category, CATEGORY_MAP.nota).icon }}"
-             class="size-24 rounded-2xl border border-line bg-surface text-center text-5xl shadow-xl outline-none placeholder:opacity-40 focus:border-accent" title="Ícone (cole um emoji)">
-      <p class="pb-2 text-xs text-faint">Ícone: cole um emoji (Win + . abre o seletor)</p>
+      <input name="icon" value="{{ page.icon }}" maxlength="8" placeholder="—" title="Um emoji (opcional). Vazio usa o ícone da categoria."
+             class="size-24 rounded-2xl border border-line bg-surface text-center text-5xl shadow-xl outline-none placeholder:opacity-40 focus:border-accent" aria-label="Ícone da página">
+      <p class="pb-2 text-xs text-faint">Ícone: vazio usa o da categoria, ou cole um emoji (Win + . abre o seletor)</p>
     </div>
     <input name="title" value="{{ page.title }}" required autofocus placeholder="Sem título"
            class="mt-5 w-full bg-transparent font-display text-4xl text-ink outline-none placeholder:text-faint md:text-5xl">
@@ -41,22 +41,22 @@
 
     {# ---------- Propriedades ---------- #}
     <div class="mt-6 grid gap-x-6 gap-y-3 border-y border-line py-4 text-sm sm:grid-cols-[9rem_1fr]">
-      <label class="pt-2 text-muted" for="category">🏷️ Categoria</label>
+      <label class="pt-2 text-muted" for="category">Categoria</label>
       <select class="input py-1.5" id="category" name="category">
-        {% for c in CATEGORIES %}<option value="{{ c.key }}" {{ 'selected' if c.key == page.category }}>{{ c.icon }} {{ c.single }}</option>{% endfor %}
+        {% for c in CATEGORIES %}<option value="{{ c.key }}" {{ 'selected' if c.key == page.category }}>{{ c.single }}</option>{% endfor %}
       </select>
-      <label class="pt-2 text-muted" for="parent_id">📂 Dentro de</label>
+      <label class="pt-2 text-muted" for="parent_id">Dentro de</label>
       <select class="input py-1.5" id="parent_id" name="parent_id">
         <option value="">— nenhuma (página principal) —</option>
         {% for pid, label in parents %}<option value="{{ pid }}" {{ 'selected' if pid == page.parent_id }}>{{ label }}</option>{% endfor %}
       </select>
-      <label class="pt-2 text-muted" for="year">⏳ Linha do tempo</label>
+      <label class="pt-2 text-muted" for="year">Linha do tempo</label>
       <div class="flex gap-2">
         <input class="input w-32 py-1.5" id="year" name="year" type="number" value="{{ page.year if page.year is not none else '' }}" placeholder="Ano">
         <input class="input flex-1 py-1.5" name="date_label" value="{{ page.date_label }}" placeholder="Data no calendário do mundo (ex.: 3º dia do Degelo, Era das Cinzas)">
       </div>
       {% if timelines %}
-        <span class="pt-1 text-muted">🧵 Aparece em</span>
+        <span class="pt-1 text-muted">Aparece em</span>
         <div class="flex flex-wrap gap-2">
           {% for t in timelines %}
             <label class="flex cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1 has-[:checked]:border-accent has-[:checked]:bg-accent/10">
@@ -72,12 +72,12 @@
     {# ---------- Editor ---------- #}
     <div class="mt-6">
       <div class="sticky top-14 z-10 -mx-2 flex flex-wrap items-center gap-1 rounded-lg border border-line bg-surface/95 p-1 backdrop-blur">
-        {% for cmd, label, tip in [('h2','H2','Título'),('h3','H3','Subtítulo'),('b','<b>B</b>','Negrito'),('i','<i>I</i>','Itálico'),('ul','• Lista','Lista'),('todo','☑ Tarefa','Lista de tarefas'),('quote','❝ Citação','Citação'),('hr','―','Divisor'),('link','[[ ]] Link','Link para outra página')] %}
+        {% for cmd, label, tip in [('h2','H2','Título'),('h3','H3','Subtítulo'),('b','<b>B</b>','Negrito'),('i','<i>I</i>','Itálico'),('ul','• Lista','Lista'),('todo','☐ Tarefa','Lista de tarefas'),('quote','“ Citação','Citação'),('hr','―','Divisor'),('link','[[ ]] Link','Link para outra página')] %}
           <button type="button" data-md="{{ cmd }}" title="{{ tip }}" class="rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2">{{ label|safe }}</button>
         {% endfor %}
         <button type="button" id="table-btn" title="Inserir ou editar tabela (com o cursor dentro de uma tabela, edita ela)" class="rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2">▦ Tabela</button>
         <label class="cursor-pointer rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2" title="Inserir imagem (ou cole/arraste no texto)">
-          🖼️ Imagem <input type="file" accept="image/*" multiple class="hidden" id="inline-img">
+          {{ ri('picture') }} Imagem <input type="file" accept="image/*" multiple class="hidden" id="inline-img">
         </label>
         <div class="ml-auto flex rounded-md bg-surface-2 p-0.5 text-xs">
           <button type="button" data-tab="write" class="rounded px-2.5 py-1">Escrever</button>
@@ -222,7 +222,7 @@
     const ctrl = document.createElement('tr');
     for (let c = 0; c < cols; c++) {
       const th = document.createElement('td'); th.className = 'pb-1 text-center';
-      const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.title = 'Remover coluna';
+      const x = document.createElement('button'); x.type = 'button'; x.append(ui('x', 'size-3')); x.title = 'Remover coluna'; x.setAttribute('aria-label', 'Remover coluna');
       x.className = 'rounded px-1.5 text-xs text-faint hover:text-red-500';
       x.addEventListener('click', () => { if (cols > 1) { rows.forEach(r => r.splice(c, 1)); renderGrid(); } });
       th.append(x); ctrl.append(th);
@@ -240,7 +240,7 @@
       });
       const del = document.createElement('td'); del.className = 'pl-1';
       if (ri > 0) {
-        const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.title = 'Remover linha';
+        const x = document.createElement('button'); x.type = 'button'; x.append(ui('x', 'size-3')); x.title = 'Remover linha'; x.setAttribute('aria-label', 'Remover linha');
         x.className = 'rounded px-1.5 text-xs text-faint hover:text-red-500';
         x.addEventListener('click', () => { rows.splice(ri, 1); renderGrid(); });
         del.append(x);

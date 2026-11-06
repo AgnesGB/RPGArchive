@@ -17,12 +17,12 @@
       {% if a.image_url %}
         <img src="{{ a.image_url }}" alt="" loading="lazy" class="size-full object-cover transition duration-500 group-hover:scale-105" style="object-position: center {{ a.cover_pos }}%" referrerpolicy="no-referrer">
       {% else %}
-        <div class="grid size-full place-items-center text-5xl opacity-60" style="background: linear-gradient(135deg, color-mix(in oklab, var(--a500) 18%, transparent), transparent)">{{ a.icon or c.icon }}</div>
+        <div class="grid size-full place-items-center text-5xl opacity-80" style="background: linear-gradient(135deg, color-mix(in oklab, var(--a500) 18%, transparent), transparent)">{{ (a.icon or c.icon)|glyph(48) }}</div>
       {% endif %}
     </div>
     <div class="flex flex-1 flex-col p-4">
       <p class="text-[11px] uppercase tracking-wider text-faint">{{ c.single }}{% if a.year is not none %} · ano {{ a.year }}{% endif %}</p>
-      <h3 class="mt-0.5 truncate font-semibold text-ink group-hover:text-accent-ink">{{ a.icon or c.icon }} {{ a.title }}</h3>
+      <h3 class="mt-0.5 truncate font-semibold text-ink group-hover:text-accent-ink">{{ (a.icon or c.icon)|glyph }} {{ a.title }}</h3>
       <p class="mt-1 line-clamp-2 text-sm text-muted">{{ a.summary or ' ' }}</p>
     </div>
   </a>

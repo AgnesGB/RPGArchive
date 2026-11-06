@@ -7,6 +7,7 @@ from flask import (Blueprint, abort, flash, g, jsonify, redirect, render_templat
 from markupsafe import Markup
 
 from .access import get_page, get_world, page_icon, touch_world
+from .icons import glyph_text
 from .auth import login_required
 from .constants import CATEGORY_MAP, RELATION_KINDS, relation_options
 from .db import get_db
@@ -213,7 +214,7 @@ def _parent_choices(wid, exclude=None):
         for r in sorted(by_parent.get(pid, []), key=lambda r: r["title"].lower()):
             if r["id"] in exclude:
                 continue
-            out.append((r["id"], " " * depth + f"{page_icon(r)} {r['title']}"))
+            out.append((r["id"], " " * depth + f"{glyph_text(page_icon(r))} {r['title']}".lstrip()))
             walk(r["id"], depth + 1)
     walk(None, 0)
     return out

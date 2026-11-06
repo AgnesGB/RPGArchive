@@ -224,6 +224,8 @@ def _migrate(db):
     # Todo mundo antigo ganha o dono como membro
     db.execute("""INSERT OR IGNORE INTO world_members (world_id, user_id, role)
                   SELECT id, user_id, 'owner' FROM worlds""")
+    # o antigo ícone padrão (emoji do globo) vira "sem ícone" = ícone pixel padrão do site
+    db.execute("UPDATE worlds SET icon = '' WHERE icon IN ('🌍', '🌍️')")
 
     if db.execute("PRAGMA user_version").fetchone()[0] < 2:
         # v2: dados antigos viram uma "Árvore principal" e uma "Linha principal" por mundo

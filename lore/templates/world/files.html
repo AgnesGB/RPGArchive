@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-7xl px-6 py-8 lg:px-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl text-ink">🗃️ Acervo</h1>
+      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('chest', 32) }} Acervo</h1>
       <p class="mt-1 text-muted">Imagens, livros e documentos do mundo. Use-os em páginas, mapas mentais e mapas.</p>
     </div>
     <div class="flex rounded-lg border border-line p-0.5 text-sm">
@@ -17,7 +17,7 @@
   <form method="post" enctype="multipart/form-data" action="{{ url_for('files.upload', wid=world.id) }}" id="drop"
         class="mt-6 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-8 text-center transition">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="text-3xl">⬆️</div>
+    <span class="text-faint">{{ ui('upload', 'size-8') }}</span>
     <p class="text-ink">Arraste arquivos aqui ou
       <label class="cursor-pointer text-accent-ink underline">escolha no computador<input type="file" name="files" multiple class="hidden" onchange="this.form.submit()"></label></p>
     <p class="text-xs text-faint">Imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP · até 40 MB</p>
@@ -31,17 +31,17 @@
             {% if is_image(f.mime) %}
               <img src="{{ url_for('files.serve', fid=f.id) }}" alt="" loading="lazy" class="h-40 w-full object-cover">
             {% else %}
-              <div class="grid h-40 place-items-center bg-surface-2 text-5xl">{{ '📕' if f.mime == 'application/pdf' else '📘' if 'epub' in f.mime else '📄' }}</div>
+              <div class="grid h-40 place-items-center bg-surface-2">{{ ri('redbook' if f.mime == 'application/pdf' else 'book' if 'epub' in f.mime else 'parchment', 64) }}</div>
             {% endif %}
             <div class="p-3">
               <p class="truncate text-sm font-medium text-ink" title="{{ f.original_name }}">{{ f.original_name }}</p>
               <p class="text-xs text-faint">{{ f.size|filesize }}{% if f.uploader %} · {{ f.uploader }}{% endif %}</p>
             </div>
           </a>
-          <form method="post" action="{{ url_for('files.delete', wid=world.id, fid=f.id) }}" class="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100"
+          <form method="post" action="{{ url_for('files.delete', wid=world.id, fid=f.id) }}" class="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
                 data-confirm="Apagar “{{ f.original_name }}”? Cards e marcadores que usam este arquivo também somem." onsubmit="return confirm(this.dataset.confirm)">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="grid size-8 place-items-center rounded-full bg-black/60 text-white hover:bg-red-600" title="Apagar">✕</button>
+            <button class="grid size-8 place-items-center rounded-full bg-black/60 text-white hover:bg-red-600" title="Apagar arquivo" aria-label="Apagar {{ f.original_name }}">{{ ui('trash') }}</button>
           </form>
         </div>
       {% endfor %}

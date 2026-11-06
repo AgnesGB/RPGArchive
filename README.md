@@ -62,6 +62,16 @@ No editor: **R** gira 90° (Shift+R volta), o controle deslizante gira de 15 em 
 Os pacotes são de uso pessoal/gratuito e não permitem redistribuir os arquivos (veja `lore/static/mapkit/CREDITS.md`):
 não publique `assets/` nem `mapkit/` em repositório público.
 
+## Ícones
+
+- **Pixel-art** (navegação, categorias, tipos de card): sprite em `lore/static/icons/raven.png` + `raven.css`,
+  gerado do pack *Raven Fantasy Icons* (não versionado). Para trocar/acrescentar, edite `ICONS` em `scripts/build_icons.py`
+  (índice no spritesheet de 16 px) e rode `python scripts/build_icons.py "<pasta do pack>"`.
+  Nos templates: `{{ ri('castle') }}`, `{{ ri('map', 32) }}` (use 16/32/48/64 px: múltiplos inteiros mantêm o pixel nítido).
+- **Ações** (apagar, fechar, editar…): ícones de traço em `lore/static/icons/ui.svg` → `{{ ui('trash') }}`.
+- Ícone de página/mundo: emoji escolhido pela pessoa ou `ri:<nome>` (padrão da categoria) → `{{ valor|glyph }}`.
+- No JS (`lore/static/icons.js`): `ri()`, `ui()`, `glyph()`.
+
 ## Login com Google
 
 1. Em https://console.cloud.google.com/apis/credentials crie um **ID do cliente OAuth** do tipo *Aplicativo da Web*.

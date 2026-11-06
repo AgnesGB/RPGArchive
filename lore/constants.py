@@ -1,14 +1,14 @@
 SITE_NAME = "Aquele que Observa"
 
 CATEGORIES = [
-    {"key": "personagem", "label": "Personagens", "single": "Personagem", "icon": "🧙"},
-    {"key": "local", "label": "Locais", "single": "Local", "icon": "🏰"},
-    {"key": "faccao", "label": "Facções", "single": "Facção", "icon": "⚔️"},
-    {"key": "criatura", "label": "Criaturas", "single": "Criatura", "icon": "🐉"},
-    {"key": "item", "label": "Itens", "single": "Item", "icon": "💎"},
-    {"key": "evento", "label": "Eventos", "single": "Evento", "icon": "📜"},
-    {"key": "livro", "label": "Livros e registros", "single": "Livro / registro", "icon": "📖"},
-    {"key": "nota", "label": "Notas", "single": "Nota", "icon": "📝"},
+    {"key": "personagem", "label": "Personagens", "single": "Personagem", "icon": "ri:hood"},
+    {"key": "local", "label": "Locais", "single": "Local", "icon": "ri:castle"},
+    {"key": "faccao", "label": "Facções", "single": "Facção", "icon": "ri:shield"},
+    {"key": "criatura", "label": "Criaturas", "single": "Criatura", "icon": "ri:beast"},
+    {"key": "item", "label": "Itens", "single": "Item", "icon": "ri:gem"},
+    {"key": "evento", "label": "Eventos", "single": "Evento", "icon": "ri:star"},
+    {"key": "livro", "label": "Livros e registros", "single": "Livro / registro", "icon": "ri:book"},
+    {"key": "nota", "label": "Notas", "single": "Nota", "icon": "ri:quill"},
 ]
 CATEGORY_MAP = {c["key"]: c for c in CATEGORIES}
 

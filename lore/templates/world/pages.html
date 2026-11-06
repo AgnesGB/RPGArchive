@@ -7,7 +7,7 @@
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-display text-3xl text-ink">
-        {% if current_cat %}{{ current_cat.icon }} {{ current_cat.label }}{% else %}📚 Todas as páginas{% endif %}
+        {% if current_cat %}{{ current_cat.icon|glyph(32) }} {{ current_cat.label }}{% else %}{{ ri('tome', 32) }} Todas as páginas{% endif %}
       </h1>
       {% if q %}<p class="mt-1 text-muted">Resultados para “{{ q }}” · <a class="text-accent-ink hover:underline" href="{{ url_for('pages.index', wid=world.id, cat=cat) }}">limpar</a></p>{% endif %}
     </div>
@@ -28,7 +28,7 @@
       {% for a in pages %}
         {% set c = CATEGORY_MAP.get(a.category, CATEGORY_MAP.nota) %}
         <a href="{{ url_for('pages.view', wid=world.id, aid=a.id) }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2">
-          <span class="text-lg">{{ a.icon or c.icon }}</span>
+          <span class="text-lg">{{ (a.icon or c.icon)|glyph }}</span>
           <span class="font-medium text-ink">{{ a.title }}</span>
           <span class="hidden truncate text-sm text-muted md:block">{{ a.summary }}</span>
           <span class="chip ml-auto shrink-0">{{ c.single }}</span>

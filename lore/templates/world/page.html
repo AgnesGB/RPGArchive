@@ -5,33 +5,33 @@
 {% set c = CATEGORY_MAP.get(page.category, CATEGORY_MAP.nota) %}
 {{ m.cover(page.image_url, page.cover_pos, 'h-52 md:h-72') }}
 <article class="mx-auto max-w-5xl px-6 pb-20 lg:px-12">
-  <div class="relative -mt-14 grid size-24 place-items-center rounded-2xl border border-line bg-surface text-5xl shadow-xl">{{ page.icon or c.icon }}</div>
+  <div class="relative -mt-14 grid size-24 place-items-center rounded-2xl border border-line bg-surface text-5xl shadow-xl">{{ (page.icon or c.icon)|glyph(64) }}</div>
 
   <nav class="mt-4 flex flex-wrap items-center gap-1 text-sm text-muted">
-    <a class="hover:text-ink" href="{{ url_for('pages.index', wid=world.id, cat=page.category) }}">{{ c.icon }} {{ c.single }}</a>
+    <a class="hover:text-ink" href="{{ url_for('pages.index', wid=world.id, cat=page.category) }}">{{ c.icon|glyph }} {{ c.single }}</a>
     {% for b in breadcrumb %}
       <span class="text-faint">/</span>
-      <a class="hover:text-ink" href="{{ url_for('pages.view', wid=world.id, aid=b.id) }}">{{ b.icon or CATEGORY_MAP.get(b.category, CATEGORY_MAP.nota).icon }} {{ b.title }}</a>
+      <a class="hover:text-ink" href="{{ url_for('pages.view', wid=world.id, aid=b.id) }}">{{ page_icon(b)|glyph }} {{ b.title }}</a>
     {% endfor %}
   </nav>
 
   <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
     <h1 class="font-display text-4xl leading-tight text-ink md:text-5xl">{{ page.title }}</h1>
     <div class="flex gap-1">
-      <a href="{{ url_for('pages.new', wid=world.id, parent=page.id) }}" class="btn btn-ghost" title="Criar subpágina">+ Subpágina</a>
-      <a href="{{ url_for('pages.edit', wid=world.id, aid=page.id) }}" class="btn btn-outline">✎ Editar</a>
+      <a href="{{ url_for('pages.new', wid=world.id, parent=page.id) }}" class="btn btn-ghost" title="Criar subpágina">{{ ui('plus') }} Subpágina</a>
+      <a href="{{ url_for('pages.edit', wid=world.id, aid=page.id) }}" class="btn btn-outline">{{ ui('pencil') }} Editar</a>
       <form method="post" action="{{ url_for('pages.delete', wid=world.id, aid=page.id) }}"
             data-confirm="Apagar “{{ page.title }}”? As subpáginas sobem um nível." onsubmit="return confirm(this.dataset.confirm)">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="btn btn-ghost text-red-500" title="Apagar">🗑</button>
+        <button class="btn btn-ghost btn-icon btn-quiet-danger size-9" title="Apagar página" aria-label="Apagar página">{{ ui('trash') }}</button>
       </form>
     </div>
   </div>
   {% if page.summary %}<p class="mt-3 font-serif text-xl italic text-muted">{{ page.summary }}</p>{% endif %}
 
   <div class="mt-5 flex flex-wrap gap-2 border-b border-line pb-5 text-sm">
-    <span class="chip">{{ c.icon }} {{ c.single }}</span>
-    {% if page.year is not none %}<span class="chip">⏳ Ano {{ page.year }}{% if page.date_label %} · {{ page.date_label }}{% endif %}</span>{% endif %}
+    <span class="chip">{{ c.icon|glyph }} {{ c.single }}</span>
+    {% if page.year is not none %}<span class="chip">{{ ri('scroll') }} Ano {{ page.year }}{% if page.date_label %} · {{ page.date_label }}{% endif %}</span>{% endif %}
     {% for t in timelines_of %}<a href="{{ url_for('history.timelines', wid=world.id, t=t.id) }}#e{{ page.id }}" class="chip hover:text-ink"><span class="size-2 rounded-full" style="background: {{ t.color }}"></span>{{ t.name }}</a>{% endfor %}
     <span class="chip">Editado {{ page.updated_at[:10] }}{% if editor %} por {{ editor.name }}{% endif %}</span>
   </div>
@@ -58,10 +58,10 @@
             {% for r in relations %}
               <li class="group flex items-start gap-1 text-sm">
                 <span class="flex-1"><span class="text-muted">{{ r.phrase }}</span>
-                  <a class="text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=r.other.id) }}">{{ r.other.icon }} {{ r.other.title }}</a></span>
-                <form method="post" action="{{ url_for('pages.delete_relation', wid=world.id, aid=page.id, rid=r.id) }}" class="opacity-0 group-hover:opacity-100">
+                  <a class="text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=r.other.id) }}">{{ r.other.icon|glyph }} {{ r.other.title }}</a></span>
+                <form method="post" action="{{ url_for('pages.delete_relation', wid=world.id, aid=page.id, rid=r.id) }}" class="opacity-0 group-hover:opacity-100 focus-within:opacity-100">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="px-1 text-faint hover:text-red-500" title="Remover relação">✕</button>
+                  <button class="grid size-6 place-items-center rounded text-faint hover:bg-red-500/10 hover:text-red-500" title="Remover relação" aria-label="Remover relação">{{ ui('x', 'size-3.5') }}</button>
                 </form>
               </li>
             {% endfor %}
@@ -78,7 +78,7 @@
               </select>
               <input name="label" class="input hidden py-1.5 text-sm" placeholder="ex.: é mentor(a) de">
               <select name="other_id" class="input py-1.5 text-sm" required>
-                {% for o in others %}<option value="{{ o.id }}">{{ o.icon or CATEGORY_MAP.get(o.category, CATEGORY_MAP.nota).icon }} {{ o.title }}</option>{% endfor %}
+                {% for o in others %}<option value="{{ o.id }}">{{ page_icon(o)|glyph_text }} {{ o.title }}</option>{% endfor %}
               </select>
               <button class="btn btn-primary btn-sm w-full">Adicionar</button>
             </form>
@@ -93,9 +93,9 @@
             {% for l in board_links %}
               <li>
                 <span class="text-faint">{{ l.direction }}</span>
-                <a class="text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=l.other.id) }}">{{ l.other.icon }} {{ l.other.title }}</a>
+                <a class="text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=l.other.id) }}">{{ l.other.icon|glyph }} {{ l.other.title }}</a>
                 {% if l.label %}<span class="text-muted">“{{ l.label }}”</span>{% endif %}
-                <a class="block text-xs text-faint hover:text-ink" href="{{ url_for('boards.view', wid=world.id, bid=l.board_id) }}">em 🕸️ {{ l.board_name }}</a>
+                <a class="block text-xs text-faint hover:text-ink" href="{{ url_for('boards.view', wid=world.id, bid=l.board_id) }}">em {{ ri('web') }} {{ l.board_name }}</a>
               </li>
             {% endfor %}
           </ul>
@@ -107,7 +107,7 @@
         {% if backlinks %}
           <ul class="mt-2 space-y-1">
             {% for b in backlinks %}
-              <li><a class="text-sm text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=b.id) }}">{{ b.icon or CATEGORY_MAP.get(b.category, CATEGORY_MAP.nota).icon }} {{ b.title }}</a></li>
+              <li><a class="text-sm text-accent-ink hover:underline" href="{{ url_for('pages.view', wid=world.id, aid=b.id) }}">{{ page_icon(b)|glyph }} {{ b.title }}</a></li>
             {% endfor %}
           </ul>
         {% else %}

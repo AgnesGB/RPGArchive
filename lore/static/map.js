@@ -495,7 +495,7 @@
       if (res.status === 409) {
         M = normalize(j.data); version = j.version; undo.length = 0; redo.length = 0; syncGridForm(); redrawAll();
         toast('Outra pessoa salvou o mapa antes: carreguei a versão mais nova.', true); saveState('');
-      } else if (res.ok) { version = j.version; saveState(dirty ? 'editando…' : 'salvo ✓'); }
+      } else if (res.ok) { version = j.version; saveState(dirty ? 'editando…' : 'salvo'); }
       else { dirty = true; saveState('erro ao salvar'); toast(j.error || 'Não foi possível salvar o mapa.', true); }
     } catch { dirty = true; saveState('sem conexão'); }
     saving = false;
@@ -601,7 +601,7 @@
       if (p.label || p.article) { const t = el('div', 'tag', p.label || p.article.title); t.style.top = '52px'; n.append(t); }
     } else {
       const d = el('div', 'drop'); d.style.background = p.color;
-      d.append(el('span', '', p.file ? '📎' : (p.article ? p.article.icon : '')));
+      d.append(p.file ? ui('clip', 'size-3.5') : (p.article ? glyph(p.article.icon) : el('span')));
       n.append(d);
       if (p.label || p.article) { const t = el('div', 'tag', p.label || p.article.title); t.style.top = '34px'; n.append(t); }
     }
@@ -621,8 +621,8 @@
     side.replaceChildren();
     const isToken = p.kind === 'token';
     const head = el('div', 'flex items-center justify-between border-b border-line p-4');
-    head.append(el('p', 'font-display text-lg text-ink', isToken ? '🪙 Token' : '📍 Marcador'));
-    const x = el('button', 'btn btn-ghost btn-sm', '✕'); x.addEventListener('click', closeSide); head.append(x);
+    const h = el('p', 'flex items-center gap-2 font-display text-lg text-ink'); h.append(iconLabel(ri(isToken ? 'coin' : 'flag'), isToken ? 'Token' : 'Marcador')); head.append(h);
+    const x = el('button', 'btn btn-ghost btn-sm btn-icon'); x.append(ui('x')); x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.addEventListener('click', closeSide); head.append(x);
     side.append(head);
     const body = el('div', 'space-y-4 p-4'); side.append(body);
 
@@ -630,15 +630,15 @@
       const a = el('a', 'group block overflow-hidden rounded-xl border border-line hover:border-accent'); a.href = p.article.url;
       if (p.article.cover) { const i = el('img', 'h-32 w-full object-cover'); i.src = p.article.cover; i.referrerPolicy = 'no-referrer'; a.append(i); }
       const t = el('div', 'p-3');
-      t.append(el('p', 'font-semibold text-ink group-hover:text-accent-ink', `${p.article.icon} ${p.article.title} ↗`));
+      const tt = el('p', 'flex items-center gap-1.5 font-semibold text-ink group-hover:text-accent-ink'); tt.append(glyph(p.article.icon), el('span', 'flex-1', p.article.title), ui('external', 'size-3.5 text-faint')); t.append(tt);
       if (p.article.summary) t.append(el('p', 'mt-1 text-sm text-muted', p.article.summary));
       a.append(t); body.append(a);
     }
     if (p.file) {
       const a = el('a', 'flex items-center gap-3 rounded-xl border border-line p-3 hover:border-accent');
       a.href = p.file.url; a.target = '_blank'; a.rel = 'noopener';
-      a.append(el('span', 'text-3xl', p.file.is_image ? '🖼️' : '📕'));
-      const t = el('div', 'min-w-0'); t.append(el('p', 'truncate text-sm font-medium text-ink', p.file.name), el('p', 'text-xs text-accent-ink', 'abrir / baixar ↗'));
+      a.append(ri(p.file.is_image ? 'picture' : 'redbook', 32));
+      const t = el('div', 'min-w-0'); t.append(el('p', 'truncate text-sm font-medium text-ink', p.file.name), el('p', 'text-xs text-accent-ink', 'abrir / baixar'));
       a.append(t); body.append(a);
     }
     const field = (label, input) => { const w = el('label', 'block'); w.append(el('span', 'label', label), input); body.append(w); return input; };
@@ -647,7 +647,7 @@
     name.addEventListener('change', () => savePin(p, { label: name.value }).then(renderPins));
     const page = field(isToken ? 'Personagem (página)' : 'Página ligada', el('select', 'input py-1.5'));
     page.append(new Option('— nenhuma —', ''));
-    D.pages.forEach(pg => page.append(new Option(`${pg.icon} ${pg.title}`, pg.id, false, pg.id === p.article_id)));
+    D.pages.forEach(pg => page.append(new Option(`${glyphText(pg.icon)} ${pg.title}`.trim(), pg.id, false, pg.id === p.article_id)));
     page.addEventListener('change', () => savePin(p, { article_id: page.value ? Number(page.value) : null }).then(u => { renderPins(); openSide(u); }));
     const uploadTo = async (file, imagesOnly) => {
       const fd = new FormData(); fd.append('files', file);
@@ -665,9 +665,9 @@
     } else {
       const attach = el('div', 'space-y-2');
       const sel = el('select', 'input py-1.5'); sel.append(new Option('— nenhum —', ''));
-      D.files.forEach(f => sel.append(new Option(`${f.is_image ? '🖼️' : '📄'} ${f.name}`, f.id, false, f.id === p.file_id)));
+      D.files.forEach(f => sel.append(new Option(f.name, f.id, false, f.id === p.file_id)));
       sel.addEventListener('change', async () => { openSide(await savePin(p, { file_id: sel.value ? Number(sel.value) : null })); renderPins(); });
-      const up = el('label', 'btn btn-outline btn-sm w-full cursor-pointer', '⬆ Enviar livro / arquivo');
+      const up = el('label', 'btn btn-outline btn-sm w-full cursor-pointer'); up.append(iconLabel(ui('upload', 'size-3.5'), 'Enviar livro / arquivo'));
       const fi = el('input', 'hidden'); fi.type = 'file'; up.append(fi);
       fi.addEventListener('change', async () => { if (fi.files[0]) { openSide(await savePin(p, { file_id: await uploadTo(fi.files[0], false) })); renderPins(); } });
       attach.append(sel, up); field('Livro / arquivo anexado', attach);
@@ -675,15 +675,15 @@
     const colors = el('div', 'flex flex-wrap gap-2');
     D.colors.forEach(c => {
       const b = el('button', 'size-7 rounded-full ring-offset-2 ring-offset-surface border border-black/20' + (c === p.color ? ' ring-2 ring-[var(--a500)]' : ''));
-      b.style.background = c; b.addEventListener('click', () => savePin(p, { color: c }).then(u => { renderPins(); openSide(u); }));
+      b.style.background = c; b.title = 'Cor'; b.setAttribute('aria-label', 'Cor ' + c); b.addEventListener('click', () => savePin(p, { color: c }).then(u => { renderPins(); openSide(u); }));
       colors.append(b);
     });
     field('Cor', colors);
     const note = field('Anotações', el('textarea', 'input text-sm'));
     note.rows = 5; note.value = p.note; note.placeholder = isToken ? 'HP, condições, inventário…' : 'O que há neste lugar? Segredos, encontros…';
     note.addEventListener('change', () => savePin(p, { note: note.value }));
-    const del = el('button', 'btn btn-ghost btn-sm w-full text-red-500', '🗑 Apagar ' + (isToken ? 'token' : 'marcador'));
-    del.addEventListener('click', async () => { if (!confirm('Apagar?')) return; touched(); await api('DELETE', `${D.api}/${p.id}`); pins.delete(p.id); closeSide(); });
+    const del = el('button', 'btn btn-ghost btn-sm btn-quiet-danger w-full'); del.append(iconLabel(ui('trash', 'size-3.5'), 'Apagar ' + (isToken ? 'token' : 'marcador')));
+    del.addEventListener('click', async () => { if (!confirm(`Apagar ${isToken ? 'o token' : 'o marcador'}${p.label ? ' “' + p.label + '”' : ''}?`)) return; touched(); await api('DELETE', `${D.api}/${p.id}`); pins.delete(p.id); closeSide(); });
     body.append(del);
   }
   function startPlacing(kind) { placing = kind; vp.classList.add('placing'); $('place-hint').classList.remove('hidden'); }
@@ -737,7 +737,7 @@
         M.props.push(np); selectedProp = np.id; showPropSel(); drawObjects(); markDirty();
       } else { selectedProp = null; showPropSel(); drawObjects(); }
     } else if (!gridOn() && ['terrain', 'fill', 'walls'].includes(tool)) {
-      toast('Ative uma grade em ⚙️ Grade e fundo para pintar terreno e paredes.', true);
+      toast('Ative uma grade na ferramenta “Grade” para pintar terreno e paredes.', true);
     }
     clearUi();
   });

@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl text-ink">🕸️ Mapas mentais</h1>
+      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('web', 32) }} Mapas mentais</h1>
       <p class="mt-1 text-muted">Quadros livres para ligar páginas, ideias, imagens e arquivos.</p>
     </div>
     <form method="post" action="{{ url_for('boards.create', wid=world.id) }}" class="flex gap-2">
