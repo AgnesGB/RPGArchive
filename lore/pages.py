@@ -7,7 +7,7 @@ from flask import (Blueprint, abort, flash, g, jsonify, redirect, render_templat
 from markupsafe import Markup
 
 from .access import get_page, get_world, page_icon, touch_world
-from .icons import glyph_text
+from .icons import glyph_text, icon_from_form
 from .auth import login_required
 from .constants import CATEGORY_MAP, RELATION_KINDS, relation_options
 from .db import get_db
@@ -100,7 +100,7 @@ def _form_data(world, existing=None):
 
     return {
         "title": f.get("title", "").strip()[:200],
-        "icon": f.get("icon", "").strip()[:8],
+        "icon": icon_from_form(world["id"]),
         "category": category if category in CATEGORY_MAP else "nota",
         "summary": f.get("summary", "").strip()[:500],
         "content": f.get("content", ""),
@@ -245,6 +245,21 @@ def view(wid, aid):
         timelines_of=db.execute("""SELECT t.id, t.name, t.color FROM timelines t JOIN timeline_pages tp
                                    ON tp.timeline_id = t.id WHERE tp.article_id = ? ORDER BY t.id""", (aid,)).fetchall(),
     )
+
+
+@bp.post("/w/<int:wid>/p/<int:aid>/favorite")
+@login_required
+def favorite(wid, aid):
+    """Favorita / desfavorita a página (para a pessoa logada)."""
+    world = get_world(wid)
+    get_page(world, aid)
+    db = get_db()
+    if aid in g.favorite_ids:
+        db.execute("DELETE FROM page_favorites WHERE user_id = ? AND article_id = ?", (g.user["id"], aid))
+    else:
+        db.execute("INSERT OR IGNORE INTO page_favorites (user_id, article_id) VALUES (?, ?)", (g.user["id"], aid))
+    db.commit()
+    return redirect(url_for("pages.view", wid=wid, aid=aid))
 
 
 @bp.route("/w/<int:wid>/p/<int:aid>/edit", methods=["GET", "POST"])

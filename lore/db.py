@@ -48,6 +48,14 @@ CREATE TABLE IF NOT EXISTS world_invites (
     PRIMARY KEY (world_id, email)
 );
 
+-- páginas favoritadas por cada pessoa (aparecem no topo da barra lateral)
+CREATE TABLE IF NOT EXISTS page_favorites (
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, article_id)
+);
+
 CREATE TABLE IF NOT EXISTS files (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     world_id      INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,

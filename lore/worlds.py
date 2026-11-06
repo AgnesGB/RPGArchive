@@ -5,6 +5,7 @@ from .access import get_world
 from .auth import EMAIL_RE, login_required
 from .db import get_db
 from .files import UploadError, save_upload
+from .icons import icon_from_form
 
 bp = Blueprint("worlds", __name__)
 
@@ -34,12 +35,15 @@ def create_world():
         return redirect(url_for("worlds.list_worlds"))
     db = get_db()
     cur = db.execute(
-        "INSERT INTO worlds (user_id, name, description, icon) VALUES (?, ?, ?, ?)",
-        (g.user["id"], name, request.form.get("description", "").strip()[:2000],
-         request.form.get("icon", "").strip()[:8]),
+        "INSERT INTO worlds (user_id, name, description) VALUES (?, ?, ?)",
+        (g.user["id"], name, request.form.get("description", "").strip()[:2000]),
     )
     wid = cur.lastrowid
     db.execute("INSERT INTO world_members (world_id, user_id, role) VALUES (?, ?, 'owner')", (wid, g.user["id"]))
+    try:  # o mundo precisa existir antes de guardar uma imagem de ícone no acervo dele
+        db.execute("UPDATE worlds SET icon = ? WHERE id = ?", (icon_from_form(wid), wid))
+    except UploadError as e:
+        flash(f"Mundo criado, mas o ícone não foi salvo: {e}", "error")
     db.execute("INSERT INTO boards (world_id, name) VALUES (?, ?)", (wid, "Mapa mental principal"))
     db.commit()
     return redirect(url_for("worlds.world_home", wid=wid))
@@ -74,6 +78,7 @@ def world_settings(wid):
             return redirect(url_for("worlds.world_settings", wid=wid))
         cover = world["cover_url"]
         try:
+            icon = icon_from_form(wid)
             if request.files.get("cover") and request.files["cover"].filename:
                 cover = url_for("files.serve", fid=save_upload(wid, request.files["cover"], images_only=True))
         except UploadError as e:
@@ -90,7 +95,7 @@ def world_settings(wid):
             """UPDATE worlds SET name = ?, description = ?, icon = ?, cover_url = ?, cover_pos = ?,
                updated_at = CURRENT_TIMESTAMP WHERE id = ?""",
             (name, request.form.get("description", "").strip()[:2000],
-             request.form.get("icon", "").strip()[:8], cover, pos, wid),
+             icon, cover, pos, wid),
         )
         db.commit()
         flash("Mundo atualizado.", "success")

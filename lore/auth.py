@@ -192,3 +192,66 @@ def google_callback():
         user_id = user["id"]
     db.commit()
     return _login(user_id, session.get("after_login"))
+
+
+# ------------------------------------------------------------------ perfil
+AVATAR_DIR = "avatars"
+
+
+def _avatar_path(name):
+    from pathlib import Path
+    return Path(current_app.config["UPLOAD_DIR"]) / AVATAR_DIR / name
+
+
+def _delete_local_avatar(url):
+    prefix = url_for("auth.avatar", name="")
+    if url and url.startswith(prefix):
+        _avatar_path(url[len(prefix):]).unlink(missing_ok=True)
+
+
+@bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    import secrets
+    from .constants import IMAGE_TYPES
+    if request.method == "POST":
+        db = get_db()
+        name = request.form.get("name", "").strip()[:80]
+        if not name:
+            flash("O nome não pode ficar vazio.", "error")
+            return redirect(url_for("auth.profile"))
+        avatar = g.user["avatar_url"]
+        fs = request.files.get("avatar")
+        if fs and fs.filename:
+            ext = fs.filename.rsplit(".", 1)[-1].lower() if "." in fs.filename else ""
+            if ext not in IMAGE_TYPES:
+                flash("Envie uma imagem (PNG, JPG, GIF, WEBP ou AVIF).", "error")
+                return redirect(url_for("auth.profile"))
+            stored = f"{g.user['id']}_{secrets.token_hex(8)}.{ext}"
+            path = _avatar_path(stored)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fs.save(path)
+            _delete_local_avatar(avatar)
+            avatar = url_for("auth.avatar", name=stored)
+        elif request.form.get("remove_avatar"):
+            _delete_local_avatar(avatar)
+            avatar = None
+        db.execute("UPDATE users SET name = ?, avatar_url = ? WHERE id = ?", (name, avatar, g.user["id"]))
+        db.commit()
+        flash("Perfil atualizado.", "success")
+        return redirect(url_for("auth.profile"))
+    return render_template("auth/profile.html")
+
+
+@bp.route("/avatar/<name>")
+@login_required
+def avatar(name):
+    from flask import abort, send_file
+    if "/" in name or "\\" in name or name.startswith("."):
+        abort(404)
+    path = _avatar_path(name)
+    if not path.is_file():
+        abort(404)
+    resp = send_file(path, max_age=60 * 60 * 24 * 30)
+    resp.headers["Cache-Control"] = "private, max-age=2592000"
+    return resp

@@ -6,7 +6,7 @@ CATEGORIES = [
     {"key": "faccao", "label": "Facções", "single": "Facção", "icon": "ri:shield"},
     {"key": "criatura", "label": "Criaturas", "single": "Criatura", "icon": "ri:beast"},
     {"key": "item", "label": "Itens", "single": "Item", "icon": "ri:gem"},
-    {"key": "evento", "label": "Eventos", "single": "Evento", "icon": "ri:star"},
+    {"key": "evento", "label": "Eventos", "single": "Evento", "icon": "ri:fire"},
     {"key": "livro", "label": "Livros e registros", "single": "Livro / registro", "icon": "ri:book"},
     {"key": "nota", "label": "Notas", "single": "Nota", "icon": "ri:quill"},
 ]

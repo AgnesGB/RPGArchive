@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Meus mundos{% endblock %}
+{% from "_icon_picker.html" import icon_picker %}
 {% block body %}
 <main class="mx-auto max-w-6xl px-6 py-10">
   <div class="flex flex-wrap items-end justify-between gap-4">
@@ -14,14 +15,16 @@
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {% for w in worlds %}
         <a href="{{ url_for('worlds.world_home', wid=w.id) }}" class="group panel overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl">
-          <div class="relative h-36 overflow-hidden">
+          <div class="relative h-36">
+            <div class="absolute inset-0 overflow-hidden">
             {% if w.cover_url %}
               <img src="{{ w.cover_url }}" alt="" class="size-full object-cover transition duration-500 group-hover:scale-105" style="object-position: center {{ w.cover_pos }}%" referrerpolicy="no-referrer">
             {% else %}
               <div class="size-full" style="background: linear-gradient(135deg, var(--a500), color-mix(in oklab, var(--a700) 60%, black))"></div>
             {% endif %}
+            </div>
             {% if w.role != 'owner' %}<span class="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-white backdrop-blur">Compartilhado por {{ w.owner_name }}</span>{% endif %}
-            <span class="absolute -bottom-6 left-5 grid size-12 place-items-center rounded-xl border border-line bg-surface text-2xl shadow">{{ (w.icon or 'ri:world')|glyph(32) }}</span>
+            <span class="absolute -bottom-6 left-5 z-10 grid size-12 place-items-center overflow-hidden rounded-xl border border-line bg-surface text-2xl shadow">{{ (w.icon or 'ri:world')|glyph(32) }}</span>
           </div>
           <div class="p-5 pt-8">
             <h2 class="font-display text-lg text-ink group-hover:text-accent-ink">{{ w.name }}</h2>
@@ -33,7 +36,7 @@
     </div>
   {% else %}
     <div class="panel mt-8 grid place-items-center px-6 py-20 text-center">
-      {{ ri('orb', 64) }}
+      <img src="{{ url_for('static', filename='icons/brand-128.png') }}" alt="" class="size-20">
       <h2 class="mt-4 font-display text-xl text-ink">Nenhum mundo ainda</h2>
       <p class="mt-2 max-w-sm text-muted">Crie o primeiro mundo da sua campanha. Se alguém te convidar, ele aparece aqui também.</p>
       <button class="btn btn-primary mt-6" onclick="document.getElementById('new-world').showModal()">Criar meu primeiro mundo</button>
@@ -41,14 +44,14 @@
   {% endif %}
 </main>
 
-<dialog id="new-world" class="m-auto w-full max-w-md rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
-  <form method="post" action="{{ url_for('worlds.create_world') }}" class="space-y-4 p-6">
+<dialog id="new-world" class="m-auto w-full max-w-md overflow-visible rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('worlds.create_world') }}" class="space-y-4 p-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <h2 class="font-display text-xl text-ink">Novo mundo</h2>
     <div class="flex gap-3">
-      <div class="w-20">
-        <label class="label" for="w-icon">Ícone</label>
-        <input class="input text-center text-xl" id="w-icon" name="icon" value="" maxlength="8" placeholder="—" title="Um emoji (opcional). Vazio usa o ícone padrão.">
+      <div>
+        <span class="label">Ícone</span>
+        {{ icon_picker('', 'ri:world', 'size-16', 32) }}
       </div>
       <div class="flex-1">
         <label class="label" for="w-name">Nome</label>

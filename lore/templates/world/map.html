@@ -163,7 +163,7 @@
   'pins': pins, 'pages': page_list, 'files': file_list, 'colors': PIN_COLORS,
   'api': url_for('maps.pins', wid=world.id, mid=map.id), 'upload': url_for('files.upload', wid=world.id),
   'dataUrl': url_for('maps.data', wid=world.id, mid=map.id), 'data': mapdata, 'version': version,
-  'kit': url_for('static', filename='mapkit/'), 'image': image, 'startEdit': start_edit,
+  'kit': url_for('static', filename='mapkit/'), 'image': image, 'startEdit': start_edit, 'hasThumb': has_thumb,
   'mapId': map.id }|tojson }}</script>
 <script src="{{ url_for('static', filename='map.js') }}"></script>
 {% endblock %}

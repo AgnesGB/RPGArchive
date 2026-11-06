@@ -3,7 +3,7 @@
 <main class="relative overflow-hidden">
   <div class="pointer-events-none absolute inset-0 opacity-40" style="background: radial-gradient(ellipse at top, color-mix(in oklab, var(--a500) 35%, transparent), transparent 60%)"></div>
   <section class="relative mx-auto max-w-5xl px-6 pt-24 pb-16 text-center">
-    <div class="mx-auto mb-6 grid size-20 place-items-center rounded-full border border-line-strong bg-surface shadow-xl">{{ ri('orb', 48) }}</div>
+    <img src="{{ url_for('static', filename='icons/brand-256.png') }}" alt="" class="mx-auto mb-6 size-32 drop-shadow-2xl">
     <p class="mb-4 text-sm uppercase tracking-[0.35em] text-accent-ink">{{ SITE_NAME }}</p>
     <h1 class="font-display text-4xl font-semibold leading-tight text-ink sm:text-6xl">
       Tudo que acontece no seu mundo,<br><span class="text-accent-ink">alguém registra.</span>

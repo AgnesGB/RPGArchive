@@ -51,6 +51,29 @@ ICONS = {
     "chain": 158,      # link
     "sun": 989,
     "moon": 976,
+    # extras para o seletor de ícone de mundo/página
+    "tower": 37,
+    "mountain": 29,
+    "fire": 909,
+    "wizard": 1840,
+    "helmet": 1910,
+    "bow": 1513,
+    "staff": 1689,
+    "potion": 275,
+    "key": 178,
+    "ruby": 162,
+    "trophy": 14,
+    "scales": 123,
+    "anvil": 124,
+    "skull": 224,
+    "pirate": 672,
+    "mushroom": 247,
+    "rose": 262,
+    "clover": 667,
+    "heart": 658,
+    "holy": 669,
+    "fish": 352,
+    "bag": 157,
 }
 
 SIZE = 16

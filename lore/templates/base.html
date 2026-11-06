@@ -107,7 +107,7 @@
   <header class="sticky top-0 z-40 h-14 border-b border-line bg-bg/85 backdrop-blur">
     <div class="flex h-full items-center gap-3 px-4">
       <a href="{{ url_for('index') }}" class="flex shrink-0 items-center gap-2 font-display text-base font-semibold tracking-wide text-accent-ink sm:text-lg">
-        {{ ri('orb', 32) }} <span class="hidden sm:inline">{{ SITE_NAME }}</span>
+        <img src="{{ url_for('static', filename='icons/brand-128.png') }}" alt="" class="size-9 drop-shadow"> <span class="hidden sm:inline">{{ SITE_NAME }}</span>
       </a>
       {% if g.world %}
         <span class="text-faint">/</span>
@@ -117,13 +117,13 @@
         {% include "_theme_picker.html" %}
         {% if g.user %}
           <a href="{{ url_for('worlds.list_worlds') }}" class="btn btn-ghost hidden sm:inline-flex">Meus mundos</a>
-          <div class="flex items-center gap-2 pl-1" title="{{ g.user.email }}">
+          <a href="{{ url_for('auth.profile') }}" class="flex items-center gap-2 rounded-full pl-1" title="Meu perfil ({{ g.user.email }})" aria-label="Meu perfil">
             {% if g.user.avatar_url %}
-              <img src="{{ g.user.avatar_url }}" alt="" class="size-8 rounded-full ring-1 ring-line-strong" referrerpolicy="no-referrer">
+              <img src="{{ g.user.avatar_url }}" alt="" class="size-8 rounded-full object-cover ring-1 ring-line-strong hover:ring-accent" referrerpolicy="no-referrer">
             {% else %}
               <span class="grid size-8 place-items-center rounded-full bg-accent text-sm font-semibold text-on-accent">{{ g.user.name[:1]|upper }}</span>
             {% endif %}
-          </div>
+          </a>
           <form method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-ghost" title="Sair da conta">{{ ui('logout') }}<span class="hidden sm:inline">Sair</span></button>

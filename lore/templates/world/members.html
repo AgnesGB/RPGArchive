@@ -22,7 +22,7 @@
   <div class="panel divide-y divide-line">
     {% for p in members %}
       <div class="flex items-center gap-3 px-5 py-3">
-        {% if p.avatar_url %}<img src="{{ p.avatar_url }}" class="size-10 rounded-full" alt="" referrerpolicy="no-referrer">
+        {% if p.avatar_url %}<img src="{{ p.avatar_url }}" class="size-10 rounded-full object-cover" alt="" referrerpolicy="no-referrer">
         {% else %}<span class="grid size-10 place-items-center rounded-full bg-accent font-semibold text-on-accent">{{ p.name[:1]|upper }}</span>{% endif %}
         <div class="min-w-0 flex-1">
           <p class="font-medium text-ink">{{ p.name }}{% if p.id == g.user.id %} <span class="text-faint">(você)</span>{% endif %}</p>

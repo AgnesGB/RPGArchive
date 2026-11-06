@@ -21,9 +21,14 @@
   window.glyph = (v, size = 16, cls = '') => {
     v = v || '';
     if (v.startsWith('ri:')) return ri(v.slice(3), size, cls);
+    if (v.startsWith('img:')) {
+      const i = document.createElement('img'); i.src = v.slice(4); i.alt = ''; i.loading = 'lazy';
+      i.className = 'inline-block shrink-0 rounded-[22%] object-cover align-middle ' + cls;
+      i.style.width = i.style.height = size + 'px'; return i;
+    }
     const s = document.createElement('span'); s.className = cls; s.textContent = v; return s;
   };
-  window.glyphText = v => (v || '').startsWith('ri:') ? '' : (v || '');
+  window.glyphText = v => /^(ri|img):/.test(v || '') ? '' : (v || '');
   // botão/label com ícone + texto: iconLabel(ui('trash'), 'Apagar')
   window.iconLabel = (icon, text) => {
     const f = document.createDocumentFragment(); f.append(icon);
@@ -31,3 +36,27 @@
     return f;
   };
 })();
+
+// Seletor de ícone (templates/_icon_picker.html)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.icon-picker').forEach(root => {
+    const hidden = root.querySelector('input[name=icon]'), file = root.querySelector('input[name=icon_file]');
+    const pop = root.querySelector('.ip-pop'), preview = root.querySelector('.ip-preview'), emoji = root.querySelector('.ip-emoji');
+    const size = Number(root.dataset.size) || 48;
+    const show = () => preview.replaceChildren(glyph(hidden.value || root.dataset.default, size));
+    root.refresh = show;   // usado quando o padrão muda (ex.: categoria da página)
+    const set = v => { hidden.value = v; file.value = ''; show(); };
+    root.querySelector('.ip-trigger').addEventListener('click', () => pop.classList.toggle('hidden'));
+    root.querySelectorAll('[data-ip]').forEach(b => b.addEventListener('click', () => { set(b.dataset.ip); emoji.value = ''; pop.classList.add('hidden'); }));
+    emoji.addEventListener('input', () => { set(emoji.value.trim()); });
+    root.querySelector('.ip-upload').addEventListener('click', () => file.click());
+    file.addEventListener('change', () => {
+      const f = file.files[0]; if (!f) return;
+      hidden.value = '';
+      const i = glyph('img:' + URL.createObjectURL(f), size); preview.replaceChildren(i);
+      pop.classList.add('hidden');
+    });
+    document.addEventListener('click', e => { if (!root.contains(e.target)) pop.classList.add('hidden'); });
+    root.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.classList.contains('hidden')) { e.stopPropagation(); pop.classList.add('hidden'); root.querySelector('.ip-trigger').focus(); } });
+  });
+});

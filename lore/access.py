@@ -24,9 +24,17 @@ def get_world(wid, owner_only=False):
         (wid,),
     ).fetchall()
     g.page_tree = build_tree(pages)
+    # uma árvore por categoria: subpágina de outra categoria vira raiz na sua própria categoria
+    g.category_trees = {}
     g.category_counts = {}
     for p in pages:
         g.category_counts[p["category"]] = g.category_counts.get(p["category"], 0) + 1
+    for key in CATEGORY_MAP:
+        g.category_trees[key] = build_tree([p for p in pages if p["category"] == key])
+    g.favorites = db.execute(
+        """SELECT a.id, a.title, a.icon, a.category FROM page_favorites f JOIN articles a ON a.id = f.article_id
+           WHERE f.user_id = ? AND a.world_id = ? ORDER BY a.title COLLATE NOCASE""", (g.user["id"], wid)).fetchall()
+    g.favorite_ids = {f["id"] for f in g.favorites}
     g.page_count = len(pages)
     g.boards = db.execute("SELECT id, name FROM boards WHERE world_id = ? ORDER BY name COLLATE NOCASE", (wid,)).fetchall()
     g.maps = db.execute("SELECT id, name FROM maps WHERE world_id = ? ORDER BY name COLLATE NOCASE", (wid,)).fetchall()

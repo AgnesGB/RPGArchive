@@ -1,22 +1,24 @@
 {% extends "base.html" %}
-{% macro tree(nodes, depth=0) %}
+{# Árvore de páginas da barra lateral. key separa o estado aberto/fechado de cada seção (Todas, cada categoria). #}
+{% macro chev() %}<span class="grid w-3 shrink-0 place-items-center text-faint transition [details[open]>summary>&]:rotate-90">{{ ui('chevron', 'size-3') }}</span>{% endmacro %}
+{% macro tree(nodes, key, depth=1) %}
   {% for n in nodes %}
     {% set p = n.page %}
     {% set active = page is defined and page.id is defined and page.id == p.id %}
     {% if n.children %}
-      <details class="group/t" {{ 'open' if depth == 0 and loop.length < 8 }} data-tree="{{ p.id }}">
+      <details data-key="{{ key }}-{{ p.id }}">
         <summary class="nav-link cursor-pointer list-none {{ 'active' if active }}" style="padding-left: {{ 0.5 + depth * 0.9 }}rem">
-          <span class="grid w-3 shrink-0 place-items-center text-faint transition group-open/t:rotate-90">{{ ui('chevron', 'size-3') }}</span>
-          <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="flex min-w-0 flex-1 items-center gap-1.5">
-            <span>{{ page_icon(p)|glyph }}</span><span class="truncate">{{ p.title }}</span>
+          {{ chev() }}
+          <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="flex min-w-0 flex-1 items-center gap-1.5" {{ 'aria-current=page' if active }}>
+            {{ page_icon(p)|glyph }}<span class="truncate">{{ p.title }}</span>
           </a>
         </summary>
-        {{ tree(n.children, depth + 1) }}
+        {{ tree(n.children, key, depth + 1) }}
       </details>
     {% else %}
-      <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="nav-link {{ 'active' if active }}" style="padding-left: {{ 0.5 + depth * 0.9 }}rem">
+      <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="nav-link {{ 'active' if active }}" style="padding-left: {{ 0.5 + depth * 0.9 }}rem" {{ 'aria-current=page' if active }}>
         <span class="w-3 shrink-0"></span>
-        <span>{{ page_icon(p)|glyph }}</span><span class="truncate">{{ p.title }}</span>
+        {{ page_icon(p)|glyph }}<span class="truncate">{{ p.title }}</span>
       </a>
     {% endif %}
   {% endfor %}
@@ -41,26 +43,68 @@
         <a href="{{ url_for('worlds.members', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.members' }}">{{ ri('people') }} Pessoas <span class="ml-auto text-xs text-faint">{{ g.member_count }}</span></a>
       </nav>
 
-      <div>
+      <div id="sidebar-pages" data-world="{{ world.id }}">
         <div class="flex items-center justify-between pr-1">
           <p class="section-title">Páginas</p>
           <a href="{{ url_for('pages.new', wid=world.id) }}" class="grid size-6 place-items-center rounded text-faint hover:bg-surface-2 hover:text-ink" title="Nova página" aria-label="Nova página">{{ ui('plus') }}</a>
         </div>
-        <a href="{{ url_for('pages.index', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'pages.index' and not cat }}"><span class="w-3"></span>{{ ri('tome') }} Todas <span class="ml-auto text-xs text-faint">{{ g.page_count }}</span></a>
-        <div class="mt-1 space-y-0.5">
-          {{ tree(g.page_tree) }}
-        </div>
-        {% if not g.page_tree %}<p class="px-2 py-2 text-xs text-faint">Nenhuma página ainda.</p>{% endif %}
-      </div>
 
-      <div>
-        <p class="section-title">Categorias</p>
+        {% if g.favorites %}
+          <details data-key="fav" open class="mb-1">
+            <summary class="nav-link cursor-pointer list-none">{{ chev() }} {{ ri('star') }} Favoritas <span class="ml-auto text-xs text-faint">{{ g.favorites|length }}</span></summary>
+            {% for p in g.favorites %}
+              {% set active = page is defined and page.id is defined and page.id == p.id %}
+              <a href="{{ url_for('pages.view', wid=world.id, aid=p.id) }}" class="nav-link {{ 'active' if active }}" style="padding-left: 1.4rem">
+                <span class="w-3 shrink-0"></span>{{ page_icon(p)|glyph }}<span class="truncate">{{ p.title }}</span></a>
+            {% endfor %}
+          </details>
+        {% endif %}
+
+        <details data-key="all">
+          <summary class="nav-link cursor-pointer list-none {{ 'active' if ep == 'pages.index' and not cat }}">
+            {{ chev() }}
+            <a href="{{ url_for('pages.index', wid=world.id) }}" class="flex min-w-0 flex-1 items-center gap-1.5">{{ ri('tome') }} Todas</a>
+            <span class="text-xs text-faint">{{ g.page_count }}</span>
+          </summary>
+          {{ tree(g.page_tree, 'all') }}
+          {% if not g.page_tree %}<p class="py-1 pl-9 text-xs text-faint">Nenhuma página ainda.</p>{% endif %}
+        </details>
+
         {% for c in CATEGORIES %}
-          <a href="{{ url_for('pages.index', wid=world.id, cat=c.key) }}" class="nav-link {{ 'active' if cat is defined and cat == c.key }}">
-            {{ c.icon|glyph }} {{ c.label }} <span class="ml-auto text-xs text-faint">{{ g.category_counts.get(c.key, 0) }}</span>
-          </a>
+          {% set n = g.category_counts.get(c.key, 0) %}
+          <details data-key="cat-{{ c.key }}" data-cat="{{ c.key }}">
+            <summary class="nav-link cursor-pointer list-none {{ 'active' if cat is defined and cat == c.key }}">
+              {{ chev() }}
+              <a href="{{ url_for('pages.index', wid=world.id, cat=c.key) }}" class="flex min-w-0 flex-1 items-center gap-1.5 {{ 'text-faint' if not n }}">{{ c.icon|glyph }} {{ c.label }}</a>
+              <span class="text-xs text-faint">{{ n }}</span>
+            </summary>
+            {{ tree(g.category_trees[c.key], c.key) }}
+            <a href="{{ url_for('pages.new', wid=world.id, cat=c.key) }}" class="nav-link text-xs text-faint" style="padding-left: 1.4rem">
+              <span class="w-3 shrink-0"></span>{{ ui('plus', 'size-3.5') }} Nova página em {{ c.label|lower }}</a>
+          </details>
         {% endfor %}
       </div>
+      <script>
+      // lembra quais seções estão abertas (por mundo) e abre o caminho até a página atual
+      (() => {
+        const box = document.getElementById('sidebar-pages'), store = 'sidebar:' + box.dataset.world;
+        let st = {}; try { st = JSON.parse(localStorage.getItem(store) || '{}'); } catch {}
+        box.querySelectorAll('details[data-key]').forEach(d => {
+          if (d.dataset.key in st) d.open = st[d.dataset.key];
+          // só guarda o que a pessoa abriu/fechou (não a abertura automática até a página atual)
+          const sum = d.querySelector(':scope > summary'); let byUser = false;
+          ['click', 'keydown'].forEach(ev => sum.addEventListener(ev, e => { if (!e.target.closest('a')) byUser = true; }));
+          d.addEventListener('toggle', () => {
+            if (!byUser) return; byUser = false;
+            st[d.dataset.key] = d.open; try { localStorage.setItem(store, JSON.stringify(st)); } catch {}
+          });
+        });
+        {% if page is defined and page.category is defined %}
+        const cur = box.querySelector('details[data-cat="{{ page.category }}"] .nav-link.active');
+        for (let d = cur?.closest('details'); d && box.contains(d); d = d.parentElement.closest('details')) d.open = true;
+        {% endif %}
+      })();
+      </script>
 
       {% if g.is_owner %}
         <a href="{{ url_for('worlds.world_settings', wid=world.id) }}" class="nav-link text-muted {{ 'active' if ep == 'worlds.world_settings' }}">{{ ri('gear') }} Configurações</a>

@@ -843,6 +843,8 @@
     drawTerrainAll(); drawGrid(); drawObjects(); renderPins();
     buildPalette(); setTool('terrain'); setMode(D.startEdit ? 'edit' : 'play');
     window.addEventListener('resize', () => applyView());
+    // mapa novo (ou antigo sem miniatura): salva uma vez para a lista de mapas mostrar a prévia
+    if (!D.hasThumb) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);
   }
   if (img && !img.complete) img.addEventListener('load', start); else start();
 })();

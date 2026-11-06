@@ -1,5 +1,6 @@
 {% extends "world/_layout.html" %}
 {% import "world/_macros.html" as m %}
+{% from "_icon_picker.html" import icon_picker %}
 {% block title %}{{ 'Nova página' if is_new else 'Editar ' ~ page.title }}{% endblock %}
 {% block world_content %}
 <form method="post" enctype="multipart/form-data" id="page-form"
@@ -30,9 +31,8 @@
   <div class="mx-auto max-w-4xl px-6 pb-16 lg:px-12">
     {# ---------- Ícone + título ---------- #}
     <div class="relative -mt-12 flex items-end gap-3">
-      <input name="icon" value="{{ page.icon }}" maxlength="8" placeholder="—" title="Um emoji (opcional). Vazio usa o ícone da categoria."
-             class="size-24 rounded-2xl border border-line bg-surface text-center text-5xl shadow-xl outline-none placeholder:opacity-40 focus:border-accent" aria-label="Ícone da página">
-      <p class="pb-2 text-xs text-faint">Ícone: vazio usa o da categoria, ou cole um emoji (Win + . abre o seletor)</p>
+      {{ icon_picker(page.icon, CATEGORY_MAP.get(page.category, CATEGORY_MAP.nota).icon, 'size-24', 64, 'Ícone da página') }}
+      <p class="pb-2 text-xs text-faint">Clique para escolher um ícone, enviar uma imagem ou colar um emoji.<br>Sem escolha, usa o ícone da categoria.</p>
     </div>
     <input name="title" value="{{ page.title }}" required autofocus placeholder="Sem título"
            class="mt-5 w-full bg-transparent font-display text-4xl text-ink outline-none placeholder:text-faint md:text-5xl">
@@ -42,7 +42,7 @@
     {# ---------- Propriedades ---------- #}
     <div class="mt-6 grid gap-x-6 gap-y-3 border-y border-line py-4 text-sm sm:grid-cols-[9rem_1fr]">
       <label class="pt-2 text-muted" for="category">Categoria</label>
-      <select class="input py-1.5" id="category" name="category">
+      <select class="input py-1.5" id="category" name="category" onchange="const ip = document.querySelector('.icon-picker'); ip.dataset.default = {{ CATEGORY_MAP|tojson|forceescape }}[this.value].icon; ip.refresh?.()">
         {% for c in CATEGORIES %}<option value="{{ c.key }}" {{ 'selected' if c.key == page.category }}>{{ c.single }}</option>{% endfor %}
       </select>
       <label class="pt-2 text-muted" for="parent_id">Dentro de</label>

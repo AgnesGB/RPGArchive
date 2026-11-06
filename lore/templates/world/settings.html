@@ -1,5 +1,6 @@
 {% extends "world/_layout.html" %}
 {% import "world/_macros.html" as m %}
+{% from "_icon_picker.html" import icon_picker %}
 {% block title %}Configurações · {{ world.name }}{% endblock %}
 {% block world_content %}
 <div class="mx-auto max-w-2xl space-y-8 px-6 py-8">
@@ -9,9 +10,9 @@
     <div class="space-y-5 px-6 pb-6">
       <h1 class="font-display text-2xl text-ink">Configurações do mundo</h1>
       <div class="flex gap-3">
-        <div class="w-20">
-          <label class="label" for="icon">Ícone</label>
-          <input class="input text-center text-xl" id="icon" name="icon" value="{{ world.icon }}" maxlength="8">
+        <div>
+          <span class="label">Ícone</span>
+          {{ icon_picker(world.icon, 'ri:world', 'size-16', 32, inline=True) }}
         </div>
         <div class="flex-1">
           <label class="label" for="name">Nome</label>

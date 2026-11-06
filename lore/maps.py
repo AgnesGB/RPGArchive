@@ -176,6 +176,7 @@ def view(wid, mid):
         file_list=[file_dict(f) for f in files],
         mapdata=json.loads(m["data"] or "{}"), version=m["version"],
         start_edit=bool(request.args.get("edit")),
+        has_thumb=bool(m["thumb"]),
     )
 
 
