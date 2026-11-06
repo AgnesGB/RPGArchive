@@ -400,7 +400,8 @@
     } else if (node) {
       const c = cards.get(Number(node.dataset.id));
       select({ type: 'card', id: c.id });
-      node.parentElement.append(node);       // traz para frente
+      // traz para frente — só se precisar: mover o elemento no DOM a cada clique quebra o duplo clique
+      if (node.nextElementSibling) node.parentElement.append(node);
       const p = toWorld(e.clientX, e.clientY);
       action = { type: 'move', card: c, dx: p.x - c.x, dy: p.y - c.y, moved: false };
     } else if (edge) {
