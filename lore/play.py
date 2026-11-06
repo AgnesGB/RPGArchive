@@ -195,6 +195,10 @@ def dashboard(wid):
             "all_files": [f for f in db.execute("SELECT id, original_name, mime FROM files WHERE world_id = ? ORDER BY original_name COLLATE NOCASE", (wid,))
                           if ("file", f["id"]) not in in_handouts],
             "pending": db.execute("SELECT email FROM world_invites WHERE world_id = ? AND role = 'player'", (wid,)).fetchall(),
+            "encounters": encounters_for(wid), "enc_status": ENC_STATUS,
+            "every_map": db.execute("SELECT id, name FROM maps WHERE world_id = ? ORDER BY name COLLATE NOCASE", (wid,)).fetchall(),
+            "every_page": db.execute("SELECT id, title, icon, category FROM articles WHERE world_id = ? ORDER BY title COLLATE NOCASE", (wid,)).fetchall(),
+            "every_file": db.execute("SELECT id, original_name FROM files WHERE world_id = ? ORDER BY original_name COLLATE NOCASE", (wid,)).fetchall(),
         }
     return render_template("play/dashboard.html", world=world, party=party, gm=gm, shared=shared, handouts=handouts,
                            party_stats=party_stats, players=players, **ctx)
@@ -295,6 +299,207 @@ def remove_player(wid, uid):
     if uid == g.user["id"]:
         return redirect(url_for("worlds.list_worlds"))
     return redirect(url_for("play.dashboard", wid=wid) + "#jogadores")
+
+
+# --------------------------------------------------------------------------- encontros (só o mestre)
+
+ENC_STATUS = {"planned": "Planejado", "active": "Em jogo", "done": "Concluído"}
+ENC_TABLES = {"map": "maps", "page": "articles", "file": "files"}
+
+
+def _encounter(wid, eid):
+    e = get_db().execute("SELECT * FROM encounters WHERE id = ? AND world_id = ?", (eid, wid)).fetchone()
+    if e is None:
+        abort(404)
+    return e
+
+
+def _back_to(eid):
+    return redirect(url_for("play.dashboard", wid=request.view_args["wid"]) + f"#enc-{eid}")
+
+
+def _reveal(wid, kind, ref):
+    db = get_db()
+    if kind == "map":
+        db.execute("INSERT OR IGNORE INTO play_maps (world_id, map_id) VALUES (?, ?)", (wid, ref))
+    else:
+        db.execute("INSERT OR IGNORE INTO handouts (world_id, kind, ref_id, created_by) VALUES (?, ?, ?, ?)",
+                   (wid, kind, ref, g.user["id"]))
+
+
+def _hide(wid, kind, ref):
+    db = get_db()
+    if kind == "map":
+        db.execute("DELETE FROM play_maps WHERE world_id = ? AND map_id = ?", (wid, ref))
+    else:
+        db.execute("DELETE FROM handouts WHERE world_id = ? AND kind = ? AND ref_id = ?", (wid, kind, ref))
+
+
+def encounters_for(wid):
+    """Encontros com os itens já resolvidos (nome, ícone, link do planejamento e se já está na mesa)."""
+    db = get_db()
+    on_table = shared_map_ids(wid)
+    revealed = {(r["kind"], r["ref_id"]) for r in db.execute("SELECT kind, ref_id FROM handouts WHERE world_id = ?", (wid,))}
+    out = []
+    for e in db.execute("SELECT * FROM encounters WHERE world_id = ? ORDER BY status = 'done', position, id", (wid,)):
+        items = {"map": [], "page": [], "file": []}
+        for it in db.execute("SELECT kind, ref_id FROM encounter_items WHERE encounter_id = ? ORDER BY position, rowid", (e["id"],)):
+            k, ref = it["kind"], it["ref_id"]
+            if k == "map":
+                r = db.execute("SELECT id, name, thumb, file_id FROM maps WHERE id = ? AND world_id = ?", (ref, wid)).fetchone()
+                if r:
+                    items[k].append({"id": ref, "name": r["name"], "thumb": r["thumb"], "file_id": r["file_id"],
+                                     "url": url_for("maps.view", wid=wid, mid=ref), "live": ref in on_table})
+            elif k == "page":
+                r = db.execute("SELECT id, title, icon, category FROM articles WHERE id = ? AND world_id = ?", (ref, wid)).fetchone()
+                if r:
+                    items[k].append({"id": ref, "name": r["title"], "icon": page_icon(r),
+                                     "url": url_for("pages.view", wid=wid, aid=ref), "live": ("page", ref) in revealed})
+            else:
+                r = db.execute("SELECT * FROM files WHERE id = ? AND world_id = ?", (ref, wid)).fetchone()
+                if r:
+                    f = file_dict(r)
+                    items[k].append({"id": ref, "name": f["name"], "is_image": f["is_image"], "url": f["url"],
+                                     "live": ("file", ref) in revealed})
+        n = sum(len(v) for v in items.values())
+        out.append({"e": e, "items": items, "count": n, "live": sum(i["live"] for v in items.values() for i in v),
+                    "maps_off": [i["id"] for i in items["map"] if not i["live"]]})
+    return out
+
+
+@bp.post("/w/<int:wid>/play/encounters")
+@login_required
+def new_encounter(wid):
+    world = _main_world(wid)
+    _gm(world)
+    db = get_db()
+    name = request.form.get("name", "").strip()[:120] or "Novo encontro"
+    pos = db.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM encounters WHERE world_id = ?", (wid,)).fetchone()[0]
+    eid = db.execute("INSERT INTO encounters (world_id, name, position) VALUES (?, ?, ?)", (wid, name, pos)).lastrowid
+    db.commit()
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>")
+@login_required
+def edit_encounter(wid, eid):
+    world = _main_world(wid)
+    _gm(world)
+    e = _encounter(wid, eid)
+    f = request.form
+    status = f.get("status") if f.get("status") in ENC_STATUS else e["status"]
+    get_db().execute("UPDATE encounters SET name = ?, notes = ?, status = ? WHERE id = ?",
+                     ((f.get("name", e["name"]).strip()[:120] or e["name"]), f.get("notes", e["notes"])[:20000], status, eid))
+    get_db().commit()
+    if request.headers.get("Accept") == "application/json":
+        return jsonify(ok=True)
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/delete")
+@login_required
+def delete_encounter(wid, eid):
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    get_db().execute("DELETE FROM encounters WHERE id = ?", (eid,))
+    get_db().commit()
+    flash("Encontro apagado (mapas e páginas continuam no planejamento).", "success")
+    return redirect(url_for("play.dashboard", wid=wid) + "#encontros")
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/move")
+@login_required
+def move_encounter(wid, eid):
+    """Sobe (-1) ou desce (+1) o encontro na lista."""
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    db = get_db()
+    ids = [r[0] for r in db.execute("SELECT id FROM encounters WHERE world_id = ? ORDER BY position, id", (wid,))]
+    i, d = ids.index(eid), (1 if request.form.get("dir") == "down" else -1)
+    if 0 <= i + d < len(ids):
+        ids[i], ids[i + d] = ids[i + d], ids[i]
+        for pos, x in enumerate(ids):
+            db.execute("UPDATE encounters SET position = ? WHERE id = ?", (pos, x))
+        db.commit()
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/items")
+@login_required
+def add_encounter_item(wid, eid):
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    db = get_db()
+    kind, ref = request.form.get("kind"), request.form.get("ref_id", type=int)
+    table = ENC_TABLES.get(kind)
+    if table and ref and db.execute(f"SELECT 1 FROM {table} WHERE id = ? AND world_id = ?", (ref, wid)).fetchone():
+        pos = db.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM encounter_items WHERE encounter_id = ?", (eid,)).fetchone()[0]
+        db.execute("INSERT OR IGNORE INTO encounter_items (encounter_id, kind, ref_id, position) VALUES (?, ?, ?, ?)",
+                   (eid, kind, ref, pos))
+        db.commit()
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/items/remove")
+@login_required
+def remove_encounter_item(wid, eid):
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    get_db().execute("DELETE FROM encounter_items WHERE encounter_id = ? AND kind = ? AND ref_id = ?",
+                     (eid, request.form.get("kind"), request.form.get("ref_id", type=int)))
+    get_db().commit()
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/reveal")
+@login_required
+def reveal_encounter_item(wid, eid):
+    """Põe um item do encontro na mesa (mapa) ou revela (página/arquivo); hide=1 esconde de novo."""
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    kind, ref = request.form.get("kind"), request.form.get("ref_id", type=int)
+    if get_db().execute("SELECT 1 FROM encounter_items WHERE encounter_id = ? AND kind = ? AND ref_id = ?",
+                        (eid, kind, ref)).fetchone():
+        (_hide if request.form.get("hide") else _reveal)(wid, kind, ref)
+        get_db().commit()
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/start")
+@login_required
+def start_encounter(wid, eid):
+    """Começar: põe todos os mapas do encontro na mesa (páginas e arquivos esperam ser encontrados)."""
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    db = get_db()
+    for (ref,) in db.execute("SELECT ref_id FROM encounter_items WHERE encounter_id = ? AND kind = 'map'", (eid,)).fetchall():
+        _reveal(wid, "map", ref)
+    db.execute("UPDATE encounters SET status = 'active' WHERE id = ?", (eid,))
+    db.commit()
+    flash("Encontro começou: os mapas dele estão na mesa.", "success")
+    return _back_to(eid)
+
+
+@bp.post("/w/<int:wid>/play/encounters/<int:eid>/finish")
+@login_required
+def finish_encounter(wid, eid):
+    """Encerrar: tira os mapas do encontro da mesa. O que foi revelado continua com os jogadores."""
+    world = _main_world(wid)
+    _gm(world)
+    _encounter(wid, eid)
+    db = get_db()
+    for (ref,) in db.execute("SELECT ref_id FROM encounter_items WHERE encounter_id = ? AND kind = 'map'", (eid,)).fetchall():
+        _hide(wid, "map", ref)
+    db.execute("UPDATE encounters SET status = 'done' WHERE id = ?", (eid,))
+    db.commit()
+    flash("Encontro concluído: os mapas dele saíram da mesa.", "success")
+    return _back_to(eid)
 
 
 # --------------------------------------------------------------------------- mapa da mesa (jogadores)

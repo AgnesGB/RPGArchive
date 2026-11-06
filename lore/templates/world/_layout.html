@@ -26,22 +26,44 @@
 {% block body %}
 {% set ep = request.endpoint %}
 <style>
-  /* barra lateral recolhível (Ctrl+\ ou o botão « »); o estado fica salvo no navegador */
+  /* barra lateral recolhível (Ctrl+\ ou o adesivo na borda); o estado fica salvo no navegador */
   html.sb-collapsed #world-aside { display: none; }
-  #sb-open { display: none; }
-  html.sb-collapsed #sb-open { display: grid; }
-  #world-aside { transition: opacity .15s; }
+  /* adesivo colado na borda da folha: fica na beirada da barra lateral, ou na beirada da tela quando recolhida */
+  #sb-tab {
+    position: fixed; z-index: 35; top: 5.25rem; left: 0;
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    width: 1.6rem; padding: .55rem 0 .8rem .1rem;
+    border-radius: 0 .55rem .55rem 0;
+    background: var(--color-accent); color: var(--color-on-accent);
+    box-shadow: 1px 2px 0 rgb(0 0 0 / .28), 0 6px 14px -4px rgb(0 0 0 / .45);
+    transform: rotate(-3deg); transform-origin: 0 50%;
+    transition: left .2s ease, width .15s ease, transform .15s ease;
+  }
+  #sb-tab:hover, #sb-tab:focus-visible { width: 2rem; transform: rotate(0); }
+  /* cantinho dobrado do adesivo */
+  #sb-tab::after {
+    content: ''; position: absolute; right: 0; bottom: 0; width: .6rem; height: .6rem;
+    border-radius: 0 0 .55rem 0;
+    background: linear-gradient(to top left, var(--color-bg) 50%, color-mix(in oklab, var(--color-accent) 55%, white) 50%);
+  }
+  /* fita: um pedacinho translúcido "colando" o adesivo na folha */
+  #sb-tab::before {
+    content: ''; position: absolute; left: -.15rem; top: -.35rem; width: 1.1rem; height: .6rem;
+    background: rgb(255 255 255 / .28); transform: rotate(-8deg); border-radius: 1px;
+  }
+  #sb-tab .sb-arrow { font-size: .8rem; line-height: 1; font-weight: 700; }
+  #sb-tab .sb-arrow::before { content: '«'; }
+  html.sb-collapsed #sb-tab .sb-arrow::before { content: '»'; }
+  @media (min-width: 768px) { html:not(.sb-collapsed) #sb-tab { left: 18rem; } }
+  @media (max-width: 767px) { html:not(.sb-collapsed) #sb-tab { display: none; } }
 </style>
 <script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sb-collapsed'); } catch {}</script>
-<button id="sb-open" type="button" class="fixed left-2 top-[4.25rem] z-30 size-8 place-items-center rounded-lg border border-line bg-surface text-muted shadow-md hover:text-ink"
-        title="Mostrar barra lateral (Ctrl+\)" aria-label="Mostrar barra lateral">»</button>
+<button id="sb-tab" type="button" title="Mostrar/recolher barra lateral (Ctrl+\)" aria-label="Mostrar ou recolher a barra lateral">
+  {{ ri('tome') }}<span class="sb-arrow" aria-hidden="true"></span>
+</button>
 <div class="flex min-h-[calc(100vh-3.5rem)] flex-col md:flex-row">
   <aside id="world-aside" class="shrink-0 border-b border-line bg-surface/50 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
     <div class="space-y-5 p-3">
-      <div class="-mb-3 flex justify-end">
-        <button id="sb-close" type="button" class="grid size-7 place-items-center rounded-md text-faint hover:bg-surface-2 hover:text-ink"
-                title="Recolher barra lateral (Ctrl+\)" aria-label="Recolher barra lateral">«</button>
-      </div>
       <form action="{{ url_for('pages.index', wid=world.id) }}" class="relative">
         <input class="input py-1.5 pl-8 text-sm" name="q" placeholder="Buscar páginas…" aria-label="Buscar páginas" value="{{ q if q is defined else '' }}">
         <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">{{ ui('search') }}</span>
@@ -147,8 +169,7 @@
 (() => {
   const set = v => { document.documentElement.classList.toggle('sb-collapsed', v); try { localStorage.setItem('sidebar-collapsed', v ? '1' : ''); } catch {}
     dispatchEvent(new Event('resize')); };
-  document.getElementById('sb-close').addEventListener('click', () => set(true));
-  document.getElementById('sb-open').addEventListener('click', () => set(false));
+  document.getElementById('sb-tab').addEventListener('click', () => set(!document.documentElement.classList.contains('sb-collapsed')));
   addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); set(!document.documentElement.classList.contains('sb-collapsed')); } });
 })();
 </script>

@@ -57,6 +57,24 @@ CREATE TABLE IF NOT EXISTS handouts (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (world_id, kind, ref_id)
 );
+-- Encontros/cenas planejados pelo mestre (só o mestre vê): mapas, páginas e arquivos de cada um
+CREATE TABLE IF NOT EXISTS encounters (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    notes      TEXT NOT NULL DEFAULT '',
+    status     TEXT NOT NULL DEFAULT 'planned',   -- 'planned' | 'active' | 'done'
+    position   INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_encounters_world ON encounters(world_id);
+CREATE TABLE IF NOT EXISTS encounter_items (
+    encounter_id INTEGER NOT NULL REFERENCES encounters(id) ON DELETE CASCADE,
+    kind         TEXT NOT NULL,                   -- 'map' | 'page' | 'file'
+    ref_id       INTEGER NOT NULL,
+    position     INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (encounter_id, kind, ref_id)
+);
 
 CREATE TABLE IF NOT EXISTS world_invites (
     world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,

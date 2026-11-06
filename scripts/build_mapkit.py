@@ -1,11 +1,14 @@
 """Gera o kit do editor de mapas (lore/static/mapkit) a partir dos pacotes em assets/.
 
 Uso:  .venv\\Scripts\\pip install -r requirements-dev.txt
-      .venv\\Scripts\\python scripts\\build_mapkit.py
+      .venv\\Scripts\\python scripts\\build_mapkit.py               (kit completo, uso pessoal)
+      .venv\\Scripts\\python scripts\\build_mapkit.py --comercial   (só pacotes que permitem uso comercial)
+      ... --out <pasta>   gera em outra pasta (ex.: para comparar sem mexer no kit do site)
 
 Recorta tiles de terreno, separa cada objeto dos spritesheets, monta peças de parede compostas
 e escreve manifest.json. Só precisa rodar de novo se mudar os assets.
 """
+import argparse
 import json
 import re
 import shutil
@@ -30,6 +33,25 @@ PLAT = "novos/Multi_Platformer_Tileset_Free/Multi_Platformer_Tileset_Free/GrassL
 TINY = "novos/Tiny RPG Character Asset Pack 01 v2.0 -Free Soldier&Orc/Tiny RPG Character Asset Pack 01 v2.0 -Free Soldier&Orc/Characters(100x100 split)"
 CRYSTALS = "catalisadores"
 
+# Pacotes cuja licença NÃO permite (ou ainda não confirmamos que permite) uso comercial.
+# No modo --comercial tudo que vem deles fica de fora.
+NON_COMMERCIAL = {
+    CUTE: "Cute Fantasy Free (Kenmi): versão grátis não comercial; a premium libera",
+    ICONS: "Cute Fantasy Icons Free (Kenmi): versão grátis não comercial; a premium libera",
+    FAN: "The Fan-tasy Tileset (Free): licença da versão grátis não confirmada",
+    FARM: "Farm RPG Tiny Asset Pack: licença da versão grátis não confirmada",
+    FREEPACK: "FreeEnvironment: origem e licença desconhecidas",
+    CRYSTALS: "Catalisadores (cristais): origem desconhecida",
+}
+COMMERCIAL = False   # ligado por --comercial
+skipped = Counter()  # pacote bloqueado -> quantos recortes ficaram de fora
+
+
+def blocked(path):
+    if not COMMERCIAL:
+        return None
+    return next((pack for pack in NON_COMMERCIAL if str(path).startswith(pack)), None)
+
 # ---------------------------------------------------------------- terrenos (chave, rótulo, arquivo, recorte)
 TILE_TERRAINS = [
     ("grama", "Grama", f"{FAN}/Ground Tileset/Tileset_Ground.png", (0, 128, 16, 16)),
@@ -53,6 +75,20 @@ TILE_TERRAINS = [
     ("masmorra_6", "Masmorra irregular", f"{X72}/floor_6.png", None),
     ("acido", "Ácido / pântano", f"{DP}/Tilesets/Tileset_Dungeon.png", (256, 128, 32, 32)),
 ]
+# No modo comercial, terrenos de pacotes bloqueados ganham um substituto com a MESMA chave,
+# para mapas já pintados e o seletor de "terreno base" continuarem funcionando.
+TERRAIN_FALLBACK = {
+    "grama": (f"{PTD}/TX Tileset Grass.png", (0, 0, 32, 32)),
+    "grama_lisa": (f"{PTD}/TX Tileset Grass.png", (32, 0, 32, 32)),
+    "grama_viva": (f"{PTD}/TX Tileset Grass.png", (64, 0, 32, 32)),
+    "terra": ("#7a5a3a", "#6a4d31"),
+    "caminho": ("#a88a5f", "#957a52"),
+    "trilha": ("#b39668", "#a08559"),
+    "areia": ("#e6d39a", "#d8c486"),
+    "agua": ("#3f7fbf", "#3672ad"),
+    "agua_calma": ("#5a96c9", "#4f89bb"),
+    "lago": ("#2f6fa8", "#285f91"),
+}
 COLOR_TERRAINS = [
     ("floresta", "Floresta", "#2f5d34", "#244a29"),
     ("montanha", "Montanha", "#7b7368", "#5f5850"),
@@ -112,6 +148,11 @@ def label_for(path):
 
 
 def load(path, box=None):
+    """Abre um recorte de assets/. No modo --comercial devolve None se o pacote for bloqueado."""
+    pack = blocked(path)
+    if pack:
+        skipped[pack] += 1
+        return None
     im = Image.open(SRC / path).convert("RGBA")
     if box:
         x, y, w, h = box
@@ -230,6 +271,14 @@ def first_frame(name):
 
 
 def main():
+    global COMMERCIAL, OUT
+    ap = argparse.ArgumentParser(description="Gera o kit do editor de mapas.")
+    ap.add_argument("--comercial", action="store_true", help="usa só pacotes que permitem uso comercial")
+    ap.add_argument("--out", type=Path, help="pasta de saída (padrão: lore/static/mapkit)")
+    args = ap.parse_args()
+    COMMERCIAL = args.comercial
+    if args.out:
+        OUT = args.out.resolve()
     if OUT.exists():
         shutil.rmtree(OUT)
     for d in ("terrain", "props", "walls"):
@@ -238,6 +287,14 @@ def main():
 
     for key, label, path, box in TILE_TERRAINS:
         im = load(path, box)
+        if im is None:
+            fb = TERRAIN_FALLBACK.get(key)
+            if fb and fb[0].startswith("#"):
+                manifest["terrains"].append({"key": key, "label": label, "file": None, "color": fb[0], "color2": fb[1]})
+                continue
+            im = load(*fb) if fb else None
+            if im is None:
+                continue
         im.save(OUT / "terrain" / f"{key}.png")
         avg = im.convert("RGB").resize((1, 1), Image.BOX).getpixel((0, 0))
         manifest["terrains"].append({"key": key, "label": label, "file": f"terrain/{key}.png",
@@ -246,12 +303,16 @@ def main():
         manifest["terrains"].append({"key": key, "label": label, "file": None, "color": c1, "color2": c2})
     for key, (path, box) in WALL_TEXTURES.items():
         im = load(path, box)
+        if im is None:
+            continue
         im.save(OUT / "walls" / f"{key}.png")
         manifest["walls"][key] = {"file": f"walls/{key}.png", "px": im.width}
 
     used = set()
 
     def add(cat, im, name, label, unit=16):
+        if im is None:
+            return
         bbox = im.getbbox()
         if not bbox:
             return
@@ -266,6 +327,8 @@ def main():
 
     def add_sheet(cat, path, prefix, label, unit, cell=None, min_area=40, gap=2, auto=True, groups=()):
         im = load(path)
+        if im is None:
+            return
         boxes = grid_components(im, cell, auto, groups) if cell else free_components(im, min_area, gap)
         for i, b in enumerate(boxes, 1):
             add(cat, im.crop(b), f"{prefix}_{i}", f"{label} {i}", unit)
@@ -339,6 +402,9 @@ def main():
 
     # ---- Catalisadores (cristais)
     for f in sorted((SRC / CRYSTALS).glob("*.png")):
+        if blocked(CRYSTALS):
+            skipped[CRYSTALS] += 1
+            continue
         nome = re.sub(r"^\d+_", "", f.stem).replace("_", " ").capitalize()
         nome = nome.replace("Agua", "Água").replace("Ambar", "Âmbar")
         add("Catalisadores", Image.open(f).convert("RGBA"), f.stem, nome, 32)
@@ -380,7 +446,7 @@ def main():
         add("Itens", W(n), n, n.replace("flask_", "frasco ").replace("weapon_", "").replace("_", " "))
     sheet = load(f"{ICONS}/32x32/Free_Icons_all_32x32.png")
     n = 0
-    for y in range(0, sheet.height, 32):
+    for y in range(0, sheet.height if sheet else 0, 32):
         for x in range(0, sheet.width, 32):
             tile = sheet.crop((x, y, x + 32, y + 32))
             if tile.getbbox():
@@ -388,17 +454,36 @@ def main():
                 add("Itens", tile, f"icone_{n}", f"Item {n}", 32)
 
     (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
+    packs = [
+        (CUTE, "Cute Fantasy (Free) e Cute Fantasy Icons — Kenmi"),
+        (DP, "Dungeons and Pixels — Free Demo — Vladimir Ivanov"),
+        (FAN, "The Fan-tasy Tileset (Free)"),
+        (FARM, "Farm RPG FREE 16x16 - Tiny Asset Pack"),
+        (X72, "0x72 Dungeon Tileset II — 0x72 (CC0)"),
+        (PTD, "Pixel Art Top Down - Basic — Cainos"),
+        (FREEPACK, "FreeEnvironment"),
+        (PLAT, "Multi Platformer Tileset — Shackhal (CC0)"),
+        (TINY, "Tiny RPG Character Asset Pack — Zerie"),
+    ]
+    if not COMMERCIAL:
+        packs.append((CRYSTALS, "Catalisadores (cristais)"))
     (OUT / "CREDITS.md").write_text(
         "# Créditos dos assets do editor de mapas\n\n"
-        "Recortados de pacotes gratuitos por `scripts/build_mapkit.py`, para uso pessoal (não comercial):\n\n"
-        "- Cute Fantasy (Free) e Cute Fantasy Icons — Kenmi\n- Dungeons and Pixels — Free Demo — Vladimir Ivanov\n"
-        "- The Fan-tasy Tileset (Free)\n- Farm RPG FREE 16x16 - Tiny Asset Pack\n- 0x72 Dungeon Tileset II — 0x72\n"
-        "- Pixel Art Top Down - Basic — Cainos\n- FreeEnvironment\n- Multi Platformer Tileset — Shackhal (CC0)\n"
-        "- Tiny RPG Character Asset Pack — Zerie\n\n"
-        "Os pacotes não permitem redistribuir os arquivos: não publique esta pasta em repositório público.\n",
+        + ("Kit gerado em **modo comercial** (`--comercial`): só pacotes cuja licença permite uso comercial.\n\n"
+           if COMMERCIAL else
+           "Recortados de pacotes gratuitos por `scripts/build_mapkit.py`, para uso pessoal (não comercial).\n"
+           "Kit para uso comercial: `python scripts/build_mapkit.py --comercial`.\n\n")
+        + "".join(f"- {name}\n" for pack, name in packs if not blocked(pack))
+        + "\nOs pacotes não permitem redistribuir os arquivos: não publique esta pasta em repositório público.\n",
         encoding="utf-8")
     print(f"{len(manifest['terrains'])} terrenos, {len(manifest['props'])} objetos:",
           dict(Counter(p["category"] for p in manifest["props"])))
+    if COMMERCIAL:
+        print("\nModo comercial: ficaram de fora")
+        for pack, why in NON_COMMERCIAL.items():
+            print(f"  - {why}  ({skipped[pack]} recortes)")
+        print("Terrenos trocados por substitutos (mesma chave): "
+              + ", ".join(k for k, _, path, _ in TILE_TERRAINS if blocked(path) and k in TERRAIN_FALLBACK))
 
 
 if __name__ == "__main__":

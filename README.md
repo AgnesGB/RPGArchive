@@ -43,12 +43,16 @@ Inspirado no Notion (páginas), no vvd.world (wiki do mundo) e no Milanote (mapa
     marcadores/tokens que estejam sob a névoa.
 - **Mesa (aba Jogar)** — papel **jogador**, diferente de colaborador:
   - Jogadores só entram na Mesa; qualquer rota do planejamento os redireciona para lá (`get_world` barra por padrão).
+  - **Encontros** (só o mestre): planeje cada cena com mapas, páginas e arquivos do acervo, mais anotações do mestre.
+    **Começar** põe os mapas do encontro na mesa; páginas e arquivos são revelados um a um ("revelar") quando os
+    jogadores acharem; **Encerrar** tira os mapas da mesa (o que foi revelado continua revelado).
+  - O mestre vê a barra lateral do planejamento também na Mesa; jogadores não.
   - **Mapas da mesa**: o mestre escolhe quais mapas compartilhar; jogadores só observam e movem tokens
     (anotações, anexos e passagens secretas ficam escondidos).
   - **Arquivos encontrados**: o mestre revela páginas (leitura) e arquivos do acervo; só esses arquivos ficam acessíveis.
   - **Área do grupo**: um "mundo da mesa" ligado ao principal, onde jogadores (e o mestre) fazem anotações, mapas mentais,
     cronologias e árvores genealógicas.
-- **Barra lateral recolhível**: botão « » ou Ctrl+\.
+- **Barra lateral recolhível**: o adesivo colado na borda da barra (ou Ctrl+\).
 - **Acervo**: todas as imagens e arquivos do mundo (imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP, áudio e vídeo; até 40 MB).
 
 ## Rodando
@@ -81,6 +85,21 @@ No editor: **R** gira 90° (Shift+R volta), o controle deslizante gira de 15 em 
 
 Os pacotes são de uso pessoal/gratuito e não permitem redistribuir os arquivos (veja `lore/static/mapkit/CREDITS.md`):
 não publique `assets/` nem `mapkit/` em repositório público.
+
+**Uso comercial.** Alguns pacotes não podem ser usados em nada que gere dinheiro (assinatura, anúncio, venda): as
+versões grátis do Cute Fantasy e Cute Fantasy Icons (Kenmi), e ainda sem licença confirmada o Fan-tasy Tileset, o Farm RPG,
+o FreeEnvironment e os cristais. Para gerar um kit sem eles:
+
+```powershell
+.venv\Scripts\python scripts\build_mapkit.py --comercial                    # substitui o kit do site
+.venv\Scripts\python scripts\build_mapkit.py --comercial --out C:\tmp\kit   # só para comparar
+```
+
+Os terrenos desses pacotes (grama, água, areia, caminho…) ganham substitutos com a mesma chave, então mapas já
+pintados continuam abrindo; objetos deles somem dos mapas. Rodar sem `--comercial` volta o kit completo.
+A lista fica em `NON_COMMERCIAL` no script: ao comprar a versão premium de um pacote (ou confirmar a licença), tire-o
+de lá. Os ícones pixel da interface (*Raven Fantasy Icons*, versão grátis) também são só para uso pessoal e não passam
+por esse script.
 
 ## Ícones
 

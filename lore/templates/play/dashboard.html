@@ -24,10 +24,207 @@
   {% endif %}
 
   <nav class="sticky top-14 z-20 -mx-2 mt-6 flex flex-wrap gap-1 border-b border-line bg-bg/90 px-2 py-2 backdrop-blur">
-    {% for anchor, icon, label in [('mapas', 'map', 'Mapas'), ('encontrados', 'chest', 'Encontrados'), ('grupo', 'people', 'Área do grupo'), ('jogadores', 'helmet', 'Jogadores')] %}
+    {% for anchor, icon, label in ([('encontros', 'flag', 'Encontros')] if gm else []) + [('mapas', 'map', 'Mapas'), ('encontrados', 'chest', 'Encontrados'), ('grupo', 'people', 'Área do grupo'), ('jogadores', 'helmet', 'Jogadores')] %}
       <a href="#{{ anchor }}" class="nav-link">{{ ri(icon) }} {{ label }}</a>
     {% endfor %}
   </nav>
+
+  {% if gm %}
+  {# ------------------------------------------------------------- encontros (só o mestre) #}
+  {% macro item_btn(enc, kind, it) %}
+    <form method="post" action="{{ url_for('play.reveal_encounter_item', wid=world.id, eid=enc.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="ref_id" value="{{ it.id }}">
+      {% if it.live %}
+        <input type="hidden" name="hide" value="1">
+        <button class="enc-chip enc-live" title="{{ 'Tirar da mesa' if kind == 'map' else 'Esconder de novo' }}">{{ 'na mesa' if kind == 'map' else 'revelado' }}</button>
+      {% else %}
+        <button class="enc-chip" title="{{ 'Os jogadores passam a ver este mapa' if kind == 'map' else 'Os jogadores passam a ver isto em Encontrados' }}">{{ 'pôr na mesa' if kind == 'map' else 'revelar' }}</button>
+      {% endif %}
+    </form>
+  {% endmacro %}
+  {% macro remove_btn(enc, kind, it) %}
+    <form method="post" action="{{ url_for('play.remove_encounter_item', wid=world.id, eid=enc.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="ref_id" value="{{ it.id }}">
+      <button class="grid size-6 place-items-center rounded text-faint opacity-0 hover:bg-surface-2 hover:text-red-500 group-hover/it:opacity-100 focus:opacity-100" title="Tirar do encontro" aria-label="Tirar do encontro">{{ ui('x', 'size-3.5') }}</button>
+    </form>
+  {% endmacro %}
+  {% macro add_form(enc, kind, options, label) %}
+    {% if options %}
+    <form method="post" action="{{ url_for('play.add_encounter_item', wid=world.id, eid=enc.id) }}" class="mt-2 flex gap-1.5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="{{ kind }}">
+      <select name="ref_id" class="input min-w-0 flex-1 py-1 text-xs" aria-label="{{ label }}">{{ caller() }}</select>
+      <button class="btn btn-outline btn-sm px-2" title="{{ label }}" aria-label="{{ label }}">{{ ui('plus', 'size-3.5') }}</button>
+    </form>
+    {% endif %}
+  {% endmacro %}
+  <style>
+    .enc-chip { border-radius: 999px; border: 1px dashed var(--color-line-strong, currentColor); padding: 0 .5rem; font-size: 11px; line-height: 1.25rem; color: var(--color-muted, inherit); white-space: nowrap; }
+    .enc-chip:hover { border-style: solid; color: var(--color-ink, inherit); }
+    .enc-chip.enc-live { border-style: solid; border-color: transparent; background: color-mix(in oklab, var(--color-accent) 18%, transparent); color: var(--color-accent-ink, inherit); }
+    .enc-chip.enc-live:hover { background: color-mix(in oklab, #dc2626 18%, transparent); color: #ef4444; }
+    .enc-chip.enc-live:hover::after { content: ' ×'; }
+  </style>
+  <section id="encontros" class="scroll-mt-28 pt-8">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="font-display text-2xl text-ink">{{ ri('flag') }} Encontros</h2>
+        <p class="max-w-2xl text-sm text-muted">Planeje cada cena: quais mapas usar e o que os jogadores podem encontrar. Só você vê isto.
+          <strong>Começar</strong> põe os mapas do encontro na mesa; páginas e arquivos você revela na hora em que eles acharem.</p>
+      </div>
+      <form method="post" action="{{ url_for('play.new_encounter', wid=world.id) }}" class="flex gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input name="name" class="input py-1.5 text-sm" placeholder="Ex.: Emboscada na estrada" aria-label="Nome do encontro" maxlength="120">
+        <button class="btn btn-primary btn-sm">{{ ui('plus') }} Novo encontro</button>
+      </form>
+    </div>
+
+    <div class="mt-4 space-y-3">
+      {% for x in encounters %}
+        {% set enc = x.e %}
+        <details id="enc-{{ enc.id }}" class="panel group/enc scroll-mt-28 overflow-hidden {{ 'opacity-70' if enc.status == 'done' }} {{ 'ring-2 ring-accent/60' if enc.status == 'active' }}" {{ 'open' if enc.status != 'done' }}>
+          <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-3">
+            <span class="grid w-3 shrink-0 place-items-center text-faint transition group-open/enc:rotate-90">{{ ui('chevron', 'size-3') }}</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider
+                         {{ 'bg-accent text-on-accent' if enc.status == 'active' else ('bg-surface-2 text-faint' if enc.status == 'done' else 'bg-accent/15 text-accent-ink') }}">{{ enc_status[enc.status] }}</span>
+            <span class="min-w-0 flex-1 truncate font-display text-lg text-ink">{{ enc.name }}</span>
+            <span class="text-xs text-faint">{{ x.items.map|length }} mapa{{ 's' if x.items.map|length != 1 }} · {{ x.items.page|length + x.items.file|length }} achado{{ 's' if (x.items.page|length + x.items.file|length) != 1 }}{% if x.count %} · {{ x.live }}/{{ x.count }} com os jogadores{% endif %}</span>
+            <span class="flex items-center gap-1" onclick="event.stopPropagation()">
+              {% if enc.status != 'active' %}
+                <form method="post" action="{{ url_for('play.start_encounter', wid=world.id, eid=enc.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-primary btn-sm" title="Põe os mapas deste encontro na mesa">{{ ri('sword') }} {{ 'Começar' if enc.status == 'planned' else 'Retomar' }}</button>
+                </form>
+              {% else %}
+                <form method="post" action="{{ url_for('play.finish_encounter', wid=world.id, eid=enc.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-outline btn-sm" title="Tira os mapas deste encontro da mesa (o que foi revelado continua revelado)">Encerrar</button>
+                </form>
+              {% endif %}
+              {% for dir, label, arrow in [('up', 'Subir', '↑'), ('down', 'Descer', '↓')] %}
+                <form method="post" action="{{ url_for('play.move_encounter', wid=world.id, eid=enc.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="dir" value="{{ dir }}">
+                  <button class="grid size-7 place-items-center rounded-md text-faint hover:bg-surface-2 hover:text-ink" title="{{ label }}" aria-label="{{ label }}">{{ arrow }}</button>
+                </form>
+              {% endfor %}
+              <form method="post" action="{{ url_for('play.delete_encounter', wid=world.id, eid=enc.id) }}" onsubmit="return confirm('Apagar o encontro «{{ enc.name|e }}»? Mapas e páginas continuam no planejamento.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="grid size-7 place-items-center rounded-md text-faint hover:bg-surface-2 hover:text-red-500" title="Apagar encontro" aria-label="Apagar encontro">{{ ui('trash', 'size-4') }}</button>
+              </form>
+            </span>
+          </summary>
+
+          <div class="grid gap-4 border-t border-line p-4 lg:grid-cols-[1fr_1fr_1fr]">
+            {# mapas #}
+            <div>
+              <p class="section-title">{{ ri('map') }} Mapas</p>
+              <ul class="mt-1 space-y-1">
+                {% for it in x.items.map %}
+                  <li class="group/it flex items-center gap-2 rounded-lg p-1 hover:bg-surface-2/60">
+                    <a href="{{ it.url }}" class="flex min-w-0 flex-1 items-center gap-2" title="Abrir no planejamento">
+                      <span class="h-9 w-12 shrink-0 overflow-hidden rounded bg-surface-2">
+                        {% if it.thumb %}<img src="{{ it.thumb }}" alt="" class="size-full object-cover" style="image-rendering: pixelated">
+                        {% elif it.file_id %}<img src="{{ url_for('files.serve', fid=it.file_id) }}" alt="" loading="lazy" class="size-full object-cover">
+                        {% else %}<span class="grid size-full place-items-center opacity-60">{{ ri('map') }}</span>{% endif %}
+                      </span>
+                      <span class="truncate text-sm text-ink hover:text-accent-ink">{{ it.name }}</span>
+                    </a>
+                    {{ item_btn(enc, 'map', it) }}{{ remove_btn(enc, 'map', it) }}
+                  </li>
+                {% else %}
+                  <li class="text-xs text-faint">Nenhum mapa.</li>
+                {% endfor %}
+              </ul>
+              {% set have = x.items.map|map(attribute='id')|list %}
+              {% call add_form(enc, 'map', every_map|rejectattr('id', 'in', have)|list, 'Adicionar mapa') %}
+                {% for mp in every_map if mp.id not in have %}<option value="{{ mp.id }}">{{ mp.name }}</option>{% endfor %}
+              {% endcall %}
+            </div>
+            {# páginas #}
+            <div>
+              <p class="section-title">{{ ri('tome') }} Documentos que vão encontrar</p>
+              <ul class="mt-1 space-y-1">
+                {% for it in x.items.page %}
+                  <li class="group/it flex items-center gap-2 rounded-lg p-1 hover:bg-surface-2/60">
+                    <a href="{{ it.url }}" class="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink hover:text-accent-ink" title="Abrir no planejamento">
+                      {{ it.icon|glyph }}<span class="truncate">{{ it.name }}</span></a>
+                    {{ item_btn(enc, 'page', it) }}{{ remove_btn(enc, 'page', it) }}
+                  </li>
+                {% else %}
+                  <li class="text-xs text-faint">Nenhuma página.</li>
+                {% endfor %}
+              </ul>
+              {% set have = x.items.page|map(attribute='id')|list %}
+              {% call add_form(enc, 'page', every_page|rejectattr('id', 'in', have)|list, 'Adicionar página') %}
+                {% for p in every_page if p.id not in have %}<option value="{{ p.id }}">{{ page_icon(p)|glyph_text }} {{ p.title }}</option>{% endfor %}
+              {% endcall %}
+            </div>
+            {# arquivos #}
+            <div>
+              <p class="section-title">{{ ri('chest') }} Arquivos do acervo</p>
+              <ul class="mt-1 space-y-1">
+                {% for it in x.items.file %}
+                  <li class="group/it flex items-center gap-2 rounded-lg p-1 hover:bg-surface-2/60">
+                    <a href="{{ it.url }}" target="_blank" rel="noopener" class="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink hover:text-accent-ink">
+                      {% if it.is_image %}<img src="{{ it.url }}" alt="" loading="lazy" class="size-7 shrink-0 rounded object-cover">{% else %}{{ ri('redbook') }}{% endif %}
+                      <span class="truncate">{{ it.name }}</span></a>
+                    {{ item_btn(enc, 'file', it) }}{{ remove_btn(enc, 'file', it) }}
+                  </li>
+                {% else %}
+                  <li class="text-xs text-faint">Nenhum arquivo.</li>
+                {% endfor %}
+              </ul>
+              {% set have = x.items.file|map(attribute='id')|list %}
+              {% call add_form(enc, 'file', every_file|rejectattr('id', 'in', have)|list, 'Adicionar arquivo') %}
+                {% for f in every_file if f.id not in have %}<option value="{{ f.id }}">{{ f.original_name }}</option>{% endfor %}
+              {% endcall %}
+            </div>
+
+            <form method="post" action="{{ url_for('play.edit_encounter', wid=world.id, eid=enc.id) }}" class="enc-form flex flex-wrap items-end gap-3 lg:col-span-3">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="min-w-56 flex-1"><label class="label" for="enc-name-{{ enc.id }}">Nome</label>
+                <input class="input py-1.5 text-sm" id="enc-name-{{ enc.id }}" name="name" value="{{ enc.name }}" maxlength="120"></div>
+              <div><label class="label" for="enc-st-{{ enc.id }}">Situação</label>
+                <select class="input py-1.5 text-sm" id="enc-st-{{ enc.id }}" name="status">
+                  {% for k, v in enc_status.items() %}<option value="{{ k }}" {{ 'selected' if k == enc.status }}>{{ v }}</option>{% endfor %}
+                </select></div>
+              <div class="w-full"><label class="label" for="enc-notes-{{ enc.id }}">Anotações do mestre <span class="font-normal text-faint">(inimigos, CD, falas, ganchos…)</span></label>
+                <textarea class="input min-h-24 text-sm" id="enc-notes-{{ enc.id }}" name="notes" rows="3" placeholder="O que acontece, quem aparece, o que testar…">{{ enc.notes }}</textarea></div>
+              <span class="enc-state text-xs text-faint"></span>
+              <button class="btn btn-outline btn-sm ml-auto">Salvar</button>
+            </form>
+          </div>
+        </details>
+      {% else %}
+        <p class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-faint">
+          Nenhum encontro planejado. Dê um nome acima (ex.: "Chegada à vila", "Emboscada na estrada") e vá juntando os mapas e documentos.</p>
+      {% endfor %}
+    </div>
+  </section>
+  <script>
+  // anotações e nome salvam sozinhos ao sair do campo (o botão Salvar continua funcionando)
+  document.querySelectorAll('.enc-form').forEach(form => {
+    const state = form.querySelector('.enc-state');
+    let last = new URLSearchParams(new FormData(form)).toString();
+    const save = async () => {
+      const body = new URLSearchParams(new FormData(form));
+      if (body.toString() === last) return;
+      state.textContent = 'Salvando…';
+      try {
+        const r = await fetch(form.action, { method: 'POST', body, headers: { Accept: 'application/json' } });
+        if (!r.ok) throw 0;
+        last = body.toString(); state.textContent = 'Salvo';
+        const name = form.querySelector('[name=name]').value.trim();
+        if (name) form.closest('details').querySelector('summary .font-display').textContent = name;
+      } catch { state.textContent = 'Não salvou: use o botão Salvar'; }
+    };
+    form.querySelectorAll('input[name=name], textarea').forEach(el => el.addEventListener('blur', save));
+    form.querySelector('select[name=status]').addEventListener('change', () => form.submit());
+  });
+  // abre o encontro do link (#enc-12) e rola até ele
+  const hit = location.hash.match(/^#enc-\d+$/) && document.querySelector(location.hash);
+  if (hit) { hit.open = true; hit.scrollIntoView({ block: 'start' }); }
+  </script>
+  {% endif %}
 
   {# ------------------------------------------------------------- mapas #}
   <section id="mapas" class="scroll-mt-28 pt-8">
