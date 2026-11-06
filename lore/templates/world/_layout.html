@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "play/_nav.html" as pn with context %}
 {# Árvore de páginas da barra lateral. key separa o estado aberto/fechado de cada seção (Todas, cada categoria). #}
 {% macro chev() %}<span class="grid w-3 shrink-0 place-items-center text-faint transition [details[open]>summary>&]:rotate-90">{{ ui('chevron', 'size-3') }}</span>{% endmacro %}
 {% macro tree(nodes, key, depth=1) %}
@@ -25,42 +26,7 @@
 {% endmacro %}
 {% block body %}
 {% set ep = request.endpoint %}
-<style>
-  /* barra lateral recolhível (Ctrl+\ ou o adesivo na borda); o estado fica salvo no navegador */
-  html.sb-collapsed #world-aside { display: none; }
-  /* adesivo colado na borda da folha: fica na beirada da barra lateral, ou na beirada da tela quando recolhida */
-  #sb-tab {
-    position: fixed; z-index: 35; top: 5.25rem; left: 0;
-    display: flex; flex-direction: column; align-items: center; gap: .3rem;
-    width: 1.6rem; padding: .55rem 0 .8rem .1rem;
-    border-radius: 0 .55rem .55rem 0;
-    background: var(--color-accent); color: var(--color-on-accent);
-    box-shadow: 1px 2px 0 rgb(0 0 0 / .28), 0 6px 14px -4px rgb(0 0 0 / .45);
-    transform: rotate(-3deg); transform-origin: 0 50%;
-    transition: left .2s ease, width .15s ease, transform .15s ease;
-  }
-  #sb-tab:hover, #sb-tab:focus-visible { width: 2rem; transform: rotate(0); }
-  /* cantinho dobrado do adesivo */
-  #sb-tab::after {
-    content: ''; position: absolute; right: 0; bottom: 0; width: .6rem; height: .6rem;
-    border-radius: 0 0 .55rem 0;
-    background: linear-gradient(to top left, var(--color-bg) 50%, color-mix(in oklab, var(--color-accent) 55%, white) 50%);
-  }
-  /* fita: um pedacinho translúcido "colando" o adesivo na folha */
-  #sb-tab::before {
-    content: ''; position: absolute; left: -.15rem; top: -.35rem; width: 1.1rem; height: .6rem;
-    background: rgb(255 255 255 / .28); transform: rotate(-8deg); border-radius: 1px;
-  }
-  #sb-tab .sb-arrow { font-size: .8rem; line-height: 1; font-weight: 700; }
-  #sb-tab .sb-arrow::before { content: '«'; }
-  html.sb-collapsed #sb-tab .sb-arrow::before { content: '»'; }
-  @media (min-width: 768px) { html:not(.sb-collapsed) #sb-tab { left: 18rem; } }
-  @media (max-width: 767px) { html:not(.sb-collapsed) #sb-tab { display: none; } }
-</style>
-<script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sb-collapsed'); } catch {}</script>
-<button id="sb-tab" type="button" title="Mostrar/recolher barra lateral (Ctrl+\)" aria-label="Mostrar ou recolher a barra lateral">
-  {{ ri('tome') }}<span class="sb-arrow" aria-hidden="true"></span>
-</button>
+{% include "world/_sb_tab.html" %}
 <div class="flex min-h-[calc(100vh-3.5rem)] flex-col md:flex-row">
   <aside id="world-aside" class="shrink-0 border-b border-line bg-surface/50 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
     <div class="space-y-5 p-3">
@@ -70,16 +36,8 @@
       </form>
 
       {% if world.party_of %}
-      {# mundo da mesa: área dos jogadores (sem mapas do mestre, pessoas ou configurações) #}
-      <a href="{{ url_for('play.dashboard', wid=world.party_of) }}" class="flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-ink hover:bg-accent/20">
-        {{ ri('sword') }} Voltar para a Mesa</a>
-      <p class="px-2 text-xs text-faint">Área dos jogadores{% if g.party_main %} de {{ g.party_main.name }}{% endif %}: tudo aqui é do grupo.</p>
-      <nav class="space-y-0.5">
-        <a href="{{ url_for('boards.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">{{ ri('web') }} Mapas mentais <span class="ml-auto text-xs text-faint">{{ g.boards|length }}</span></a>
-        <a href="{{ url_for('history.timelines', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">{{ ri('scroll') }} Linhas do tempo</a>
-        <a href="{{ url_for('history.trees', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.trees' }}">{{ ri('tree') }} Árvores genealógicas</a>
-        <a href="{{ url_for('files.library', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">{{ ri('chest') }} Arquivos do grupo</a>
-      </nav>
+      {# mundo da mesa: o mesmo menu que os jogadores veem na Mesa #}
+      {{ pn.party_nav(world.party_of, world.id) }}
       {% else %}
       <nav class="space-y-0.5">
         <a href="{{ url_for('worlds.world_home', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.world_home' }}" {{ 'aria-current=page' if ep == 'worlds.world_home' }}>{{ ri('home') }} Início</a>
@@ -95,8 +53,15 @@
 
       <div id="sidebar-pages" data-world="{{ world.id }}">
         <div class="flex items-center justify-between pr-1">
-          <p class="section-title">Páginas</p>
+          <p class="section-title">{{ 'Anotações do grupo' if world.party_of else 'Páginas' }}</p>
+          {% if world.party_of %}
+            <form method="post" action="{{ url_for('pages.quick_new', wid=world.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="grid size-6 place-items-center rounded text-faint hover:bg-surface-2 hover:text-ink" title="Nova anotação" aria-label="Nova anotação">{{ ui('plus') }}</button>
+            </form>
+          {% else %}
           <a href="{{ url_for('pages.new', wid=world.id) }}" class="grid size-6 place-items-center rounded text-faint hover:bg-surface-2 hover:text-ink" title="Nova página" aria-label="Nova página">{{ ui('plus') }}</a>
+          {% endif %}
         </div>
 
         {% if g.favorites %}
@@ -120,7 +85,8 @@
           {% if not g.page_tree %}<p class="py-1 pl-9 text-xs text-faint">Nenhuma página ainda.</p>{% endif %}
         </details>
 
-        {% for c in CATEGORIES %}
+        {# na área do grupo as categorias ficam no filtro da Biblioteca (menu acima) #}
+        {% for c in (CATEGORIES if not world.party_of else []) %}
           {% set n = g.category_counts.get(c.key, 0) %}
           <details data-key="cat-{{ c.key }}" data-cat="{{ c.key }}">
             <summary class="nav-link cursor-pointer list-none {{ 'active' if cat is defined and cat == c.key }}">
@@ -165,12 +131,4 @@
     {% block world_content %}{% endblock %}
   </main>
 </div>
-<script>
-(() => {
-  const set = v => { document.documentElement.classList.toggle('sb-collapsed', v); try { localStorage.setItem('sidebar-collapsed', v ? '1' : ''); } catch {}
-    dispatchEvent(new Event('resize')); };
-  document.getElementById('sb-tab').addEventListener('click', () => set(!document.documentElement.classList.contains('sb-collapsed')));
-  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); set(!document.documentElement.classList.contains('sb-collapsed')); } });
-})();
-</script>
 {% endblock %}

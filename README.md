@@ -46,12 +46,15 @@ Inspirado no Notion (páginas), no vvd.world (wiki do mundo) e no Milanote (mapa
   - **Encontros** (só o mestre): planeje cada cena com mapas, páginas e arquivos do acervo, mais anotações do mestre.
     **Começar** põe os mapas do encontro na mesa; páginas e arquivos são revelados um a um ("revelar") quando os
     jogadores acharem; **Encerrar** tira os mapas da mesa (o que foi revelado continua revelado).
-  - O mestre vê a barra lateral do planejamento também na Mesa; jogadores não.
   - **Mapas da mesa**: o mestre escolhe quais mapas compartilhar; jogadores só observam e movem tokens
     (anotações, anexos e passagens secretas ficam escondidos).
-  - **Arquivos encontrados**: o mestre revela páginas (leitura) e arquivos do acervo; só esses arquivos ficam acessíveis.
+  - **Biblioteca do grupo**: num lugar só, o que o mestre revelou (páginas e arquivos do acervo, marcados
+    "encontrado") e o que o grupo escreveu na área dos jogadores ("do grupo"), com filtro por origem e por categoria
+    (personagens, locais, facções…). Só os arquivos revelados ficam acessíveis.
   - **Área do grupo**: um "mundo da mesa" ligado ao principal, onde jogadores (e o mestre) fazem anotações, mapas mentais,
     cronologias e árvores genealógicas.
+  - **Menu dos jogadores**: na Mesa e na área do grupo os jogadores veem só Mapas da mesa, Biblioteca (com atalhos por
+    categoria) e as ferramentas do grupo. O mestre vê, na Mesa, a barra lateral do planejamento.
 - **Barra lateral recolhível**: o adesivo colado na borda da barra (ou Ctrl+\).
 - **Acervo**: todas as imagens e arquivos do mundo (imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP, áudio e vídeo; até 40 MB).
 

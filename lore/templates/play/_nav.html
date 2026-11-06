@@ -1,0 +1,36 @@
+{# Menu dos jogadores: o mesmo na Mesa (jogador) e na área do grupo (todos). Nada do planejamento aparece aqui. #}
+{% macro party_nav(main_id, party_id) %}
+{% set ep = request.endpoint %}
+{% set mesa = url_for('play.dashboard', wid=main_id) %}
+<a href="{{ mesa }}" class="flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-ink hover:bg-accent/20 {{ 'ring-1 ring-accent' if ep == 'play.dashboard' }}">
+  {{ ri('sword') }} Mesa de jogo</a>
+<nav class="space-y-0.5">
+  <a href="{{ mesa }}#mapas" class="nav-link {{ 'active' if ep and ep.startswith('play.map') }}">{{ ri('map') }} Mapas da mesa</a>
+  <details data-key="party-lib" class="group/lib" {{ 'open' if ep == 'play.handout_page' }}>
+    <summary class="nav-link cursor-pointer list-none {{ 'active' if ep == 'play.handout_page' }}">
+      <span class="grid w-3 shrink-0 place-items-center text-faint transition group-open/lib:rotate-90">{{ ui('chevron', 'size-3') }}</span>
+      <a href="{{ mesa }}#biblioteca" class="flex min-w-0 flex-1 items-center gap-1.5">{{ ri('tome') }} Biblioteca</a>
+    </summary>
+    <a href="{{ mesa }}#encontrados" class="nav-link text-sm" style="padding-left: 1.6rem">{{ ri('chest') }} Encontrados</a>
+    {% for c in CATEGORIES %}
+      <a href="{{ mesa }}#biblioteca/{{ c.key }}" class="nav-link text-sm" style="padding-left: 1.6rem">{{ c.icon|glyph }} {{ c.label }}</a>
+    {% endfor %}
+    <a href="{{ mesa }}#biblioteca/arquivo" class="nav-link text-sm" style="padding-left: 1.6rem">{{ ri('picture') }} Arquivos</a>
+  </details>
+</nav>
+{% if party_id %}
+<div>
+  <p class="section-title">Do grupo</p>
+  <nav class="space-y-0.5">
+    <a href="{{ url_for('boards.index', wid=party_id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">{{ ri('web') }} Mapas mentais</a>
+    <a href="{{ url_for('history.timelines', wid=party_id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">{{ ri('scroll') }} Cronologias</a>
+    <a href="{{ url_for('history.trees', wid=party_id) }}" class="nav-link {{ 'active' if ep == 'history.trees' }}">{{ ri('tree') }} Árvores genealógicas</a>
+    <a href="{{ url_for('files.library', wid=party_id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">{{ ri('chest') }} Arquivos do grupo</a>
+    <form method="post" action="{{ url_for('pages.quick_new', wid=party_id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="category" value="nota">
+      <button class="nav-link w-full text-muted">{{ ui('plus', 'size-3.5') }} Nova anotação</button>
+    </form>
+  </nav>
+</div>
+{% endif %}
+{% endmacro %}

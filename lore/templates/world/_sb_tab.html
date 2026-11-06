@@ -1,0 +1,45 @@
+{# Adesivo para mostrar/recolher a barra lateral (#world-aside). Usado pelo planejamento e pela Mesa dos jogadores. #}
+<style>
+  /* barra lateral recolhível (Ctrl+\ ou o adesivo na borda); o estado fica salvo no navegador */
+  html.sb-collapsed #world-aside { display: none; }
+  /* adesivo colado na borda da folha: fica na beirada da barra lateral, ou na beirada da tela quando recolhida */
+  #sb-tab {
+    position: fixed; z-index: 28; top: 5.25rem; left: 0;  /* abaixo dos menus (z-30) */
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    width: 1.6rem; padding: .55rem 0 .8rem .1rem;
+    border-radius: 0 .55rem .55rem 0;
+    background: var(--color-accent); color: var(--color-on-accent);
+    box-shadow: 1px 2px 0 rgb(0 0 0 / .28), 0 6px 14px -4px rgb(0 0 0 / .45);
+    transform: rotate(-3deg); transform-origin: 0 50%;
+    transition: left .2s ease, width .15s ease, transform .15s ease;
+  }
+  #sb-tab:hover, #sb-tab:focus-visible { width: 2rem; transform: rotate(0); }
+  /* cantinho dobrado do adesivo */
+  #sb-tab::after {
+    content: ''; position: absolute; right: 0; bottom: 0; width: .6rem; height: .6rem;
+    border-radius: 0 0 .55rem 0;
+    background: linear-gradient(to top left, var(--color-bg) 50%, color-mix(in oklab, var(--color-accent) 55%, white) 50%);
+  }
+  /* fita: um pedacinho translúcido "colando" o adesivo na folha */
+  #sb-tab::before {
+    content: ''; position: absolute; left: -.15rem; top: -.35rem; width: 1.1rem; height: .6rem;
+    background: rgb(255 255 255 / .28); transform: rotate(-8deg); border-radius: 1px;
+  }
+  #sb-tab .sb-arrow { font-size: .8rem; line-height: 1; font-weight: 700; }
+  #sb-tab .sb-arrow::before { content: '«'; }
+  html.sb-collapsed #sb-tab .sb-arrow::before { content: '»'; }
+  @media (min-width: 768px) { html:not(.sb-collapsed) #sb-tab { left: calc(18rem - 1px); } }
+  @media (max-width: 767px) { html:not(.sb-collapsed) #sb-tab { display: none; } }
+</style>
+<script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sb-collapsed'); } catch {}</script>
+<button id="sb-tab" type="button" title="Mostrar/recolher barra lateral (Ctrl+\)" aria-label="Mostrar ou recolher a barra lateral">
+  {{ ri('tome') }}<span class="sb-arrow" aria-hidden="true"></span>
+</button>
+<script>
+(() => {
+  const set = v => { document.documentElement.classList.toggle('sb-collapsed', v); try { localStorage.setItem('sidebar-collapsed', v ? '1' : ''); } catch {}
+    dispatchEvent(new Event('resize')); };
+  document.getElementById('sb-tab').addEventListener('click', () => set(!document.documentElement.classList.contains('sb-collapsed')));
+  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); set(!document.documentElement.classList.contains('sb-collapsed')); } });
+})();
+</script>

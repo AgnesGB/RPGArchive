@@ -7,6 +7,7 @@
 - Mestre = dono ou colaborador do mundo principal; ele vê e gerencia tudo isso.
 """
 import json
+from collections import Counter
 
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 
@@ -69,6 +70,8 @@ def _main_world(wid):
     world = get_world(wid, allow_player=True)
     if world["party_of"]:
         abort(redirect(url_for("play.dashboard", wid=world["party_of"])))
+    row = get_db().execute("SELECT id FROM worlds WHERE party_of = ?", (wid,)).fetchone()
+    g.party_id = row["id"] if row else None      # menu dos jogadores
     return world
 
 
@@ -158,6 +161,7 @@ def player_data(data):
 def dashboard(wid):
     world = _main_world(wid)
     party = ensure_party(world)
+    g.party_id = party["id"]
     db = get_db()
     gm = world["role"] in GM_ROLES
     shared = db.execute(
@@ -180,6 +184,7 @@ def dashboard(wid):
                    "timelines": count("SELECT COUNT(*) FROM timelines WHERE world_id = ?"),
                    "trees": count("SELECT COUNT(*) FROM trees WHERE world_id = ?"),
                    "files": count("SELECT COUNT(*) FROM files WHERE world_id = ?")}
+    library = library_items(wid, party["id"], handouts)
     players = db.execute(
         """SELECT u.id, u.name, u.email, u.avatar_url FROM world_members m JOIN users u ON u.id = m.user_id
            WHERE m.world_id = ? AND m.role = 'player' ORDER BY u.name COLLATE NOCASE""", (wid,)).fetchall()
@@ -201,7 +206,38 @@ def dashboard(wid):
             "every_file": db.execute("SELECT id, original_name FROM files WHERE world_id = ? ORDER BY original_name COLLATE NOCASE", (wid,)).fetchall(),
         }
     return render_template("play/dashboard.html", world=world, party=party, gm=gm, shared=shared, handouts=handouts,
-                           party_stats=party_stats, players=players, **ctx)
+                           party_stats=party_stats, players=players, library=library,
+                           lib_counts=Counter(x["cat"] for x in library), lib_src=Counter(x["src"] for x in library), **ctx)
+
+
+def library_items(wid, party_id, handouts):
+    """Biblioteca do grupo: o que o mestre revelou ("encontrado") + o que o grupo criou ("do grupo"), tudo junto.
+
+    Cada item: src ('found'|'group'), kind ('page'|'file'), cat (categoria da página ou 'arquivo'), título, capa, link.
+    """
+    db = get_db()
+    out = []
+    for x in handouts:
+        if x.get("page"):
+            p = x["page"]
+            out.append({"src": "found", "kind": "page", "cat": p["category"], "title": p["title"], "icon": page_icon(p),
+                        "cover": p["image_url"], "cover_pos": p["cover_pos"], "summary": p["summary"], "url": x["url"],
+                        "date": x["h"]["created_at"], "h": x["h"]})
+        else:
+            f = x["file"]
+            out.append({"src": "found", "kind": "file", "cat": "arquivo", "title": f["name"], "file": f, "url": f["url"],
+                        "date": x["h"]["created_at"], "h": x["h"]})
+    for p in db.execute("""SELECT id, title, icon, category, summary, image_url, cover_pos, updated_at FROM articles
+                           WHERE world_id = ?""", (party_id,)):
+        out.append({"src": "group", "kind": "page", "cat": p["category"], "title": p["title"], "icon": page_icon(p),
+                    "cover": p["image_url"], "cover_pos": p["cover_pos"], "summary": p["summary"],
+                    "url": url_for("pages.view", wid=party_id, aid=p["id"]), "date": p["updated_at"]})
+    for r in db.execute("SELECT * FROM files WHERE world_id = ?", (party_id,)):
+        f = file_dict(r)
+        out.append({"src": "group", "kind": "file", "cat": "arquivo", "title": f["name"], "file": f, "url": f["url"],
+                    "date": r["created_at"]})
+    out.sort(key=lambda x: x["date"] or "", reverse=True)
+    return out
 
 
 @bp.post("/w/<int:wid>/play/maps")
@@ -242,7 +278,7 @@ def add_handout(wid):
                    (wid, kind, ref, request.form.get("note", "").strip()[:300], g.user["id"]))
         db.commit()
         flash("Revelado para os jogadores.", "success")
-    return redirect(url_for("play.dashboard", wid=wid) + "#encontrados")
+    return redirect(url_for("play.dashboard", wid=wid) + "#biblioteca")
 
 
 @bp.post("/w/<int:wid>/play/handouts/<int:hid>/remove")
@@ -253,7 +289,7 @@ def remove_handout(wid, hid):
     db = get_db()
     db.execute("DELETE FROM handouts WHERE id = ? AND world_id = ?", (hid, wid))
     db.commit()
-    return redirect(url_for("play.dashboard", wid=wid) + "#encontrados")
+    return redirect(url_for("play.dashboard", wid=wid) + "#biblioteca")
 
 
 @bp.post("/w/<int:wid>/play/players")
@@ -362,7 +398,7 @@ def encounters_for(wid):
                     items[k].append({"id": ref, "name": f["name"], "is_image": f["is_image"], "url": f["url"],
                                      "live": ("file", ref) in revealed})
         n = sum(len(v) for v in items.values())
-        out.append({"e": e, "items": items, "count": n, "live": sum(i["live"] for v in items.values() for i in v),
+        out.append({"e": e, "parts": items, "count": n, "live": sum(i["live"] for v in items.values() for i in v),
                     "maps_off": [i["id"] for i in items["map"] if not i["live"]]})
     return out
 
