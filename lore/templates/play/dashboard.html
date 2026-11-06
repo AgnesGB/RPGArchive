@@ -1,0 +1,207 @@
+{% extends "play/_layout.html" %}
+{% import "world/_macros.html" as m %}
+{% block title %}Mesa · {{ world.name }}{% endblock %}
+{% block world_content %}
+{{ m.cover(world.cover_url, world.cover_pos, 'h-40 md:h-52') }}
+<div class="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
+  <div class="relative flex flex-wrap items-end justify-between gap-4">
+    <div class="flex items-end gap-4">
+      <div class="-mt-10 grid size-20 shrink-0 place-items-center rounded-2xl border border-line bg-surface shadow-xl">{{ (world.icon or 'ri:world')|glyph(56) }}</div>
+      <div class="pb-1">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent-ink">{{ ri('sword') }} Mesa de jogo</p>
+        <h1 class="font-display text-3xl text-ink md:text-4xl">{{ world.name }}</h1>
+      </div>
+    </div>
+    {% if gm %}
+      <a href="{{ url_for('worlds.world_home', wid=world.id) }}" class="btn btn-outline">{{ ui('arrow-left') }} Planejamento</a>
+    {% endif %}
+  </div>
+  {% if gm %}
+    <p class="mt-4 max-w-3xl text-sm text-muted">Você é <strong>{{ 'dono' if world.role == 'owner' else 'colaborador(a)' }}</strong>: aqui escolhe o que os jogadores veem.
+      Eles só enxergam esta Mesa: os mapas compartilhados, o que você revelou e a área do grupo. O planejamento continua só seu.</p>
+  {% else %}
+    <p class="mt-4 max-w-3xl text-sm text-muted">Bem-vindo(a) à mesa! Aqui ficam os mapas da sessão, as pistas e documentos que o mestre revelou e a área do grupo para as suas anotações.</p>
+  {% endif %}
+
+  <nav class="sticky top-14 z-20 -mx-2 mt-6 flex flex-wrap gap-1 border-b border-line bg-bg/90 px-2 py-2 backdrop-blur">
+    {% for anchor, icon, label in [('mapas', 'map', 'Mapas'), ('encontrados', 'chest', 'Encontrados'), ('grupo', 'people', 'Área do grupo'), ('jogadores', 'helmet', 'Jogadores')] %}
+      <a href="#{{ anchor }}" class="nav-link">{{ ri(icon) }} {{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  {# ------------------------------------------------------------- mapas #}
+  <section id="mapas" class="scroll-mt-28 pt-8">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="font-display text-2xl text-ink">{{ ri('map') }} Mapas da mesa</h2>
+        <p class="text-sm text-muted">{{ 'Os jogadores observam e movem os tokens. A névoa esconde o que ainda não foi revelado.' if gm else 'Arraste os tokens para mover. O que estiver na névoa ainda não foi descoberto.' }}</p>
+      </div>
+      {% if gm and all_maps %}
+        <form method="post" action="{{ url_for('play.share_map', wid=world.id) }}" class="flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="map_id" class="input py-1.5 text-sm" aria-label="Mapa para compartilhar">
+            {% for mp in all_maps %}<option value="{{ mp.id }}">{{ mp.name }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm">Compartilhar</button>
+        </form>
+      {% endif %}
+    </div>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% for mp in shared %}
+        <div class="group panel relative overflow-hidden">
+          <a href="{{ url_for('play.map_view', wid=world.id, mid=mp.id) }}" class="block">
+            <div class="h-40 overflow-hidden bg-surface-2">
+              {% if mp.thumb %}<img src="{{ mp.thumb }}" alt="" class="size-full object-cover" style="image-rendering: pixelated">
+              {% elif mp.file_id %}<img src="{{ url_for('files.serve', fid=mp.file_id) }}" alt="" loading="lazy" class="size-full object-cover">
+              {% else %}<div class="grid size-full place-items-center opacity-50">{{ ri('map', 48) }}</div>{% endif %}
+            </div>
+            <p class="p-3 font-medium text-ink group-hover:text-accent-ink">{{ mp.name }}</p>
+          </a>
+          {% if gm %}
+            <form method="post" action="{{ url_for('play.unshare_map', wid=world.id, mid=mp.id) }}" class="absolute right-2 top-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="rounded-md bg-black/60 px-2 py-1 text-xs text-white hover:bg-red-600" title="Parar de compartilhar">Tirar da mesa</button>
+            </form>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="col-span-full rounded-xl border border-dashed border-line p-6 text-center text-sm text-faint">
+          {{ 'Nenhum mapa na mesa ainda. Escolha um mapa acima para compartilhar.' if gm else 'O mestre ainda não colocou nenhum mapa na mesa.' }}</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------- arquivos encontrados #}
+  <section id="encontrados" class="scroll-mt-28 pt-12">
+    <h2 class="font-display text-2xl text-ink">{{ ri('chest') }} Arquivos encontrados</h2>
+    <p class="text-sm text-muted">{{ 'Revele páginas e arquivos quando os jogadores descobrirem: cartas, diários, retratos, lendas…' if gm else 'Tudo o que o grupo já descobriu.' }}</p>
+    {% if gm %}
+      <div class="mt-4 flex flex-wrap gap-3">
+        {% if all_pages %}
+        <form method="post" action="{{ url_for('play.add_handout', wid=world.id) }}" class="panel flex flex-1 flex-wrap items-center gap-2 p-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="page">
+          <span class="text-sm text-muted">Revelar página</span>
+          <select name="ref_id" class="input min-w-48 flex-1 py-1.5 text-sm" aria-label="Página">
+            {% for p in all_pages %}<option value="{{ p.id }}">{{ page_icon(p)|glyph_text }} {{ p.title }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm">Revelar</button>
+        </form>
+        {% endif %}
+        {% if all_files %}
+        <form method="post" action="{{ url_for('play.add_handout', wid=world.id) }}" class="panel flex flex-1 flex-wrap items-center gap-2 p-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="file">
+          <span class="text-sm text-muted">Revelar arquivo do acervo</span>
+          <select name="ref_id" class="input min-w-48 flex-1 py-1.5 text-sm" aria-label="Arquivo">
+            {% for f in all_files %}<option value="{{ f.id }}">{{ f.original_name }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm">Revelar</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {% for x in handouts %}
+        <div class="group panel relative flex flex-col overflow-hidden">
+          {% if x.page %}
+            {% set c = CATEGORY_MAP.get(x.page.category, CATEGORY_MAP.nota) %}
+            <a href="{{ x.url }}" class="flex flex-1 flex-col">
+              <div class="relative h-28 overflow-hidden bg-surface-2">
+                {% if x.page.image_url %}<img src="{{ x.page.image_url }}" alt="" loading="lazy" class="size-full object-cover" style="object-position: center {{ x.page.cover_pos }}%" referrerpolicy="no-referrer">
+                {% else %}<div class="grid size-full place-items-center opacity-70">{{ page_icon(x.page)|glyph(40) }}</div>{% endif %}
+              </div>
+              <div class="flex-1 p-3">
+                <p class="text-[11px] uppercase tracking-wider text-faint">{{ c.single }}</p>
+                <p class="font-semibold text-ink group-hover:text-accent-ink">{{ page_icon(x.page)|glyph }} {{ x.page.title }}</p>
+                {% if x.page.summary %}<p class="mt-1 line-clamp-2 text-sm text-muted">{{ x.page.summary }}</p>{% endif %}
+              </div>
+            </a>
+          {% else %}
+            <a href="{{ x.file.url }}" target="_blank" rel="noopener" class="flex flex-1 flex-col">
+              <div class="grid h-28 place-items-center overflow-hidden bg-surface-2">
+                {% if x.file.is_image %}<img src="{{ x.file.url }}" alt="" loading="lazy" class="size-full object-cover">{% else %}{{ ri('redbook', 48) }}{% endif %}
+              </div>
+              <p class="flex-1 truncate p-3 font-medium text-ink group-hover:text-accent-ink" title="{{ x.file.name }}">{{ x.file.name }}</p>
+            </a>
+          {% endif %}
+          <p class="px-3 pb-2 text-[11px] text-faint">Revelado em {{ x.h.created_at[:10] }}</p>
+          {% if gm %}
+            <form method="post" action="{{ url_for('play.remove_handout', wid=world.id, hid=x.h.id) }}" class="absolute right-2 top-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="rounded-md bg-black/60 px-2 py-1 text-xs text-white hover:bg-red-600" title="Esconder de novo">Esconder</button>
+            </form>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="col-span-full rounded-xl border border-dashed border-line p-6 text-center text-sm text-faint">Nada encontrado ainda.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------- área do grupo #}
+  <section id="grupo" class="scroll-mt-28 pt-12">
+    <h2 class="font-display text-2xl text-ink">{{ ri('people') }} Área do grupo</h2>
+    <p class="text-sm text-muted">Espaço dos jogadores: anotações, mapas mentais das teorias, cronologias e árvores genealógicas.
+      {{ 'Você (mestre) também vê e pode ajudar.' if gm else 'O mestre também vê o que vocês fazem aqui.' }}</p>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {% for icon, label, n, url in [
+        ('quill', 'Anotações', party_stats.pages, url_for('pages.index', wid=party.id)),
+        ('web', 'Mapas mentais', party_stats.boards, url_for('boards.index', wid=party.id)),
+        ('scroll', 'Cronologias', party_stats.timelines, url_for('history.timelines', wid=party.id)),
+        ('tree', 'Árvores genealógicas', party_stats.trees, url_for('history.trees', wid=party.id)),
+        ('chest', 'Arquivos do grupo', party_stats.files, url_for('files.library', wid=party.id)),
+      ] %}
+        <a href="{{ url }}" class="panel group p-4 transition hover:-translate-y-0.5 hover:border-accent/50">
+          {{ ri(icon, 32) }}
+          <p class="mt-2 text-2xl font-semibold text-ink">{{ n }}</p>
+          <p class="text-sm text-muted group-hover:text-accent-ink">{{ label }}</p>
+        </a>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('pages.new', wid=party.id, cat='nota') }}" class="btn btn-outline btn-sm mt-3">{{ ui('plus') }} Nova anotação do grupo</a>
+  </section>
+
+  {# ------------------------------------------------------------- jogadores #}
+  <section id="jogadores" class="scroll-mt-28 pt-12">
+    <h2 class="font-display text-2xl text-ink">{{ ri('helmet') }} Jogadores</h2>
+    <p class="text-sm text-muted">Jogadores não são colaboradores: só entram na Mesa, nunca no planejamento.</p>
+    {% if gm %}
+      <form method="post" action="{{ url_for('play.add_player', wid=world.id) }}" class="panel mt-4 flex flex-wrap items-end gap-3 p-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="min-w-60 flex-1"><label class="label" for="pl-email">Adicionar jogador(a) por e-mail</label>
+          <input class="input" id="pl-email" name="email" type="email" required placeholder="jogador@email.com"></div>
+        <button class="btn btn-primary">Adicionar à mesa</button>
+        <p class="w-full text-xs text-faint">Se a pessoa ainda não tiver conta, entra como jogador(a) quando se cadastrar com esse e-mail.</p>
+      </form>
+    {% endif %}
+    <div class="panel mt-4 divide-y divide-line">
+      {% for p in players %}
+        <div class="flex items-center gap-3 px-4 py-3">
+          {% if p.avatar_url %}<img src="{{ p.avatar_url }}" alt="" class="size-9 rounded-full object-cover" referrerpolicy="no-referrer">
+          {% else %}<span class="grid size-9 place-items-center rounded-full bg-accent font-semibold text-on-accent">{{ p.name[:1]|upper }}</span>{% endif %}
+          <div class="min-w-0 flex-1"><p class="font-medium text-ink">{{ p.name }}{% if p.id == g.user.id %} <span class="text-faint">(você)</span>{% endif %}</p>
+            {% if gm %}<p class="truncate text-xs text-muted">{{ p.email }}</p>{% endif %}</div>
+          {% if gm or p.id == g.user.id %}
+            <form method="post" action="{{ url_for('play.remove_player', wid=world.id, uid=p.id) }}"
+                  data-confirm="{{ 'Sair desta mesa?' if p.id == g.user.id else 'Tirar ' ~ p.name ~ ' da mesa?' }}" onsubmit="return confirm(this.dataset.confirm)">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-ghost btn-sm btn-quiet-danger">{{ 'Sair' if p.id == g.user.id else 'Remover' }}</button>
+            </form>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="p-4 text-sm text-faint">Nenhum jogador ainda.</p>
+      {% endfor %}
+      {% for i in pending or [] %}
+        <div class="flex items-center gap-3 px-4 py-3 opacity-70">
+          <span class="grid size-9 place-items-center rounded-full border border-dashed border-line-strong">{{ ui('mail', 'size-4') }}</span>
+          <p class="flex-1 text-sm text-ink">{{ i.email }} <span class="text-faint">· convite pendente</span></p>
+          <form method="post" action="{{ url_for('play.remove_player', wid=world.id, uid=0) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="email" value="{{ i.email }}">
+            <button class="btn btn-ghost btn-sm">Cancelar</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

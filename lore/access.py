@@ -1,11 +1,18 @@
-"""Acesso aos mundos (dono + colaboradores) e dados da barra lateral."""
-from flask import abort, g, url_for
+"""Acesso aos mundos e dados da barra lateral.
+
+Papéis em world_members: 'owner' (dono), 'editor' (colaborador) e 'player' (jogador).
+Jogadores NÃO entram no planejamento: todo get_world() os manda para a Mesa, a não ser que a rota
+diga allow_player=True (só as rotas da Mesa fazem isso). Assim nada novo vaza por esquecimento.
+"""
+from flask import abort, g, redirect, url_for
 
 from .constants import CATEGORY_MAP
 from .db import get_db
 
+GM_ROLES = ("owner", "editor")
 
-def get_world(wid, owner_only=False):
+
+def get_world(wid, owner_only=False, allow_player=False):
     db = get_db()
     world = db.execute(
         """SELECT w.*, m.role FROM worlds w
@@ -15,10 +22,19 @@ def get_world(wid, owner_only=False):
     ).fetchone()
     if world is None:
         abort(404)
-    if owner_only and world["role"] != "owner":
-        abort(403)
     g.world = world
     g.is_owner = world["role"] == "owner"
+    g.is_gm = world["role"] in GM_ROLES
+    g.is_player = world["role"] == "player"
+    if g.is_player:
+        if not allow_player:
+            abort(redirect(url_for("play.dashboard", wid=wid)))
+        return world          # a Mesa não usa a barra lateral do planejamento
+    if owner_only and world["role"] != "owner":
+        abort(403)
+    g.party_main = None
+    if world["party_of"]:     # mundo da mesa: guarda o mundo principal para a navegação
+        g.party_main = db.execute("SELECT id, name, icon FROM worlds WHERE id = ?", (world["party_of"],)).fetchone()
     pages = db.execute(
         "SELECT id, title, icon, category, parent_id FROM articles WHERE world_id = ? ORDER BY title COLLATE NOCASE",
         (wid,),

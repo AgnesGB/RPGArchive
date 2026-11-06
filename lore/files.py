@@ -33,7 +33,7 @@ def save_upload(world_id, fs, images_only=False):
     ext = _ext(fs.filename)
     allowed = IMAGE_TYPES if images_only else UPLOAD_TYPES
     if ext not in allowed:
-        kinds = "imagens (PNG, JPG, GIF, WEBP)" if images_only else "imagens, PDF, EPUB, TXT, MD, DOCX, ODT ou ZIP"
+        kinds = "imagens (PNG, JPG, GIF, WEBP)" if images_only else "imagens, áudio (MP3, OGG, WAV, M4A), vídeo (MP4, WEBM), PDF, EPUB, TXT, MD, DOCX, ODT ou ZIP"
         raise UploadError(f"Tipo de arquivo não suportado: .{ext or '?'} — envie {kinds}.")
     folder = Path(current_app.config["UPLOAD_DIR"]) / str(world_id)
     folder.mkdir(parents=True, exist_ok=True)
@@ -62,14 +62,19 @@ def file_dict(f):
 def serve(fid):
     db = get_db()
     f = db.execute(
-        """SELECT f.* FROM files f JOIN world_members m ON m.world_id = f.world_id AND m.user_id = ?
+        """SELECT f.*, m.role FROM files f JOIN world_members m ON m.world_id = f.world_id AND m.user_id = ?
            WHERE f.id = ?""", (g.user["id"], fid)).fetchone()
     if f is None:
         abort(404)
+    if f["role"] == "player":   # jogador: só arquivos que aparecem na Mesa (mapas compartilhados e achados)
+        from .play import player_file_ids
+        if fid not in player_file_ids(f["world_id"]):
+            abort(404)
     path = Path(current_app.config["UPLOAD_DIR"]) / str(f["world_id"]) / f["stored_name"]
     if not path.exists():
         abort(404)
-    inline = is_image(f["mime"]) or f["mime"] in ("application/pdf", "text/plain", "text/markdown")
+    inline = (is_image(f["mime"]) or f["mime"].startswith(("audio/", "video/"))
+              or f["mime"] in ("application/pdf", "text/plain", "text/markdown"))
     resp = send_file(path, mimetype=f["mime"], as_attachment=not inline,
                      download_name=f["original_name"], max_age=60 * 60 * 24 * 30)
     resp.headers["Cache-Control"] = "private, max-age=2592000"

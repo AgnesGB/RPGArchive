@@ -40,6 +40,24 @@ CREATE TABLE IF NOT EXISTS world_members (
 CREATE INDEX IF NOT EXISTS idx_members_user ON world_members(user_id);
 
 -- Convites para e-mails que ainda não têm conta: viram membros ao entrar
+-- Mesa de jogo: mapas que os jogadores veem e "arquivos encontrados" (páginas/arquivos revelados)
+CREATE TABLE IF NOT EXISTS play_maps (
+    world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
+    map_id     INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (world_id, map_id)
+);
+CREATE TABLE IF NOT EXISTS handouts (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
+    kind       TEXT NOT NULL,              -- 'page' | 'file'
+    ref_id     INTEGER NOT NULL,
+    note       TEXT NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (world_id, kind, ref_id)
+);
+
 CREATE TABLE IF NOT EXISTS world_invites (
     world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
     email      TEXT NOT NULL,
@@ -233,13 +251,17 @@ CREATE TABLE IF NOT EXISTS timeline_pages (
 # Colunas adicionadas depois da primeira versão (bancos antigos recebem via ALTER TABLE)
 _ADDED_COLUMNS = {
     "users": {"theme": "TEXT NOT NULL DEFAULT 'dark'", "accent": "TEXT NOT NULL DEFAULT 'yellow'"},
-    "worlds": {"icon": "TEXT NOT NULL DEFAULT ''", "cover_url": "TEXT NOT NULL DEFAULT ''",
+    "world_invites": {"role": "TEXT NOT NULL DEFAULT 'editor'"},
+    "worlds": {"party_of": "INTEGER REFERENCES worlds(id) ON DELETE CASCADE",   # mundo da mesa (área dos jogadores)
+               "icon": "TEXT NOT NULL DEFAULT ''", "cover_url": "TEXT NOT NULL DEFAULT ''",
                "cover_pos": "INTEGER NOT NULL DEFAULT 50"},
     "articles": {"parent_id": "INTEGER REFERENCES articles(id) ON DELETE SET NULL",
                  "icon": "TEXT NOT NULL DEFAULT ''", "cover_pos": "INTEGER NOT NULL DEFAULT 50",
                  "year": "INTEGER", "date_label": "TEXT NOT NULL DEFAULT ''",
                  "created_by": "INTEGER REFERENCES users(id) ON DELETE SET NULL",
-                 "updated_by": "INTEGER REFERENCES users(id) ON DELETE SET NULL"},
+                 "updated_by": "INTEGER REFERENCES users(id) ON DELETE SET NULL",
+                 # editor de blocos (JSON) + versão para edição simultânea
+                 "blocks": "TEXT NOT NULL DEFAULT ''", "blocks_version": "INTEGER NOT NULL DEFAULT 0"},
     "map_tilesets": {"set_id": "INTEGER REFERENCES map_sets(id) ON DELETE CASCADE"},
     "cards": {"file_id": "INTEGER REFERENCES files(id) ON DELETE CASCADE",
               # cards que apontam para um mapa ou para outro mapa mental

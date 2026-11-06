@@ -6,7 +6,8 @@
   const $ = id => document.getElementById(id);
   const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const vp = $('mviewport'), world = $('mworld'), pinsEl = $('pins'), side = $('side'), img = $('map-img');
-  const cv = { terrain: $('cv-terrain'), grid: $('cv-grid'), objects: $('cv-objects'), ui: $('cv-ui') };
+  const cv = { terrain: $('cv-terrain'), grid: $('cv-grid'), objects: $('cv-objects'), fog: $('cv-fog'), ui: $('cv-ui') };
+  const PLAYER = !!D.player;          // jogador: só observa e move tokens
   const ctx = Object.fromEntries(Object.entries(cv).map(([k, c]) => [k, c.getContext('2d')]));
   const SQ3 = Math.sqrt(3);
 
@@ -19,9 +20,12 @@
               color: g.color || '#000000', opacity: g.opacity ?? 0.25, show: g.show ?? true },
       base: d.base || '', bg: d.bg || '#1c1917', imageOpacity: d.imageOpacity ?? 1,
       terrain: d.terrain || {}, walls: d.walls || {}, props: d.props || [],
+      // névoa: grade própria (em frações do mapa, para valer em mapas com e sem grade)
+      fog: { cols: d.fog?.cols || 0, rows: d.fog?.rows || 0, cells: Array.isArray(d.fog?.cells) ? d.fog.cells : [] },
     };
   }
   let M = normalize(D.data);
+  let fogSet = new Set(M.fog.cells);
   let version = D.version;
   let W = 0, H = 0, Q = 1;   // tamanho do mundo (px) e fator de resolução dos canvas
 
@@ -297,7 +301,60 @@
       g.restore();
     }
   }
-  function redrawAll() { computeSize(); drawTerrainAll(); drawGrid(); drawObjects(); clearUi(); renderPins(); applyView(); }
+  // ------------------------------------------------------------------ névoa (fog of war)
+  function fogDims() {
+    if (!M.fog.cols || !M.fog.rows) {
+      if (M.grid.type === 'square') { M.fog.cols = M.grid.cols; M.fog.rows = M.grid.rows; }
+      else { M.fog.cols = Math.max(4, Math.ceil(W / 40)); M.fog.rows = Math.max(4, Math.ceil(H / 40)); }
+    }
+    return { cw: W / M.fog.cols, ch: H / M.fog.rows };
+  }
+  const syncFog = () => { M.fog.cells = [...fogSet]; };
+  let fogMask = null, fogRaf = 0;
+  function drawFog() {
+    if (!cv.fog) return;
+    const g = ctx.fog; g.clearRect(0, 0, W, H);
+    if (!fogSet.size) return;
+    const { cw, ch } = fogDims(), blur = Math.max(2, Math.min(cw, ch) * 0.22);
+    if (!fogMask || fogMask.width !== cv.fog.width || fogMask.height !== cv.fog.height) {
+      fogMask = document.createElement('canvas'); fogMask.width = cv.fog.width; fogMask.height = cv.fog.height;
+    }
+    const m = fogMask.getContext('2d');
+    m.setTransform(1, 0, 0, 1, 0, 0); m.clearRect(0, 0, fogMask.width, fogMask.height); m.setTransform(Q, 0, 0, Q, 0, 0);
+    m.fillStyle = '#000';
+    const pad = PLAYER ? blur : 0;     // para o jogador a névoa "vaza" um pouco para fora: nada aparece pela borda borrada
+    for (const k of fogSet) { const [c, r] = parseKey(k); m.fillRect(c * cw - pad, r * ch - pad, cw + pad * 2 + 0.5, ch + pad * 2 + 0.5); }
+    g.save(); g.filter = `blur(${blur}px)`; g.drawImage(fogMask, 0, 0, W, H); g.restore();
+    if (PLAYER) { g.save(); g.drawImage(fogMask, 0, 0, W, H); g.restore(); }   // miolo totalmente opaco
+    g.save(); g.globalCompositeOperation = 'source-in';
+    if (PLAYER) {
+      const gr = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) / 1.2);
+      gr.addColorStop(0, '#16131f'); gr.addColorStop(1, '#07060b'); g.fillStyle = gr;
+    } else g.fillStyle = 'rgba(14, 12, 26, 0.62)';
+    g.fillRect(0, 0, W, H); g.restore();
+    if (!PLAYER) {   // mestre: listras para lembrar que ali está coberto
+      g.save(); g.globalCompositeOperation = 'source-atop'; g.strokeStyle = 'rgba(196, 181, 253, 0.22)'; g.lineWidth = 2;
+      g.beginPath(); for (let x = -H; x < W; x += 18) { g.moveTo(x, H); g.lineTo(x + H, 0); } g.stroke(); g.restore();
+    }
+  }
+  const drawFogSoon = () => { cancelAnimationFrame(fogRaf); fogRaf = requestAnimationFrame(drawFog); };
+  let fogBrush = 2;
+  function fogPaint(p, erase) {
+    const { cw, ch } = fogDims(), c0 = Math.floor(p.x / cw), r0 = Math.floor(p.y / ch), h = Math.floor((fogBrush - 1) / 2);
+    let changedAny = false;
+    for (let r = r0 - h; r < r0 - h + fogBrush; r++) for (let c = c0 - h; c < c0 - h + fogBrush; c++) {
+      if (c < 0 || r < 0 || c >= M.fog.cols || r >= M.fog.rows) continue;
+      const k = key(c, r);
+      if (erase ? fogSet.delete(k) : !fogSet.has(k) && fogSet.add(k)) changedAny = true;
+    }
+    if (changedAny) drawFogSoon();
+  }
+  function fogAll(cover) {
+    pushHistory(); fogDims(); fogSet = new Set();
+    if (cover) for (let r = 0; r < M.fog.rows; r++) for (let c = 0; c < M.fog.cols; c++) fogSet.add(key(c, r));
+    drawFog(); markDirty();
+  }
+  function redrawAll() { computeSize(); drawTerrainAll(); drawGrid(); drawObjects(); drawFog(); clearUi(); renderPins(); applyView(); }
   const clearUi = () => ctx.ui.clearRect(0, 0, W, H);
 
   // ================================================================== view (pan/zoom)
@@ -330,6 +387,7 @@
   // ================================================================== modo
   let mode = 'play', tool = 'terrain';
   function setMode(m) {
+    if (PLAYER) m = 'play';
     mode = m;
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('bg-surface', b.dataset.mode === m));
     document.querySelectorAll('[data-only]').forEach(e => { e.classList.toggle('hidden', e.dataset.only !== m); e.classList.toggle('flex', e.dataset.only === m); });
@@ -337,6 +395,7 @@
     vp.classList.toggle('editing', m === 'edit');
     if (m === 'edit') closeSide();
     const u = new URL(location); m === 'edit' ? u.searchParams.set('edit', 1) : u.searchParams.delete('edit'); history.replaceState(null, '', u);
+    if (m === 'edit') setFogLive(false);
     drawObjects(); clearUi();
   }
   document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { flushSave(); setMode(b.dataset.mode); }));
@@ -616,10 +675,10 @@
 
   // ================================================================== histórico, salvar e sincronizar
   const undo = [], redo = [];
-  function pushHistory() { undo.push(JSON.stringify(M)); if (undo.length > 80) undo.shift(); redo.length = 0; }
+  function pushHistory() { syncFog(); undo.push(JSON.stringify(M)); if (undo.length > 80) undo.shift(); redo.length = 0; }
   function restore(from, to) {
     if (!from.length) return;
-    to.push(JSON.stringify(M)); M = normalize(JSON.parse(from.pop()));
+    syncFog(); to.push(JSON.stringify(M)); M = normalize(JSON.parse(from.pop())); fogSet = new Set(M.fog.cells);
     selectedProp = null; showPropSel(); syncGridForm(); redrawAll(); markDirty();
   }
   $('undo').addEventListener('click', () => restore(undo, redo));
@@ -637,7 +696,8 @@
     return c.toDataURL('image/jpeg', 0.72);
   }
   async function save() {
-    if (!dirty) return;
+    if (!dirty || PLAYER) return;
+    syncFog();
     if (saving) { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); return; }
     saving = true; dirty = false; saveState('salvando…');
     const body = { data: M, version };
@@ -773,6 +833,20 @@
     side.classList.remove('hidden'); side.classList.add('flex');
     side.replaceChildren();
     const isToken = p.kind === 'token';
+    if (PLAYER) {      // jogador: só lê (nome, cor e, se for um achado revelado, a página)
+      const head = el('div', 'flex items-center justify-between border-b border-line p-4');
+      const h = el('p', 'flex items-center gap-2 font-display text-lg text-ink'); h.append(iconLabel(ri(isToken ? 'coin' : 'flag'), p.label || (isToken ? 'Token' : 'Marcador'))); head.append(h);
+      const x = el('button', 'btn btn-ghost btn-sm btn-icon'); x.append(ui('x')); x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.addEventListener('click', closeSide); head.append(x);
+      side.append(head);
+      const body = el('div', 'space-y-3 p-4 text-sm text-muted'); side.append(body);
+      if (p.article) {
+        const a = el('a', 'group block overflow-hidden rounded-xl border border-line hover:border-accent'); a.href = p.article.url;
+        if (p.article.cover) { const i = el('img', 'h-32 w-full object-cover'); i.src = p.article.cover; i.referrerPolicy = 'no-referrer'; a.append(i); }
+        a.append(el('p', 'p-3 font-semibold text-ink group-hover:text-accent-ink', p.article.title)); body.append(a);
+      }
+      body.append(el('p', '', isToken ? 'Arraste o token para movê-lo. Todos na mesa veem a mudança.' : 'Marcador do mapa.'));
+      return;
+    }
     const head = el('div', 'flex items-center justify-between border-b border-line p-4');
     const h = el('p', 'flex items-center gap-2 font-display text-lg text-ink'); h.append(iconLabel(ri(isToken ? 'coin' : 'flag'), isToken ? 'Token' : 'Marcador')); head.append(h);
     const x = el('button', 'btn btn-ghost btn-sm btn-icon'); x.append(ui('x')); x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.addEventListener('click', closeSide); head.append(x);
@@ -839,6 +913,20 @@
     del.addEventListener('click', async () => { if (!confirm(`Apagar ${isToken ? 'o token' : 'o marcador'}${p.label ? ' “' + p.label + '”' : ''}?`)) return; touched(); await api('DELETE', `${D.api}/${p.id}`); pins.delete(p.id); closeSide(); });
     body.append(del);
   }
+  let fogLive = false;
+  function setFogLive(v) {
+    fogLive = v && !PLAYER;
+    $('fog-live')?.classList.toggle('btn-primary', fogLive); $('fog-live')?.classList.toggle('btn-outline', !fogLive);
+    $('fog-hint')?.classList.toggle('hidden', !fogLive);
+    vp.classList.toggle('placing', fogLive);
+  }
+  $('fog-live')?.addEventListener('click', () => { stopPlacing(); setFogLive(!fogLive); });
+  document.querySelectorAll('[data-fbrush]').forEach(b => b.addEventListener('click', () => {
+    fogBrush = Number(b.dataset.fbrush);
+    document.querySelectorAll('[data-fbrush]').forEach(x => x.classList.toggle('bg-accent', x === b));
+  }));
+  $('fog-cover')?.addEventListener('click', () => { if (confirm('Cobrir o mapa todo com névoa?')) fogAll(true); });
+  $('fog-clear')?.addEventListener('click', () => { if (confirm('Revelar o mapa todo (tirar toda a névoa)?')) fogAll(false); });
   function startPlacing(kind) { placing = kind; vp.classList.add('placing'); $('place-hint').classList.remove('hidden'); }
   function stopPlacing() { placing = null; vp.classList.remove('placing'); $('place-hint').classList.add('hidden'); }
   $('add-pin').addEventListener('click', () => startPlacing('pin'));
@@ -851,6 +939,9 @@
     if (!e.target.closest('input, textarea, select, button, a, #side')) { document.body.classList.add('select-none'); getSelection()?.removeAllRanges(); }
     if (!view) return;
     const p = toWorld(e.clientX, e.clientY);
+    if (fogLive && mode === 'play' && !spaceDown && e.button !== 1 && !e.target.closest('.pin')) {
+      pushHistory(); action = { type: 'fog', erase: !e.shiftKey && e.button !== 2, last: p }; fogPaint(p, action.erase); return;
+    }
     const wantsPan = e.button === 1 || spaceDown || (mode === 'edit' && tool === 'move') || (mode === 'play' && e.button === 0 && !e.target.closest('.pin') && !placing);
     if (wantsPan || (mode === 'play' && e.button !== 0)) {
       if (!wantsPan) return;
@@ -859,18 +950,23 @@
       vp.classList.add('panning'); return;
     }
     if (mode === 'play') {
-      if (placing) {
+      if (placing && !PLAYER) {
         const f = toFrac(e.clientX, e.clientY), kind = placing; stopPlacing(); touched();
         const np = await api('POST', D.api, { kind, ...f, color: kind === 'token' ? '#3b82f6' : '#ef4444', label: kind === 'token' ? 'Jogador' : '' });
         pins.set(np.id, np); renderPins(); openSide(np); return;
       }
       const pinEl = e.target.closest('.pin');
-      if (pinEl) action = { type: 'pin', p: pins.get(Number(pinEl.dataset.id)), n: pinEl, moved: false, sx: e.clientX, sy: e.clientY };
+      if (pinEl) {
+        const pin = pins.get(Number(pinEl.dataset.id));
+        action = { type: 'pin', p: pin, n: pinEl, moved: false, sx: e.clientX, sy: e.clientY, locked: PLAYER && pin.kind !== 'token' };
+      }
       return;
     }
     // ----- modo edição
     const erase = e.button === 2;
-    if (tool === 'terrain' && gridOn()) {
+    if (tool === 'fog') {
+      pushHistory(); action = { type: 'fog', erase, last: p }; fogPaint(p, erase);
+    } else if (tool === 'terrain' && gridOn()) {
       pushHistory(); stroke = { done: new Set() }; action = { type: 'paint', erase, last: p };
       paint(cellAt(p.x, p.y), erase);
     } else if (tool === 'fill' && gridOn()) {
@@ -929,13 +1025,19 @@
       }
       action.last = p;
     }
+    else if (action.type === 'fog') {
+      const last = action.last, { cw } = fogDims(), dist = Math.hypot(p.x - last.x, p.y - last.y);
+      const steps = Math.max(1, Math.ceil(dist / (cw / 3)));
+      for (let i = 1; i <= steps; i++) fogPaint({ x: last.x + (p.x - last.x) * i / steps, y: last.y + (p.y - last.y) * i / steps }, action.erase);
+      action.last = p;
+    }
     else if (action.type === 'prop') {
       const s = snapPoint(p.x - action.dx, p.y - action.dy + (($('snap').checked && gridOn()) ? 0 : 0));
       action.prop.x = Math.round($('snap').checked && gridOn() ? s.x : p.x - action.dx);
       action.prop.y = Math.round($('snap').checked && gridOn() ? s.y : p.y - action.dy);
       action.moved = true; drawObjects();
     } else if (action.type === 'pin') {
-      if (!action.moved && Math.hypot(e.clientX - action.sx, e.clientY - action.sy) < 4) return;
+      if (action.locked || (!action.moved && Math.hypot(e.clientX - action.sx, e.clientY - action.sy) < 4)) return;
       const f = toFrac(e.clientX, e.clientY);
       action.p.x = f.x; action.p.y = f.y; action.moved = true;
       action.n.style.left = f.x * W + 'px'; action.n.style.top = f.y * H + 'px';
@@ -946,6 +1048,7 @@
     if (!action) return;
     const a = action; action = null; vp.classList.remove('panning');
     if (a.type === 'paint' || a.type === 'walls') { stroke = null; markDirty(); }
+    if (a.type === 'fog') { drawFog(); markDirty(); }
     if (a.type === 'prop') { if (a.moved) markDirty(); else undo.pop(); }
     if (a.type === 'pin') { if (a.moved) savePin(a.p, { x: a.p.x, y: a.p.y }); else openSide(a.p); }
     if (a.type === 'pan' && mode === 'play' && Math.abs(view.x - a.vx) + Math.abs(view.y - a.vy) < 3 && selected) closeSide();
@@ -958,14 +1061,14 @@
   document.addEventListener('keydown', e => {
     const typing = e.target.closest('input, textarea, select');
     if (e.key === ' ' && !typing) { spaceDown = true; vp.classList.add('tool-move'); e.preventDefault(); }
-    if (e.key === 'Escape') { stopPlacing(); if (!typing) closeSide(); }
+    if (e.key === 'Escape') { stopPlacing(); setFogLive(false); if (!typing) closeSide(); }
     if (typing || mode !== 'edit') return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? restore(redo, undo) : restore(undo, redo); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); restore(redo, undo); }
     else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedProp) { e.preventDefault(); deleteSelectedProp(); }
     else if (e.key.toLowerCase() === 'r' && selectedProp && !e.ctrlKey && !e.metaKey) { pushHistory(); rotateSelected(e.shiftKey ? -90 : 90); }
     else if (!e.ctrlKey && !e.metaKey) {
-      const t = { b: 'terrain', f: 'fill', w: 'walls', o: 'props' }[e.key.toLowerCase()];
+      const t = { b: 'terrain', f: 'fill', w: 'walls', o: 'props', n: 'fog' }[e.key.toLowerCase()];
       if (t) setTool(t);
     }
   });
@@ -977,7 +1080,7 @@
     try {
       if (!dirty && !saving) {
         const r = await fetch(`${D.dataUrl}?v=${version}`, { headers: { Accept: 'application/json' } });
-        if (r.status === 200) { const j = await r.json(); if (!dirty && !action) { M = normalize(j.data); version = j.version; syncGridForm(); redrawAll(); } }
+        if (r.status === 200) { const j = await r.json(); if (!dirty && !action) { M = normalize(j.data); fogSet = new Set(M.fog.cells); version = j.version; syncGridForm(); redrawAll(); } }
       }
       if (Date.now() - lastLocal > 3000 && !side.contains(document.activeElement)) {
         const r = await fetch(D.api, { headers: { Accept: 'application/json' } });
@@ -996,11 +1099,11 @@
     await loadSets();
     computeSize();
     if (!view) fit(); else applyView();
-    drawTerrainAll(); drawGrid(); drawObjects(); renderPins();
-    buildPalette(); buildSetsPanel(); setTool('terrain'); setMode(D.startEdit ? 'edit' : 'play');
+    drawTerrainAll(); drawGrid(); drawObjects(); fogDims(); drawFog(); renderPins();
+    buildPalette(); buildSetsPanel(); setTool('terrain'); setMode(D.startEdit && !PLAYER ? 'edit' : 'play');
     window.addEventListener('resize', () => applyView());
     // mapa novo (ou antigo sem miniatura): salva uma vez para a lista de mapas mostrar a prévia
-    if (!D.hasThumb) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);
+    if (!D.hasThumb && !PLAYER) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);
   }
   if (img && !img.complete) img.addEventListener('load', start); else start();
 })();

@@ -1,4 +1,6 @@
-{% extends "world/_layout.html" %}
+{% extends "play/_layout.html" if player_view else "world/_layout.html" %}
+{# player_view: jogador na Mesa — só observa e move tokens (os controles de edição ficam escondidos) #}
+{% set gm = not player_view %}
 {% block title %}{{ map.name }} · {{ world.name }}{% endblock %}
 {% block head %}
 <style>
@@ -28,19 +30,25 @@
 <div class="flex h-[calc(100vh-3.5rem)] flex-col">
   {# ---------- barra superior ---------- #}
   <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-3 py-2">
+    {% if gm %}
     <form method="post" enctype="multipart/form-data" action="{{ url_for('maps.settings', wid=world.id, mid=map.id) }}" class="flex items-center gap-1">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input name="name" value="{{ map.name }}" onchange="this.form.submit()"
              class="w-64 max-w-[40vw] rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
     </form>
-    <div class="flex rounded-lg bg-surface-2 p-0.5 text-sm">
+    {% else %}
+    <a href="{{ back_url }}" class="btn btn-ghost btn-sm">{{ ui('arrow-left') }} Mesa</a>
+    <h1 class="px-2 font-display text-lg text-ink">{{ map.name }}</h1>
+    {% endif %}
+    <div class="flex rounded-lg bg-surface-2 p-0.5 text-sm {{ 'hidden' if not gm }}">
       <button data-mode="play" class="flex items-center gap-1.5 rounded-md px-3 py-1">{{ ri('sword') }} Jogar</button>
       <button data-mode="edit" class="flex items-center gap-1.5 rounded-md px-3 py-1">{{ ri('quill') }} Editar mapa</button>
     </div>
     <div class="ml-auto flex flex-wrap items-center gap-1">
-      <span data-only="play" class="flex gap-1">
+      <span data-only="play" class="flex gap-1" {{ 'hidden' if not gm }}>
         <button id="add-pin" class="btn btn-primary btn-sm">{{ ri('flag') }} Marcador</button>
         <button id="add-token" class="btn btn-outline btn-sm">{{ ri('coin') }} Token</button>
+        <button id="fog-live" class="btn btn-outline btn-sm" title="Clique e arraste para revelar a névoa (Shift: cobrir de novo)">{{ ri('moon') }} Revelar névoa</button>
       </span>
       <span data-only="edit" class="hidden items-center gap-1">
         <button id="undo" class="btn btn-ghost btn-sm btn-icon" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">{{ ui('undo') }}</button>
@@ -52,22 +60,25 @@
       <span id="zoom-level" class="w-11 text-center text-xs text-muted">100%</span>
       <button data-zoom="1.25" class="btn btn-ghost btn-sm btn-icon" title="Aproximar" aria-label="Aproximar">{{ ui('plus') }}</button>
       <button id="fit" class="btn btn-ghost btn-sm btn-icon" title="Enquadrar tudo" aria-label="Enquadrar tudo">{{ ui('fit') }}</button>
+      {% if gm %}
       <span class="mx-1 h-6 w-px bg-line"></span>
       <form method="post" action="{{ url_for('maps.delete', wid=world.id, mid=map.id) }}"
             data-confirm="Apagar o mapa “{{ map.name }}” com todos os marcadores?" onsubmit="return confirm(this.dataset.confirm)">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-ghost btn-sm btn-icon btn-quiet-danger" title="Apagar mapa" aria-label="Apagar mapa">{{ ui('trash') }}</button>
       </form>
+      {% endif %}
     </div>
   </div>
 
   <div class="relative flex min-h-0 flex-1">
     {# ---------- paleta do editor ---------- #}
-    <aside id="palette" class="hidden w-72 shrink-0 flex-col overflow-hidden border-r border-line bg-surface">
-      <div class="grid grid-cols-7 gap-0.5 border-b border-line p-2">
+    <aside id="palette" class="hidden w-72 {{ '!hidden' if not gm }} shrink-0 flex-col overflow-hidden border-r border-line bg-surface">
+      <div class="grid grid-cols-8 gap-0.5 border-b border-line p-2">
         {% for key, icon, label, tip in [('terrain', ui('brush', 'size-4'), 'Pincel', 'Pincel de terreno (B)'), ('fill', ri('bucket'), 'Balde', 'Preencher área (F)'),
                                          ('walls', ri('brick'), 'Paredes', 'Paredes nas bordas (W)'), ('props', ri('tree'), 'Objetos', 'Objetos (O)'),
                                          ('move', ui('hand', 'size-4'), 'Mover', 'Mover a vista (espaço)'), ('grid', ri('gear'), 'Grade', 'Grade e fundo'),
+                                         ('fog', ri('moon'), 'Névoa', 'Névoa: cubra áreas e revele aos poucos (N)'),
                                          ('custom', ri('bag'), 'Meus', 'Meus tilesets: adicione os seus')] %}
           <button class="tool flex flex-col items-center gap-1 rounded-lg py-1.5 text-[10px] text-muted hover:bg-surface-2 hover:text-ink" data-tool="{{ key }}" title="{{ tip }}" aria-label="{{ tip }}">{{ icon }}<span>{{ label }}</span></button>
         {% endfor %}
@@ -113,6 +124,20 @@
           </div>
           <div id="prop-list" class="grid grid-cols-4 gap-1.5"></div>
           <p class="text-xs text-faint">Escolha um objeto e clique no mapa. Clique num objeto para selecionar e arrastar · botão direito apaga.</p>
+        </div>
+        {# névoa #}
+        <div data-panel="fog" class="hidden space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-muted">Pincel</span>
+            {% for n in [1, 2, 3, 5, 8] %}<button class="rounded-md border border-line px-2.5 py-1 text-xs {{ 'bg-accent' if n == 2 }}" data-fbrush="{{ n }}">{{ n }}</button>{% endfor %}
+          </div>
+          <div class="grid grid-cols-2 gap-1">
+            <button id="fog-cover" type="button" class="btn btn-outline btn-sm">Cobrir tudo</button>
+            <button id="fog-clear" type="button" class="btn btn-outline btn-sm">Revelar tudo</button>
+          </div>
+          <p class="text-xs text-faint">Arraste para <strong>cobrir</strong> com névoa · <strong>botão direito revela</strong>.
+            Os jogadores veem a névoa opaca e não enxergam marcadores nem tokens embaixo dela; você vê através, com listras.
+            Durante a sessão, use <strong>Revelar névoa</strong> no modo Jogar.</p>
         </div>
         {# meus conjuntos #}
         <div data-panel="custom" class="hidden space-y-3">
@@ -187,10 +212,12 @@
         <canvas id="cv-terrain"></canvas>
         <canvas id="cv-grid"></canvas>
         <canvas id="cv-objects"></canvas>
+        <canvas id="cv-fog" style="pointer-events: none"></canvas>
         <canvas id="cv-ui"></canvas>
         <div id="pins" class="absolute inset-0"></div>
       </div>
       <div id="place-hint" class="pointer-events-none absolute left-1/2 top-4 hidden -translate-x-1/2 rounded-full bg-black/75 px-4 py-1.5 text-sm text-white">Clique no mapa para posicionar · Esc cancela</div>
+      <div id="fog-hint" class="pointer-events-none absolute left-1/2 top-4 hidden -translate-x-1/2 rounded-full bg-black/75 px-4 py-1.5 text-sm text-white">Arraste para revelar · Shift+arrastar cobre de novo · Esc sai</div>
     </div>
 
     <aside id="side" class="hidden w-80 shrink-0 flex-col overflow-y-auto border-l border-line bg-surface"></aside>
@@ -199,11 +226,11 @@
 
 <script id="map-data" type="application/json">{{ {
   'pins': pins, 'pages': page_list, 'files': file_list, 'colors': PIN_COLORS,
-  'api': url_for('maps.pins', wid=world.id, mid=map.id), 'upload': url_for('files.upload', wid=world.id),
-  'dataUrl': url_for('maps.data', wid=world.id, mid=map.id), 'data': mapdata, 'version': version,
+  'api': pins_url or url_for('maps.pins', wid=world.id, mid=map.id), 'upload': url_for('files.upload', wid=world.id),
+  'dataUrl': data_url or url_for('maps.data', wid=world.id, mid=map.id), 'data': mapdata, 'version': version,
   'kit': url_for('static', filename='mapkit/'), 'image': image, 'startEdit': start_edit, 'hasThumb': has_thumb,
   'sets': tile_sets, 'tilesetApi': url_for('maps.tileset_create', wid=world.id),
   'setApi': url_for('maps.set_delete', wid=world.id, sid=0)[:-2],
-  'mapId': map.id }|tojson }}</script>
+  'mapId': map.id, 'player': player_view }|tojson }}</script>
 <script src="{{ url_for('static', filename='map.js') }}"></script>
 {% endblock %}

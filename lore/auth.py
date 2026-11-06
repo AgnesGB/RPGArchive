@@ -54,9 +54,14 @@ def claim_invites(user_id):
     """Convites pendentes para o e-mail do usuário viram acesso aos mundos."""
     db = get_db()
     email = db.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()["email"]
+    worlds = [r[0] for r in db.execute("SELECT world_id FROM world_invites WHERE email = ?", (email,))]
     db.execute("""INSERT OR IGNORE INTO world_members (world_id, user_id, role)
-                  SELECT world_id, ?, 'editor' FROM world_invites WHERE email = ?""", (user_id, email))
+                  SELECT world_id, ?, CASE WHEN role = 'player' THEN 'player' ELSE 'editor' END
+                  FROM world_invites WHERE email = ?""", (user_id, email))
     db.execute("DELETE FROM world_invites WHERE email = ?", (email,))
+    from .play import sync_party
+    for wid in worlds:
+        sync_party(wid)
     db.commit()
 
 

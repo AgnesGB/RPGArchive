@@ -1,7 +1,7 @@
 {% extends "world/_layout.html" %}
 {% import "world/_macros.html" as m %}
 {% from "_icon_picker.html" import icon_picker %}
-{% block title %}{{ 'Nova página' if is_new else 'Editar ' ~ page.title }}{% endblock %}
+{% block title %}{{ 'Nova página' if is_new else 'Propriedades · ' ~ page.title }}{% endblock %}
 {% block world_content %}
 <form method="post" enctype="multipart/form-data" id="page-form"
       action="{{ url_for('pages.new', wid=world.id) if is_new else url_for('pages.edit', wid=world.id, aid=page.id) }}">
@@ -68,65 +68,18 @@
         </div>
       {% endif %}
     </div>
-
-    {# ---------- Editor ---------- #}
-    <div class="mt-6">
-      <div class="sticky top-14 z-10 -mx-2 flex flex-wrap items-center gap-1 rounded-lg border border-line bg-surface/95 p-1 backdrop-blur">
-        {% for cmd, label, tip in [('h2','H2','Título'),('h3','H3','Subtítulo'),('b','<b>B</b>','Negrito'),('i','<i>I</i>','Itálico'),('ul','• Lista','Lista'),('todo','☐ Tarefa','Lista de tarefas'),('quote','“ Citação','Citação'),('hr','―','Divisor'),('link','[[ ]] Link','Link para outra página')] %}
-          <button type="button" data-md="{{ cmd }}" title="{{ tip }}" class="rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2">{{ label|safe }}</button>
-        {% endfor %}
-        <button type="button" id="table-btn" title="Inserir ou editar tabela (com o cursor dentro de uma tabela, edita ela)" class="rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2">▦ Tabela</button>
-        <label class="cursor-pointer rounded px-2 py-1 text-sm text-ink-2 hover:bg-surface-2" title="Inserir imagem (ou cole/arraste no texto)">
-          {{ ri('picture') }} Imagem <input type="file" accept="image/*" multiple class="hidden" id="inline-img">
-        </label>
-        <div class="ml-auto flex rounded-md bg-surface-2 p-0.5 text-xs">
-          <button type="button" data-tab="write" class="rounded px-2.5 py-1">Escrever</button>
-          <button type="button" data-tab="preview" class="rounded px-2.5 py-1">Visualizar</button>
-        </div>
-      </div>
-      <textarea id="content" name="content" rows="18"
-        class="mt-3 block w-full resize-none overflow-hidden bg-transparent font-serif text-[1.05rem] leading-relaxed text-ink-2 outline-none placeholder:text-faint"
-        placeholder="Comece a escrever…&#10;&#10;## História&#10;Nascida em [[Valdoria]], filha do [[Rei Aldric|antigo rei]]…&#10;&#10;Dica: cole ou arraste imagens aqui.">{{ page.content }}</textarea>
-      <div id="preview" class="lore mt-3 hidden min-h-48"></div>
-      <p class="mt-2 text-xs text-faint">Markdown · <code>[[Nome da página]]</code> cria um link · Ctrl+S salva</p>
-    </div>
+    <p class="mt-4 text-sm text-faint">{{ 'Depois de criar, você escreve direto na página: digite / para inserir blocos.' if is_new else 'O conteúdo se edita direto na página.' }}</p>
 
     <div class="sticky bottom-0 mt-8 flex justify-end gap-2 border-t border-line bg-bg/90 py-3 backdrop-blur">
       <a class="btn btn-ghost" href="{{ url_for('pages.index', wid=world.id) if is_new else url_for('pages.view', wid=world.id, aid=page.id) }}">Cancelar</a>
-      <button class="btn btn-primary">{{ 'Criar página' if is_new else 'Salvar' }}</button>
+      <button class="btn btn-primary">{{ 'Criar e começar a escrever' if is_new else 'Salvar propriedades' }}</button>
     </div>
   </div>
 </form>
 
-{# ---------- Editor visual de tabelas ---------- #}
-<dialog id="table-dialog" class="m-auto w-full max-w-4xl rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/60">
-  <div class="flex items-center justify-between border-b border-line px-5 py-3">
-    <h2 class="font-display text-lg">▦ Tabela</h2>
-    <div class="flex gap-1">
-      <button type="button" class="btn btn-outline btn-sm" data-t="add-row">+ Linha</button>
-      <button type="button" class="btn btn-outline btn-sm" data-t="add-col">+ Coluna</button>
-    </div>
-  </div>
-  <div class="max-h-[60vh] overflow-auto p-5">
-    <table id="table-grid" class="w-full border-collapse text-sm"></table>
-    <p class="mt-3 text-xs text-faint">A primeira linha é o cabeçalho. Tab passa para a próxima célula. Pode usar [[links]] e **negrito** dentro das células.</p>
-  </div>
-  <div class="flex justify-between gap-2 border-t border-line px-5 py-3">
-    <button type="button" class="btn btn-ghost text-red-500" data-t="remove" id="table-remove">Remover tabela</button>
-    <div class="flex gap-2">
-      <button type="button" class="btn btn-ghost" data-t="cancel">Cancelar</button>
-      <button type="button" class="btn btn-primary" data-t="apply">Aplicar</button>
-    </div>
-  </div>
-</dialog>
-
 <script>
 (() => {
   const form = document.getElementById('page-form');
-  const ta = document.getElementById('content');
-  const preview = document.getElementById('preview');
-  const autosize = () => { ta.style.height = 'auto'; ta.style.height = Math.max(ta.scrollHeight, 360) + 'px'; };
-  ta.addEventListener('input', autosize); autosize();
 
   // ---------- Capa: pré-visualização ----------
   const coverImg = () => document.querySelector('#cover-box img');
@@ -139,145 +92,6 @@
     i.style.objectPosition = `center ${document.getElementById('cover-pos').value}%`; box.append(i);
   });
 
-  // ---------- Barra de formatação ----------
-  function wrap(before, after = before, placeholder = '') {
-    const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e) || placeholder;
-    ta.setRangeText(before + sel + after, s, e, 'end');
-    ta.selectionStart = s + before.length; ta.selectionEnd = s + before.length + sel.length;
-    ta.focus(); autosize();
-  }
-  function linePrefix(prefix) {
-    const s = ta.selectionStart, start = ta.value.lastIndexOf('\n', s - 1) + 1;
-    ta.setRangeText(prefix, start, start, 'end'); ta.focus(); autosize();
-  }
-  const actions = {
-    h2: () => linePrefix('## '), h3: () => linePrefix('### '), b: () => wrap('**', '**', 'negrito'),
-    i: () => wrap('*', '*', 'itálico'), ul: () => linePrefix('- '), todo: () => linePrefix('- [ ] '),
-    quote: () => linePrefix('> '), hr: () => wrap('\n\n---\n\n', '', ''), link: () => wrap('[[', ']]', 'Nome da página'),
-  };
-  document.querySelectorAll('[data-md]').forEach(b => b.addEventListener('click', () => actions[b.dataset.md]()));
-
-  // ---------- Imagens no texto (upload, colar, arrastar) ----------
-  async function uploadImages(files) {
-    const imgs = [...files].filter(f => f.type.startsWith('image/'));
-    if (!imgs.length) return;
-    const fd = new FormData(); imgs.forEach(f => fd.append('files', f));
-    const marker = `![enviando ${imgs.length} imagem(ns)…]()`;
-    wrap('\n' + marker + '\n', '', '');
-    try {
-      const res = await api('POST', '{{ url_for("files.upload", wid=world.id, images=1) }}', fd);
-      const md = res.files.map(f => `![${f.name.replace(/\.[^.]+$/, '')}](${f.url})`).join('\n');
-      ta.value = ta.value.replace(marker, md);
-    } catch { ta.value = ta.value.replace(marker, ''); }
-    autosize();
-  }
-  document.getElementById('inline-img').addEventListener('change', e => { uploadImages(e.target.files); e.target.value = ''; });
-  ta.addEventListener('paste', e => { if (e.clipboardData.files.length) { e.preventDefault(); uploadImages(e.clipboardData.files); } });
-  ta.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); });
-  ta.addEventListener('drop', e => { if (e.dataTransfer.files.length) { e.preventDefault(); uploadImages(e.dataTransfer.files); } });
-
-  // ---------- Escrever / Visualizar ----------
-  async function setTab(t) {
-    document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('bg-surface', b.dataset.tab === t));
-    ta.classList.toggle('hidden', t !== 'write'); preview.classList.toggle('hidden', t !== 'preview');
-    if (t === 'preview') {
-      preview.innerHTML = '<p class="text-faint">Carregando…</p>';
-      const r = await api('POST', '{{ url_for("pages.preview", wid=world.id) }}', { content: ta.value });
-      preview.innerHTML = r.html || '<p class="text-faint">Nada escrito ainda.</p>';
-    }
-  }
-  document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-  setTab('write');
-
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); form.requestSubmit(); }
-  });
-
-  // ---------- Tabelas: edita a tabela markdown sob o cursor numa grade ----------
-  const dlg = document.getElementById('table-dialog'), grid = document.getElementById('table-grid');
-  let rows = [], range = null;
-  const splitRow = line => {
-    let s = line.trim(); if (s.startsWith('|')) s = s.slice(1); if (s.endsWith('|') && !s.endsWith('\\|')) s = s.slice(0, -1);
-    return s.split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
-  };
-  const isTableLine = l => l.trim().startsWith('|');
-  const isSep = l => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l);
-  function findTable() {
-    const lines = ta.value.split('\n');
-    let pos = 0, idx = 0;
-    for (; idx < lines.length; idx++) { if (pos + lines[idx].length >= ta.selectionStart) break; pos += lines[idx].length + 1; }
-    if (idx >= lines.length || !isTableLine(lines[idx])) return null;
-    let a = idx, b = idx;
-    while (a > 0 && isTableLine(lines[a - 1])) a--;
-    while (b < lines.length - 1 && isTableLine(lines[b + 1])) b++;
-    const start = lines.slice(0, a).join('\n').length + (a ? 1 : 0);
-    const end = start + lines.slice(a, b + 1).join('\n').length;
-    const body = lines.slice(a, b + 1).filter(l => !isSep(l)).map(splitRow);
-    return { start, end, rows: body };
-  }
-  function renderGrid() {
-    const cols = Math.max(...rows.map(r => r.length));
-    rows.forEach(r => { while (r.length < cols) r.push(''); });
-    grid.replaceChildren();
-    const ctrl = document.createElement('tr');
-    for (let c = 0; c < cols; c++) {
-      const th = document.createElement('td'); th.className = 'pb-1 text-center';
-      const x = document.createElement('button'); x.type = 'button'; x.append(ui('x', 'size-3')); x.title = 'Remover coluna'; x.setAttribute('aria-label', 'Remover coluna');
-      x.className = 'rounded px-1.5 text-xs text-faint hover:text-red-500';
-      x.addEventListener('click', () => { if (cols > 1) { rows.forEach(r => r.splice(c, 1)); renderGrid(); } });
-      th.append(x); ctrl.append(th);
-    }
-    ctrl.append(document.createElement('td')); grid.append(ctrl);
-    rows.forEach((r, ri) => {
-      const tr = document.createElement('tr');
-      r.forEach((cell, ci) => {
-        const td = document.createElement('td'); td.className = 'border border-line p-0';
-        const inp = document.createElement('input');
-        inp.className = 'w-full min-w-24 bg-transparent px-2 py-1.5 outline-none focus:bg-accent/10 ' + (ri === 0 ? 'font-semibold text-ink bg-surface-2' : 'text-ink-2');
-        inp.value = cell; inp.placeholder = ri === 0 ? 'Cabeçalho' : '';
-        inp.addEventListener('input', () => { rows[ri][ci] = inp.value; });
-        td.append(inp); tr.append(td);
-      });
-      const del = document.createElement('td'); del.className = 'pl-1';
-      if (ri > 0) {
-        const x = document.createElement('button'); x.type = 'button'; x.append(ui('x', 'size-3')); x.title = 'Remover linha'; x.setAttribute('aria-label', 'Remover linha');
-        x.className = 'rounded px-1.5 text-xs text-faint hover:text-red-500';
-        x.addEventListener('click', () => { rows.splice(ri, 1); renderGrid(); });
-        del.append(x);
-      }
-      tr.append(del); grid.append(tr);
-    });
-  }
-  function toMarkdown() {
-    const esc = c => (c || ' ').replace(/\|/g, '\\|').replace(/\n/g, ' ');
-    const widths = rows[0].map((_, c) => Math.max(3, ...rows.map(r => esc(r[c]).length)));
-    const line = r => '| ' + r.map((c, i) => esc(c).padEnd(widths[i])).join(' | ') + ' |';
-    return [line(rows[0]), '| ' + widths.map(w => '-'.repeat(w)).join(' | ') + ' |', ...rows.slice(1).map(line)].join('\n');
-  }
-  document.getElementById('table-btn').addEventListener('click', () => {
-    const t = findTable();
-    if (t) { range = { start: t.start, end: t.end }; rows = t.rows; }
-    else { range = null; rows = [['Nome', 'Descrição', 'Notas'], ['', '', ''], ['', '', '']]; }
-    document.getElementById('table-remove').classList.toggle('invisible', !range);
-    renderGrid(); dlg.showModal(); grid.querySelector('input')?.focus();
-  });
-  dlg.addEventListener('click', e => {
-    const t = e.target.dataset?.t; if (!t) return;
-    const cols = rows[0].length;
-    if (t === 'add-row') { rows.push(Array(cols).fill('')); renderGrid(); grid.querySelectorAll('tr')[rows.length].querySelector('input').focus(); }
-    if (t === 'add-col') { rows.forEach((r, i) => r.push(i ? '' : 'Coluna ' + (cols + 1))); renderGrid(); }
-    if (t === 'cancel') dlg.close();
-    if (t === 'apply' || t === 'remove') {
-      const md = t === 'apply' ? toMarkdown() : '';
-      if (range) ta.setRangeText(md, range.start, range.end, 'end');
-      else {
-        const s = ta.selectionStart, before = ta.value.slice(0, s);
-        const pre = before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
-        ta.setRangeText(pre + md + '\n\n', s, ta.selectionEnd, 'end');
-      }
-      dlg.close(); autosize(); ta.focus();
-    }
-  });
 })();
 </script>
 {% endblock %}

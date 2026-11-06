@@ -25,16 +25,43 @@
 {% endmacro %}
 {% block body %}
 {% set ep = request.endpoint %}
+<style>
+  /* barra lateral recolhível (Ctrl+\ ou o botão « »); o estado fica salvo no navegador */
+  html.sb-collapsed #world-aside { display: none; }
+  #sb-open { display: none; }
+  html.sb-collapsed #sb-open { display: grid; }
+  #world-aside { transition: opacity .15s; }
+</style>
+<script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sb-collapsed'); } catch {}</script>
+<button id="sb-open" type="button" class="fixed left-2 top-[4.25rem] z-30 size-8 place-items-center rounded-lg border border-line bg-surface text-muted shadow-md hover:text-ink"
+        title="Mostrar barra lateral (Ctrl+\)" aria-label="Mostrar barra lateral">»</button>
 <div class="flex min-h-[calc(100vh-3.5rem)] flex-col md:flex-row">
-  <aside class="shrink-0 border-b border-line bg-surface/50 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
+  <aside id="world-aside" class="shrink-0 border-b border-line bg-surface/50 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-72 md:overflow-y-auto md:border-r md:border-b-0">
     <div class="space-y-5 p-3">
+      <div class="-mb-3 flex justify-end">
+        <button id="sb-close" type="button" class="grid size-7 place-items-center rounded-md text-faint hover:bg-surface-2 hover:text-ink"
+                title="Recolher barra lateral (Ctrl+\)" aria-label="Recolher barra lateral">«</button>
+      </div>
       <form action="{{ url_for('pages.index', wid=world.id) }}" class="relative">
         <input class="input py-1.5 pl-8 text-sm" name="q" placeholder="Buscar páginas…" aria-label="Buscar páginas" value="{{ q if q is defined else '' }}">
         <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">{{ ui('search') }}</span>
       </form>
 
+      {% if world.party_of %}
+      {# mundo da mesa: área dos jogadores (sem mapas do mestre, pessoas ou configurações) #}
+      <a href="{{ url_for('play.dashboard', wid=world.party_of) }}" class="flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-ink hover:bg-accent/20">
+        {{ ri('sword') }} Voltar para a Mesa</a>
+      <p class="px-2 text-xs text-faint">Área dos jogadores{% if g.party_main %} de {{ g.party_main.name }}{% endif %}: tudo aqui é do grupo.</p>
+      <nav class="space-y-0.5">
+        <a href="{{ url_for('boards.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">{{ ri('web') }} Mapas mentais <span class="ml-auto text-xs text-faint">{{ g.boards|length }}</span></a>
+        <a href="{{ url_for('history.timelines', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">{{ ri('scroll') }} Linhas do tempo</a>
+        <a href="{{ url_for('history.trees', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.trees' }}">{{ ri('tree') }} Árvores genealógicas</a>
+        <a href="{{ url_for('files.library', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">{{ ri('chest') }} Arquivos do grupo</a>
+      </nav>
+      {% else %}
       <nav class="space-y-0.5">
         <a href="{{ url_for('worlds.world_home', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.world_home' }}" {{ 'aria-current=page' if ep == 'worlds.world_home' }}>{{ ri('home') }} Início</a>
+        <a href="{{ url_for('play.dashboard', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('play.') }}">{{ ri('sword') }} Jogar <span class="ml-auto rounded-full bg-accent/15 px-1.5 text-[10px] font-semibold uppercase text-accent-ink">mesa</span></a>
         <a href="{{ url_for('boards.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">{{ ri('web') }} Mapas mentais <span class="ml-auto text-xs text-faint">{{ g.boards|length }}</span></a>
         <a href="{{ url_for('maps.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('maps.') }}">{{ ri('map') }} Mapas <span class="ml-auto text-xs text-faint">{{ g.maps|length }}</span></a>
         <a href="{{ url_for('history.timelines', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">{{ ri('scroll') }} Linhas do tempo</a>
@@ -42,6 +69,7 @@
         <a href="{{ url_for('files.library', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">{{ ri('chest') }} Acervo</a>
         <a href="{{ url_for('worlds.members', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.members' }}">{{ ri('people') }} Pessoas <span class="ml-auto text-xs text-faint">{{ g.member_count }}</span></a>
       </nav>
+      {% endif %}
 
       <div id="sidebar-pages" data-world="{{ world.id }}">
         <div class="flex items-center justify-between pr-1">
@@ -106,7 +134,7 @@
       })();
       </script>
 
-      {% if g.is_owner %}
+      {% if g.is_owner and not world.party_of %}
         <a href="{{ url_for('worlds.world_settings', wid=world.id) }}" class="nav-link text-muted {{ 'active' if ep == 'worlds.world_settings' }}">{{ ri('gear') }} Configurações</a>
       {% endif %}
     </div>
@@ -115,4 +143,13 @@
     {% block world_content %}{% endblock %}
   </main>
 </div>
+<script>
+(() => {
+  const set = v => { document.documentElement.classList.toggle('sb-collapsed', v); try { localStorage.setItem('sidebar-collapsed', v ? '1' : ''); } catch {}
+    dispatchEvent(new Event('resize')); };
+  document.getElementById('sb-close').addEventListener('click', () => set(true));
+  document.getElementById('sb-open').addEventListener('click', () => set(false));
+  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); set(!document.documentElement.classList.contains('sb-collapsed')); } });
+})();
+</script>
 {% endblock %}

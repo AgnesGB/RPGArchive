@@ -81,4 +81,9 @@ DOC_TYPES = {
     "doc": "application/msword",
     "zip": "application/zip",
 }
-UPLOAD_TYPES = {**IMAGE_TYPES, **DOC_TYPES}
+AUDIO_TYPES = {
+    "mp3": "audio/mpeg", "ogg": "audio/ogg", "oga": "audio/ogg", "opus": "audio/ogg",
+    "wav": "audio/wav", "m4a": "audio/mp4", "aac": "audio/aac", "flac": "audio/flac",
+}
+VIDEO_TYPES = {"mp4": "video/mp4", "webm": "video/webm", "mov": "video/quicktime"}
+UPLOAD_TYPES = {**IMAGE_TYPES, **DOC_TYPES, **AUDIO_TYPES, **VIDEO_TYPES}

@@ -1,12 +1,15 @@
 """Páginas (estilo Notion), relações, linha do tempo e árvore genealógica."""
+import json
 import re
+from pathlib import Path
 
 import mistune
-from flask import (Blueprint, abort, flash, g, jsonify, redirect, render_template, request,
+from flask import (Blueprint, abort, current_app, flash, g, jsonify, redirect, render_template, request,
                    url_for)
 from markupsafe import Markup
 
 from .access import get_page, get_world, page_icon, touch_world
+from .blocks import Ctx, blocks_text, clean_blocks, load_blocks, page_ids_in, with_markdown_html
 from .icons import glyph_text, icon_from_form
 from .auth import login_required
 from .constants import CATEGORY_MAP, RELATION_KINDS, relation_options
@@ -103,7 +106,6 @@ def _form_data(world, existing=None):
         "icon": icon_from_form(world["id"]),
         "category": category if category in CATEGORY_MAP else "nota",
         "summary": f.get("summary", "").strip()[:500],
-        "content": f.get("content", ""),
         "image_url": cover,
         "cover_pos": cover_pos,
         "parent_id": parent_id,
@@ -154,7 +156,7 @@ def new(wid):
                        image_url, cover_pos, year, date_label, created_by, updated_by)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (wid, data["parent_id"], data["title"], data["icon"], data["category"], data["summary"],
-                     data["content"], data["image_url"], data["cover_pos"], data["year"], data["date_label"],
+                     "", data["image_url"], data["cover_pos"], data["year"], data["date_label"],
                      g.user["id"], g.user["id"]),
                 )
                 _save_timelines(wid, cur.lastrowid)
@@ -167,7 +169,7 @@ def new(wid):
         page = {"title": request.args.get("title", ""),
                 "category": cat if cat in CATEGORY_MAP else "personagem",
                 "parent_id": request.args.get("parent", type=int)}
-    defaults = {"icon": "", "summary": "", "content": "", "image_url": "", "cover_pos": 50,
+    defaults = {"icon": "", "summary": "", "image_url": "", "cover_pos": 50,
                 "year": request.args.get("year", type=int), "date_label": "", "parent_id": None}
     page = {**defaults, **page}
     return _render_form(world, page, True)
@@ -233,18 +235,117 @@ def view(wid, aid):
            ORDER BY title COLLATE NOCASE""",
         (wid, aid, f"[[{t}]]", f"[[{t}|"),
     ).fetchall()
-    children = db.execute("SELECT * FROM articles WHERE parent_id = ? ORDER BY title COLLATE NOCASE", (aid,)).fetchall()
+    blocks = load_blocks(page)
+    in_blocks = page_ids_in(blocks)
+    # subpáginas que já aparecem como bloco não se repetem na lista do fim
+    children = [c for c in db.execute("SELECT * FROM articles WHERE parent_id = ? ORDER BY title COLLATE NOCASE", (aid,))
+                if c["id"] not in in_blocks]
     others = db.execute("SELECT id, title, icon, category FROM articles WHERE world_id = ? AND id != ? ORDER BY title COLLATE NOCASE",
                         (wid, aid)).fetchall()
     editor = db.execute("SELECT name FROM users WHERE id = ?", (page["updated_by"],)).fetchone() if page["updated_by"] else None
     return render_template(
-        "world/page.html", world=world, page=page, html=render_lore(wid, page["content"]),
+        "world/page.html", world=world, page=page,
+        editor_data=_editor_data(world, page, blocks),
         backlinks=backlinks, children=children, breadcrumb=_breadcrumb(wid, page),
         relations=_relations_of(wid, aid), board_links=_board_links_of(wid, aid),
         others=others, relation_options=relation_options(), editor=editor,
         timelines_of=db.execute("""SELECT t.id, t.name, t.color FROM timelines t JOIN timeline_pages tp
                                    ON tp.timeline_id = t.id WHERE tp.article_id = ? ORDER BY t.id""", (aid,)).fetchall(),
     )
+
+
+def _page_map(wid):
+    rows = get_db().execute("SELECT id, title, icon, category FROM articles WHERE world_id = ?", (wid,)).fetchall()
+    return {r["id"]: {"t": r["title"], "i": page_icon(r), "u": url_for("pages.view", wid=wid, aid=r["id"])} for r in rows}
+
+
+def _dividers():
+    """Divisores: qualquer .svg/.png em static/dividers (os SVG ganham a cor do tema)."""
+    folder = Path(current_app.static_folder) / "dividers"
+    out = []
+    for f in sorted(folder.glob("*")):
+        if f.suffix.lower() in (".svg", ".png", ".webp"):
+            out.append({"key": re.sub(r"[^a-z0-9_-]", "-", f.stem.lower()),
+                        "url": url_for("static", filename=f"dividers/{f.name}"), "mask": f.suffix.lower() == ".svg"})
+    return out
+
+
+def _md(wid):
+    return lambda md: render_lore(wid, md)
+
+
+def _editor_data(world, page, blocks):
+    wid, aid = world["id"], page["id"]
+    return {
+        "blocks": with_markdown_html(blocks, _md(wid)),
+        "version": page["blocks_version"], "title": page["title"], "aid": aid,
+        "pages": _page_map(wid), "dividers": _dividers(),
+        "api": {"save": url_for("pages.blocks", wid=wid, aid=aid), "subpage": url_for("pages.subpage", wid=wid, aid=aid),
+                "upload": url_for("files.upload", wid=wid), "preview": url_for("pages.preview", wid=wid)},
+    }
+
+
+def _ctx(wid):
+    db = get_db()
+    return Ctx([r[0] for r in db.execute("SELECT id FROM articles WHERE world_id = ?", (wid,))],
+               [r[0] for r in db.execute("SELECT id FROM files WHERE world_id = ?", (wid,))])
+
+
+@bp.route("/w/<int:wid>/p/<int:aid>/blocks", methods=["GET", "PUT"])
+@login_required
+def blocks(wid, aid):
+    """GET ?v=N: 204 se não mudou. PUT {blocks, version, title}: salva (409 se outra pessoa salvou antes)."""
+    world = get_world(wid)
+    page = get_page(world, aid)
+    db = get_db()
+    if request.method == "GET":
+        if request.args.get("v", type=int) == page["blocks_version"]:
+            return "", 204
+        return jsonify(blocks=with_markdown_html(load_blocks(page), _md(wid)),
+                       version=page["blocks_version"], title=page["title"], pages=_page_map(wid))
+    if request.content_length and request.content_length > 8 * 1024 * 1024:
+        abort(413)
+    body = request.get_json(silent=True) or {}
+    if body.get("version") != page["blocks_version"]:
+        return jsonify(blocks=with_markdown_html(load_blocks(page), _md(wid)), pages=_page_map(wid),
+                       version=page["blocks_version"], title=page["title"], conflict=True), 409
+    clean = clean_blocks(body.get("blocks"), _ctx(wid))
+    titles = {k: v["t"] for k, v in _page_map(wid).items()}
+    title, title_error = page["title"], None
+    new_title = str(body.get("title") or "").strip()[:200]
+    if new_title and new_title != page["title"]:
+        if _title_taken(wid, new_title, exclude_id=aid):
+            title_error = "Já existe uma página com esse título neste mundo."
+        else:
+            title = new_title
+    db.execute("""UPDATE articles SET blocks = ?, content = ?, title = ?, blocks_version = blocks_version + 1,
+                  updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?""",
+               (json.dumps(clean, ensure_ascii=False, separators=(",", ":")), blocks_text(clean, titles), title,
+                g.user["id"], aid))
+    touch_world(wid)
+    db.commit()
+    return jsonify(version=page["blocks_version"] + 1, title=title, title_error=title_error)
+
+
+@bp.post("/w/<int:wid>/p/<int:aid>/subpage")
+@login_required
+def subpage(wid, aid):
+    """Cria uma subpágina vazia (bloco 'Página' do editor)."""
+    world = get_world(wid)
+    page = get_page(world, aid)
+    base = str((request.get_json(silent=True) or {}).get("title") or "Sem título").strip()[:180] or "Sem título"
+    title, n = base, 1
+    while _title_taken(wid, title):
+        n += 1
+        title = f"{base} {n}"
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO articles (world_id, parent_id, title, category, content, created_by, updated_by)
+           VALUES (?, ?, ?, ?, '', ?, ?)""", (wid, aid, title, page["category"], g.user["id"], g.user["id"]))
+    touch_world(wid)
+    db.commit()
+    row = db.execute("SELECT id, title, icon, category FROM articles WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return jsonify(id=row["id"], t=row["title"], i=page_icon(row), u=url_for("pages.view", wid=wid, aid=row["id"])), 201
 
 
 @bp.post("/w/<int:wid>/p/<int:aid>/favorite")
@@ -280,9 +381,9 @@ def edit(wid, aid):
         else:
             db = get_db()
             db.execute(
-                """UPDATE articles SET parent_id=?, title=?, icon=?, category=?, summary=?, content=?, image_url=?,
+                """UPDATE articles SET parent_id=?, title=?, icon=?, category=?, summary=?, image_url=?,
                    cover_pos=?, year=?, date_label=?, updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?""",
-                (data["parent_id"], data["title"], data["icon"], data["category"], data["summary"], data["content"],
+                (data["parent_id"], data["title"], data["icon"], data["category"], data["summary"],
                  data["image_url"], data["cover_pos"], data["year"], data["date_label"], g.user["id"], aid),
             )
             _save_timelines(wid, aid)

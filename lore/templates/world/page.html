@@ -1,6 +1,7 @@
 {% extends "world/_layout.html" %}
 {% import "world/_macros.html" as m %}
 {% block title %}{{ page.title }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}">{% endblock %}
 {% block world_content %}
 {% set c = CATEGORY_MAP.get(page.category, CATEGORY_MAP.nota) %}
 {{ m.cover(page.image_url, page.cover_pos, 'h-52 md:h-72') }}
@@ -16,7 +17,7 @@
   </nav>
 
   <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
-    <h1 class="font-display text-4xl leading-tight text-ink md:text-5xl">{{ page.title }}</h1>
+    <h1 id="page-title" class="min-w-0 flex-1 font-display text-4xl leading-tight text-ink outline-none md:text-5xl" spellcheck="false">{{ page.title }}</h1>
     <div class="flex gap-1">
       {% set fav = page.id in g.favorite_ids %}
       <form method="post" action="{{ url_for('pages.favorite', wid=world.id, aid=page.id) }}">
@@ -25,8 +26,9 @@
                 title="{{ 'Tirar dos favoritos' if fav else 'Favoritar (aparece no topo da barra lateral)' }}" aria-label="{{ 'Tirar dos favoritos' if fav else 'Favoritar' }}">
           {{ ri('star') if fav else ui('star') }}</button>
       </form>
-      <a href="{{ url_for('pages.new', wid=world.id, parent=page.id) }}" class="btn btn-ghost" title="Criar subpágina">{{ ui('plus') }} Subpágina</a>
-      <a href="{{ url_for('pages.edit', wid=world.id, aid=page.id) }}" class="btn btn-outline">{{ ui('pencil') }} Editar</a>
+      <span id="save-state" class="self-center px-1 text-xs text-faint" aria-live="polite"></span>
+      <button type="button" id="lock-btn" class="btn btn-ghost btn-icon size-9" title="Travar edição" aria-label="Travar edição">{{ ui('pencil') }}</button>
+      <a href="{{ url_for('pages.edit', wid=world.id, aid=page.id) }}" class="btn btn-outline" title="Capa, ícone, categoria, ano, linhas do tempo…">{{ ui('tag') }} Propriedades</a>
       <form method="post" action="{{ url_for('pages.delete', wid=world.id, aid=page.id) }}"
             data-confirm="Apagar “{{ page.title }}”? As subpáginas sobem um nível." onsubmit="return confirm(this.dataset.confirm)">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -45,9 +47,7 @@
 
   <div class="mt-8 grid gap-10 lg:grid-cols-[1fr_17rem]">
     <div class="min-w-0">
-      <div class="lore">
-        {% if page.content.strip() %}{{ html }}{% else %}<p class="text-faint">Página em branco. <a href="{{ url_for('pages.edit', wid=world.id, aid=page.id) }}">Começar a escrever</a>.</p>{% endif %}
-      </div>
+      <div id="editor" class="ed lore-blocks"></div>
 
       {% if children %}
         <h2 class="mt-12 mb-4 font-display text-xl text-ink">Subpáginas</h2>
@@ -124,4 +124,6 @@
     </aside>
   </div>
 </article>
+<script id="page-data" type="application/json">{{ editor_data|tojson }}</script>
+<script src="{{ url_for('static', filename='editor.js') }}"></script>
 {% endblock %}

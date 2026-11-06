@@ -14,7 +14,7 @@
   {% if worlds %}
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {% for w in worlds %}
-        <a href="{{ url_for('worlds.world_home', wid=w.id) }}" class="group panel overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl">
+        <a href="{{ url_for('play.dashboard', wid=w.id) if w.role == 'player' else url_for('worlds.world_home', wid=w.id) }}" class="group panel overflow-hidden transition hover:-translate-y-0.5 hover:shadow-xl">
           <div class="relative h-36">
             <div class="absolute inset-0 overflow-hidden">
             {% if w.cover_url %}
@@ -23,7 +23,8 @@
               <div class="size-full" style="background: linear-gradient(135deg, var(--a500), color-mix(in oklab, var(--a700) 60%, black))"></div>
             {% endif %}
             </div>
-            {% if w.role != 'owner' %}<span class="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-white backdrop-blur">Compartilhado por {{ w.owner_name }}</span>{% endif %}
+            {% if w.role == 'player' %}<span class="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-white backdrop-blur">Jogador(a) · mesa de {{ w.owner_name }}</span>
+            {% elif w.role != 'owner' %}<span class="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-white backdrop-blur">Compartilhado por {{ w.owner_name }}</span>{% endif %}
             <span class="absolute -bottom-6 left-5 z-10 grid size-12 place-items-center overflow-hidden rounded-xl border border-line bg-surface text-2xl shadow">{{ (w.icon or 'ri:world')|glyph(32) }}</span>
           </div>
           <div class="p-5 pt-8">

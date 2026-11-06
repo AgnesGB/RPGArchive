@@ -70,6 +70,7 @@ def create(wid):
 # --------------------------------------------------------------------------- dados do editor
 
 GRID_TYPES = ("none", "square", "hex")
+FOG_CELL = re.compile(r"\d{1,3},\d{1,3}")
 MAX_CELLS = 150
 MAX_DATA = 3 * 1024 * 1024
 
@@ -93,6 +94,10 @@ def _clean_data(d):
         "walls": {str(k)[:40]: str(v)[:16] for k, v in (d.get("walls") or {}).items()} if isinstance(d.get("walls"), dict) else {},
         "props": [],
     }
+    fog = d.get("fog") if isinstance(d.get("fog"), dict) else {}
+    out["fog"] = {"cols": _num(fog.get("cols"), 0, 0, 400), "rows": _num(fog.get("rows"), 0, 0, 400),
+                  "cells": [k for k in (fog.get("cells") or [])[:160000]
+                            if isinstance(k, str) and FOG_CELL.fullmatch(k)]}
     for p in (d.get("props") or [])[:5000]:
         if not isinstance(p, dict):
             continue
@@ -178,6 +183,7 @@ def view(wid, mid):
         start_edit=bool(request.args.get("edit")),
         has_thumb=bool(m["thumb"]),
         tile_sets=sets_of(wid),
+        player_view=False,
     )
 
 

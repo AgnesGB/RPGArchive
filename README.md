@@ -14,7 +14,16 @@ Inspirado no Notion (páginas), no vvd.world (wiki do mundo) e no Milanote (mapa
   páginas, mapas mentais, mapas e arquivos. Convites para e-mails sem conta são liberados quando a pessoa se cadastra.
 - **Páginas estilo Notion**: capa (upload, link ou nenhuma) com ajuste de posição, ícone em emoji, subpáginas
   (árvore na lateral), categorias (personagem, local, facção, criatura, item, evento, livro/registro, nota),
-  editor Markdown com barra de formatação, **editor visual de tabelas**, imagens coladas ou arrastadas no texto e pré-visualização.
+  e **editor de blocos** direto na página (salva sozinho; "Propriedades" cuida de capa, ícone, categoria e ano):
+  - `/` ou `+` insere blocos: texto, títulos, listas, tarefas, lista recolhível, citação, destaque (callout com ícone),
+    divisor, tabela, código, imagem, **vídeo/música por link** (YouTube, Spotify, SoundCloud, Vimeo, Deezer, Apple Music,
+    Twitch), áudio, vídeo e arquivo enviados, subpágina, link para página, 2/3 colunas e markdown.
+  - Alça `⋮⋮`: arraste para cima/baixo ou **para o lado de outro bloco (cria colunas)**; clique para transformar, colorir,
+    duplicar ou apagar. Colunas e imagens/vídeos se redimensionam arrastando a borda.
+  - Atalhos: `# `, `## `, `### `, `- `, `1. `, `[] `, `> `, `---`, ```` ``` ````; `[[` liga uma página; Ctrl+K cria link;
+    selecionar texto mostra negrito/itálico/cor/marca-texto. Colar ou soltar imagens/áudios/arquivos cria os blocos.
+  - Divisores decorativos: todo `.svg`/`.png` em `lore/static/dividers/` vira um estilo (SVG ganha a cor do tema).
+  - Páginas antigas em Markdown aparecem num bloco "Markdown", com o botão "converter em blocos".
   - `[[Nome]]` ou `[[Nome|texto]]` liga páginas; links para páginas inexistentes ficam vermelhos e criam a página.
   - **Relações** (0..N) entre páginas: pai/mãe, cônjuge, irmão, aliado, inimigo, membro de, vive em, possui ou texto livre.
   - Cada página mostra suas relações, ligações nos mapas mentais e quem a menciona.
@@ -29,7 +38,18 @@ Inspirado no Notion (páginas), no vvd.world (wiki do mundo) e no Milanote (mapa
     **objetos** (árvores, casas, móveis, criaturas, itens…), desfazer/refazer e salvamento automático com controle de versão.
   - **Jogar**: **marcadores** (ligados a páginas, com livro/arquivo anexado e anotações) e **tokens** de jogadores
     arrastáveis, sincronizados entre todos.
-- **Acervo**: todas as imagens e arquivos do mundo (imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP; até 40 MB).
+  - **Névoa** (fog of war): ferramenta "Névoa" no editor (pincel, cobrir/revelar tudo) e botão "Revelar névoa" no
+    modo Jogar para ir abrindo durante a sessão. O mestre vê através (listrado); jogadores veem opaco e não recebem
+    marcadores/tokens que estejam sob a névoa.
+- **Mesa (aba Jogar)** — papel **jogador**, diferente de colaborador:
+  - Jogadores só entram na Mesa; qualquer rota do planejamento os redireciona para lá (`get_world` barra por padrão).
+  - **Mapas da mesa**: o mestre escolhe quais mapas compartilhar; jogadores só observam e movem tokens
+    (anotações, anexos e passagens secretas ficam escondidos).
+  - **Arquivos encontrados**: o mestre revela páginas (leitura) e arquivos do acervo; só esses arquivos ficam acessíveis.
+  - **Área do grupo**: um "mundo da mesa" ligado ao principal, onde jogadores (e o mestre) fazem anotações, mapas mentais,
+    cronologias e árvores genealógicas.
+- **Barra lateral recolhível**: botão « » ou Ctrl+\.
+- **Acervo**: todas as imagens e arquivos do mundo (imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP, áudio e vídeo; até 40 MB).
 
 ## Rodando
 
