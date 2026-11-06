@@ -24,6 +24,9 @@ MAX_DEPTH = 6
 
 _PAGE_HREF = re.compile(r"^/w/\d+/p/\d+$")
 _FILE_SRC = re.compile(r"^/f/(\d+)$")
+_HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+# cor livre (roda de cor) no texto: <span style="color:#rrggbb"> / <mark style="background-color:#rrggbb">
+_STYLE_COLOR = re.compile(r"^\s*(color|background-color)\s*:\s*(#[0-9a-fA-F]{6})\s*;?\s*$")
 _ICON_OK = re.compile(r"^(ri:[a-z0-9_-]{1,40}|img:/f/\d+|[^<>\"'&]{1,16})$")
 
 
@@ -69,7 +72,11 @@ class _Clean(HTMLParser):
             cls = [c for c in (a.get("class") or "").split() if re.fullmatch(r"(c|bg)-(%s)" % "|".join(COLORS), c)]
             if cls:
                 extra = f' class="{" ".join(cls)}"'
-            elif tag == "span":
+            m = _STYLE_COLOR.match(a.get("style") or "")
+            prop = "color" if tag == "span" else "background-color"
+            if m and m.group(1) == prop:
+                extra += f' style="{prop}:{m.group(2).lower()}"'
+            if not extra and tag == "span":
                 return
         self.stack.append(tag)
         self.out.append(f"<{tag}{extra}>")
@@ -180,8 +187,8 @@ def _clean_block(b, ctx, depth, in_columns):
     t = b["type"]
     o = {"id": re.sub(r"[^A-Za-z0-9_-]", "", _s(b.get("id"), 24)) or "b", "type": t}
     color = _s(b.get("color"), 12)
-    if color in BLOCK_COLORS and color:
-        o["color"] = color
+    if (color in BLOCK_COLORS and color) or _HEX.match(color.removesuffix("_bg")):
+        o["color"] = color.lower()
     if t in RICH_TYPES:
         o["html"] = clean_html(b.get("html"))
         if t == "todo":

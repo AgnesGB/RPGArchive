@@ -180,7 +180,11 @@
   }
   function renderBlock(b, num) {
     const w = el('div', 'blk'); w.dataset.id = b.id; w.dataset.type = b.type;
-    if (b.color) w.classList.add(b.color.endsWith('_bg') ? 'bg-' + b.color.slice(0, -3) : 'c-' + b.color);
+    if (b.color?.startsWith('#')) {
+      // cor livre (roda de cor): texto em #rrggbb, ou fundo suave a partir de #rrggbb_bg
+      if (b.color.endsWith('_bg')) { w.classList.add('bg-custom'); w.style.setProperty('--blk-bg', b.color.slice(0, -3)); }
+      else { w.classList.add('c-custom'); w.style.color = b.color; }
+    } else if (b.color) w.classList.add(b.color.endsWith('_bg') ? 'bg-' + b.color.slice(0, -3) : 'c-' + b.color);
     const g = el('div', 'gutter');
     const plus = button(ui('plus', 'size-4'), 'Adicionar bloco (Alt: acima)');
     plus.addEventListener('click', e => openInsertMenu(plus.getBoundingClientRect(), { refId: b.id, where: e.altKey ? 'before' : 'after' }));
@@ -717,6 +721,9 @@
     COLORS.forEach(([c, n]) => sw(c, 'Texto ' + n.toLowerCase(), 'A'));
     COLORS.forEach(([c, n]) => sw(c + '_bg', 'Fundo ' + n.toLowerCase(), ''));
     box.append(grid);
+    box.append(colorWheel(b.color?.startsWith('#') ? b.color.replace('_bg', '') : null, (hex, isBg) => {
+      closePop(); snapshot(); b.color = isBg ? hex + '_bg' : hex; changed(); render();
+    }));
     box.append(el('div', 'sec', 'Bloco'));
     if (b.type === 'markdown') item('Converter em blocos', () => convertMarkdown(b));
     if (b.type === 'divider') item('Trocar estilo…', () => openDividerMenu(rect, b));
@@ -831,11 +838,12 @@
     bar.style.left = Math.max(8, Math.min(innerWidth - w - 8, rect.left + rect.width / 2 - w / 2)) + 'px';
     bar.style.top = Math.max(8, rect.top - bar.offsetHeight - 8) + 'px';
   }
-  function wrapSelection(tag, cls = '') {
+  function wrapSelection(tag, cls = '', style = '') {
     const sel = getSelection(); if (!sel.rangeCount) return;
     const range = sel.getRangeAt(0), tmp = el('div'); tmp.append(range.cloneContents());
     const inner = tag === 'code' ? esc(tmp.textContent) : tmp.innerHTML;
-    document.execCommand('insertHTML', false, cls === null ? esc(tmp.textContent) : `<${tag}${cls ? ` class="${cls}"` : ''}>${inner}</${tag}>`);
+    const attrs = (cls ? ` class="${cls}"` : '') + (style ? ` style="${style}"` : '');
+    document.execCommand('insertHTML', false, cls === null ? esc(tmp.textContent) : `<${tag}${attrs}>${inner}</${tag}>`);
     sel.anchorNode?.parentElement?.closest('[data-rich]')?.dispatchEvent(new Event('input', { bubbles: true }));
   }
   function colorMenu() {
@@ -847,7 +855,41 @@
     COLORS.forEach(([c, n]) => { const x = button('A', 'Texto ' + n.toLowerCase(), 'c-' + c); x.addEventListener('click', apply('span', 'c-' + c)); grid.append(x); });
     COLORS.forEach(([c, n]) => { const x = button('A', 'Marca-texto ' + n.toLowerCase(), 'bg-' + c); x.addEventListener('click', apply('mark', 'bg-' + c)); grid.append(x); });
     box.append(el('div', 'sec', 'Texto e marca-texto'), grid);
+    box.append(colorWheel(null, (hex, isBg) => {
+      closePop(); const s = getSelection(); s.removeAllRanges(); s.addRange(range);
+      wrapSelection(isBg ? 'mark' : 'span', '', `${isBg ? 'background-color' : 'color'}:${hex}`);
+    }));
     openPop(bar.getBoundingClientRect(), box);
+  }
+  // Roda de cor: escolhe qualquer cor para o texto ou para o fundo; guarda as últimas usadas.
+  const RECENT_KEY = 'editor-recent-colors';
+  const recentColors = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch { return []; } };
+  const rememberColor = hex => { try { localStorage.setItem(RECENT_KEY, JSON.stringify([hex, ...recentColors().filter(c => c !== hex)].slice(0, 10))); } catch {} };
+  function colorWheel(current, onPick) {
+    const wrap = el('div');
+    wrap.append(el('div', 'sec', 'Outra cor'));
+    const row = el('div', 'wheel');
+    const make = (label, isBg) => {
+      const l = el('label'); const inp = el('input'); inp.type = 'color'; inp.value = current || (isBg ? '#fde68a' : '#e11d48');
+      inp.title = label; inp.setAttribute('aria-label', label);
+      // "change" só dispara quando a pessoa confirma a cor (no "input" ela ainda está escolhendo)
+      inp.addEventListener('change', () => { rememberColor(inp.value); onPick(inp.value, isBg); });
+      l.append(inp, el('span', '', label)); return l;
+    };
+    row.append(make('Texto', false), make('Fundo', true));
+    wrap.append(row);
+    const rec = recentColors();
+    if (rec.length) {
+      wrap.append(el('div', 'sec', 'Usadas recentemente'));
+      const r = el('div', 'recent');
+      rec.forEach(hex => {
+        const t = button('', `Texto ${hex} (Shift: fundo)`); t.style.background = hex;
+        t.addEventListener('click', e => onPick(hex, e.shiftKey));
+        r.append(t);
+      });
+      wrap.append(r);
+    }
+    return wrap;
   }
   function addLink() {
     const sel = getSelection(); if (!sel.rangeCount) return;
