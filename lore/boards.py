@@ -89,6 +89,7 @@ def view(wid, bid):
         "SELECT id, title, icon, category, summary FROM articles WHERE world_id = ? ORDER BY title COLLATE NOCASE",
         (wid,)).fetchall()
     page_list = [{"id": p["id"], "title": p["title"], "icon": page_icon(p),
+                  "cat": p["category"] if p["category"] in CATEGORY_MAP else "nota",
                   "category": CATEGORY_MAP.get(p["category"], CATEGORY_MAP["nota"])["single"]} for p in pages]
     return render_template("world/board.html", world=world, board=board, state=_state(bid), page_list=page_list)
 

@@ -14,6 +14,9 @@ O código é o mesmo.
 
 ---
 
+> O usuário é **Midiri** (com M maiúsculo) e os caminhos diferenciam maiúsculas: `/home/Midiri/...`.
+> O domínio e o arquivo WSGI continuam em minúsculas (`midiri.pythonanywhere.com`, `/var/www/midiri_pythonanywhere_com_wsgi.py`).
+
 ## 1. Clonar (console Bash do PythonAnywhere)
 
 Aba **Consoles** › **Bash**:
@@ -65,12 +68,12 @@ Salve com `Ctrl+O`, `Enter`, `Ctrl+X`. O `.env` está no `.gitignore`, então n�
 ## 4. Criar o web app (aba **Web**)
 
 1. **Add a new web app** › domínio `midiri.pythonanywhere.com` › **Manual configuration** (não escolha "Flask") › Python **3.12**.
-2. Seção **Virtualenv**: `/home/midiri/.virtualenvs/rpgarchive`
+2. Seção **Virtualenv**: `/home/Midiri/.virtualenvs/rpgarchive`
 3. Seção **Static files**, adicione:
 
    | URL | Directory |
    |---|---|
-   | `/static/` | `/home/midiri/RPGArchive/lore/static` |
+   | `/static/` | `/home/Midiri/RPGArchive/lore/static` |
 
 4. Seção **Security**: ligue **Force HTTPS**.
 

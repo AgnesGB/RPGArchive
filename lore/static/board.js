@@ -86,12 +86,16 @@
           img.addEventListener('load', renderEdges);
           n.append(img);
         }
-        const body = el('div', 'p-3');
+        const body = el('div', a.cover ? 'p-3' : 'p-3 pr-10');
         body.append(el('p', 'text-[10px] font-semibold uppercase tracking-wider text-stone-500', a.category));
         body.append(el('p', 'mt-0.5 font-bold leading-snug text-stone-900', `${a.icon} ${a.title}`));
         if (a.summary) body.append(el('p', 'mt-1 text-xs leading-relaxed text-stone-600', a.summary));
         n.append(body);
-        n.title = 'Dois cliques para abrir a página';
+        // atalho: um clique no ↗ abre a página (o resto do card continua arrastável)
+        const go = el('a', 'absolute right-1.5 top-3 grid h-7 w-7 place-items-center rounded-lg bg-white/85 text-sm font-bold text-stone-700 shadow ring-1 ring-black/10 hover:bg-white hover:text-stone-950', '↗');
+        go.href = a.url; go.title = 'Abrir a página'; go.draggable = false;
+        n.append(go);
+        n.title = 'Clique em ↗ (ou dois cliques) para abrir a página';
       }
     } else if (c.kind === 'image') {
       n.classList.add('overflow-hidden', 'p-1.5');
@@ -117,8 +121,7 @@
       if (c.title) n.append(el('p', 'px-3 pb-3 text-xs text-stone-600 whitespace-pre-wrap', c.title));
     } else {
       const body = el('div', 'p-3');
-      body.append(el('p', 'text-[10px] font-semibold uppercase tracking-wider text-stone-500', '💡 Ideia'));
-      if (c.title) body.append(el('p', 'mt-0.5 font-bold text-stone-900', c.title));
+      if (c.title) body.append(el('p', 'font-bold text-stone-900', c.title));
       body.append(el('p', 'mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-700', c.body || (c.title ? '' : 'Dois cliques para escrever…')));
       if (!c.body && !c.title) body.lastChild.classList.add('italic', 'text-stone-400');
       n.append(body);
@@ -338,9 +341,10 @@
   if (localStorage.getItem('board-panel')) { panel.classList.remove('hidden'); panel.classList.add('flex'); }
   function renderPageList() {
     const q = $('page-search').value.trim().toLowerCase();
+    const cat = $('page-cat').value;
     const onBoard = new Set([...cards.values()].filter(c => c.kind === 'article').map(c => c.article_id));
     const ul = $('page-list'); ul.replaceChildren();
-    const list = DATA.pages.filter(p => !q || p.title.toLowerCase().includes(q));
+    const list = DATA.pages.filter(p => (!cat || p.cat === cat) && (!q || p.title.toLowerCase().includes(q)));
     if (!list.length) {
       const li = el('li', 'p-3 text-sm text-faint'); li.append('Nenhuma página. ');
       const a = el('a', 'text-accent-ink underline', 'Criar uma'); a.href = DATA.newPage; li.append(a); ul.append(li);
@@ -357,6 +361,7 @@
     }
   }
   $('page-search').addEventListener('input', renderPageList);
+  $('page-cat').addEventListener('change', renderPageList);
 
   // soltar páginas e arquivos no canvas
   viewport.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });

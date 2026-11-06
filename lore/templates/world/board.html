@@ -31,7 +31,7 @@
     <div class="ml-auto flex flex-wrap items-center gap-1">
       <button id="add-note" class="btn btn-primary btn-sm">💡 Ideia</button>
       <label class="btn btn-outline btn-sm cursor-pointer">🖼️ Imagem / arquivo<input type="file" multiple id="file-input" class="hidden"></label>
-      <button id="toggle-panel" class="btn btn-outline btn-sm">📚 Páginas</button>
+      <button id="toggle-panel" class="btn btn-outline btn-sm" title="Personagens, locais, facções, livros…">📚 Páginas do mundo</button>
       <span class="mx-1 h-6 w-px bg-line"></span>
       <button data-zoom="0.8" class="btn btn-ghost btn-sm" title="Afastar">−</button>
       <span id="zoom-level" class="w-11 text-center text-xs text-muted">100%</span>
@@ -79,8 +79,13 @@
     <aside id="panel" class="hidden w-72 shrink-0 flex-col border-l border-line bg-surface">
       <div class="border-b border-line p-3">
         <p class="text-sm font-medium text-ink">Páginas do mundo</p>
-        <p class="text-xs text-faint">Arraste para o quadro ou clique para adicionar.</p>
-        <input id="page-search" class="input mt-2 py-1.5 text-sm" placeholder="Filtrar…">
+        <p class="text-xs text-faint">Personagens, locais, facções, livros… Arraste para o quadro ou clique para adicionar.
+          No card, clique em ↗ para abrir a página.</p>
+        <select id="page-cat" class="input mt-2 py-1.5 text-sm">
+          <option value="">Todas as categorias</option>
+          {% for c in CATEGORIES %}<option value="{{ c.key }}">{{ c.icon }} {{ c.label }}</option>{% endfor %}
+        </select>
+        <input id="page-search" class="input mt-2 py-1.5 text-sm" placeholder="Buscar pelo nome…">
       </div>
       <ul id="page-list" class="flex-1 space-y-0.5 overflow-y-auto p-2"></ul>
     </aside>

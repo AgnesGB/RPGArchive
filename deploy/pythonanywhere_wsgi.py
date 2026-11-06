@@ -4,9 +4,11 @@
 #
 # As configurações (SECRET_KEY, Google etc.) ficam no arquivo .env da pasta do projeto,
 # não aqui. Veja DEPLOY.md.
+import os
 import sys
 
-PROJECT_DIR = "/home/midiri/RPGArchive"
+# ~ = /home/<seu usuário> (no PythonAnywhere o usuário diferencia maiúsculas: /home/Midiri)
+PROJECT_DIR = os.path.expanduser("~/RPGArchive")
 if PROJECT_DIR not in sys.path:
     sys.path.insert(0, PROJECT_DIR)
 
