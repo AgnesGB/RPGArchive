@@ -48,7 +48,7 @@
                class="w-56 rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
       </form>
       <button id="ft-add-person" class="btn btn-primary btn-sm">{{ ui('plus', 'size-3.5') }} Pessoa</button>
-      <span class="hidden text-xs text-faint md:inline">Clique numa pessoa: os <strong>+</strong> em volta adicionam pai/mãe (em cima), filho(a) (embaixo), cônjuge (direita) e irmão(ã) (esquerda). Selecionada, cada pessoa mostra o parentesco.</span>
+      <span class="hidden text-xs text-faint md:inline"><strong>Um clique</strong> numa pessoa mostra o parentesco de todos; <strong>dois cliques</strong> abrem o menu dela. Os <strong>+</strong> em volta adicionam pai/mãe (em cima), filho(a) (embaixo), cônjuge (direita) e irmão(ã) (esquerda).</span>
       <div class="ml-auto flex items-center gap-1">
         <button data-zoom="0.8" class="btn btn-ghost btn-sm btn-icon" title="Afastar" aria-label="Afastar">{{ ui('minus') }}</button>
         <span id="ft-zoom" class="w-11 text-center text-xs text-muted">100%</span>
@@ -121,7 +121,7 @@
   const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const vp = $('ft-vp'), world = $('ft-world'), nodes = $('ft-nodes'), svg = $('ft-lines'), menu = $('ft-menu');
   const W = 172, H = 168, GAP_X = 56, GAP_Y = 104, PAD = 70;
-  let data = D.data, selected = null, xy = new Map(), lines = [], moreOpen = false;
+  let data = D.data, selected = null, menuOpen = false, xy = new Map(), lines = [], moreOpen = false;
   const people = () => new Map(data.people.map(p => [p.id, p]));
 
   // tipos de laço: rótulos e como desenhar
@@ -192,6 +192,8 @@
     if (has(many(many(Sib, g.children), g.children), t)) return 'sobrinho(a)-neto(a)';
     if (has(many(unc, g.children), t)) return 'primo(a)';
     if (has(many(many(P2, g.siblings), x => many(g.children(x), g.children)), t)) return 'primo(a) de 2º grau';
+    const sp = S1.flatMap(x => g.get(g.partners, x)).find(x => x.o === t && x.kind !== 'spouse');
+    if (sp) return sp.kind === 'ex_spouse' ? 'ex do cônjuge' : 'noivo(a) do cônjuge';
     if (has(many(S1, g.parents), t)) return 'sogro(a)';
     if (has(many(C1, g.spouses), t)) return 'genro/nora';
     if (has(many(S1, g.siblings), t) || has(many(Sib, g.spouses), t)) return 'cunhado(a)';
@@ -373,9 +375,11 @@
       plus('child', 'Filho(a)', { left: '50%', bottom: '-13px', marginLeft: '-13px' }, { top: '30px' });
       plus('spouse', 'Cônjuge', { right: '-13px', top: '50%', marginTop: '-13px' }, { left: '30px' });
       plus('sibling', 'Irmão(ã)', { left: '-13px', top: '50%', marginTop: '-13px' }, { right: '30px' });
+      // um clique: seleciona (destaca a família e mostra o parentesco) · dois cliques ou botão direito: menu
       c.addEventListener('click', () => select(id));
-      c.addEventListener('dblclick', () => { location.href = p.url; });
-      c.addEventListener('keydown', e => { if (e.key === 'Enter') select(id); });
+      c.addEventListener('dblclick', () => openMenu(id));
+      c.addEventListener('contextmenu', e => { e.preventDefault(); openMenu(id); });
+      c.addEventListener('keydown', e => { if (e.key === 'Enter') select(id); if (e.key === ' ' || e.key === 'ContextMenu') { e.preventDefault(); openMenu(id); } });
       c.addEventListener('mouseenter', () => highlight(selected || id));
       c.addEventListener('mouseleave', () => highlight(selected));
       nodes.append(c);
@@ -405,10 +409,14 @@
   }
 
   // ------------------------------------------------------------------ seleção + menu
-  function select(id) { selected = id; moreOpen = false; nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('sel', Number(c.dataset.id) === id)); highlight(id); showMenu(); }
+  function select(id) {
+    if (id !== selected) { menuOpen = false; moreOpen = false; }
+    selected = id; nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('sel', Number(c.dataset.id) === id)); highlight(id); showMenu();
+  }
+  function openMenu(id) { select(id); menuOpen = true; showMenu(); }
   function showMenu() {
     menu.replaceChildren();
-    if (!selected) { menu.classList.add('hidden'); return; }
+    if (!selected || !menuOpen) { menu.classList.add('hidden'); return; }
     const P = people(), p = P.get(selected), g = G;
     const head = el('div', 'flex items-center gap-2 border-b border-line px-1 pb-2');
     head.append(glyph(p.icon), el('span', 'min-w-0 flex-1 truncate font-semibold text-ink', p.title));
@@ -460,7 +468,7 @@
     placeMenu();
   }
   function placeMenu() {
-    if (!selected || !xy.get(selected)) return;
+    if (!selected || !menuOpen || !xy.get(selected)) return;
     const at = xy.get(selected), r = vp.getBoundingClientRect();
     let left = view.x + (at.x + W + 24) * view.z, top = view.y + at.y * view.z;
     if (left + menu.offsetWidth > r.width - 8) left = view.x + at.x * view.z - menu.offsetWidth - 24;
@@ -513,7 +521,8 @@
   $('ft-picker-close').addEventListener('click', closePicker);
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (!picker.classList.contains('hidden')) closePicker(); else select(null);
+    if (!picker.classList.contains('hidden')) closePicker();
+    else if (menuOpen) { menuOpen = false; showMenu(); } else select(null);
   });
   $('ft-add-person').addEventListener('click', () => openPicker('add'));
   $('ft-empty-add').addEventListener('click', () => openPicker('add'));
