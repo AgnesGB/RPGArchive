@@ -6,7 +6,7 @@
   #ft-vp.panning { cursor: grabbing; }
   #ft-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
   .ft-card { position: absolute; transition: opacity .15s, box-shadow .15s, border-color .15s; }
-  .ft-card.dim, .ft-line.dim { opacity: .25; }
+  .ft-card.dim, .ft-line.dim, .ft-tag.dim { opacity: .25; }
   .ft-card.sel { border-color: var(--a500); box-shadow: 0 0 0 3px color-mix(in oklab, var(--a500) 35%, transparent); }
   .ft-line { transition: opacity .15s, stroke .15s; }
   .ft-line.hot { stroke: var(--a500); }
@@ -48,7 +48,7 @@
                class="w-56 rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
       </form>
       <button id="ft-add-person" class="btn btn-primary btn-sm">{{ ui('plus', 'size-3.5') }} Pessoa</button>
-      <span class="hidden text-xs text-faint md:inline">Clique numa pessoa: os <strong>+</strong> em volta dela adicionam pai/mãe (em cima), filho(a) (embaixo) e cônjuge (ao lado).</span>
+      <span class="hidden text-xs text-faint md:inline">Clique numa pessoa: os <strong>+</strong> em volta adicionam pai/mãe (em cima), filho(a) (embaixo), cônjuge (direita) e irmão(ã) (esquerda). Selecionada, cada pessoa mostra o parentesco.</span>
       <div class="ml-auto flex items-center gap-1">
         <button data-zoom="0.8" class="btn btn-ghost btn-sm btn-icon" title="Afastar" aria-label="Afastar">{{ ui('minus') }}</button>
         <span id="ft-zoom" class="w-11 text-center text-xs text-muted">100%</span>
@@ -120,10 +120,91 @@
   const $ = id => document.getElementById(id);
   const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const vp = $('ft-vp'), world = $('ft-world'), nodes = $('ft-nodes'), svg = $('ft-lines'), menu = $('ft-menu');
-  const W = 172, H = 168, GAP_X = 48, GAP_Y = 96, PAD = 60;
-  let data = D.data, selected = null, xy = new Map(), lines = [];
-  let rel = { parentsOf: new Map(), childrenOf: new Map(), spouseOf: new Map() };
+  const W = 172, H = 168, GAP_X = 56, GAP_Y = 104, PAD = 70;
+  let data = D.data, selected = null, xy = new Map(), lines = [], moreOpen = false;
   const people = () => new Map(data.people.map(p => [p.id, p]));
+
+  // tipos de laço: rótulos e como desenhar
+  const PARTNER = { spouse: 'cônjuge', ex_spouse: 'ex-cônjuge', betrothed: 'noivo(a)' };
+  const SIBLING = { sibling: 'irmão(ã)', twin: 'gêmeo(a)', half_sibling: 'meio-irmão(ã)' };
+  const ADD = {   // tipo escolhido -> título do seletor / item do menu
+    parent: 'Pai ou mãe', child: 'Filho(a)', spouse: 'Cônjuge', sibling: 'Irmão(ã)',
+    twin: 'Gêmeo(a)', half_sibling: 'Meio-irmão(ã)', ex_spouse: 'Ex-cônjuge', betrothed: 'Noivo(a)',
+    adoptive_parent: 'Pai/mãe adotivo(a)', adoptive_child: 'Filho(a) adotivo(a)', guardian: 'Tutor(a)', ward: 'Pupilo(a)',
+  };
+
+  // ------------------------------------------------------------------ modelo de parentesco
+  let G = null;   // grafo da árvore atual
+  function buildGraph() {
+    const P = people(), m = () => new Map();
+    const g = { bio: m(), kids: m(), adopt: m(), adoptKids: m(), guard: m(), wards: m(), partners: m(), sibs: m() };
+    const push = (mp, k, v) => (mp.get(k) || mp.set(k, []).get(k)).push(v);
+    for (const [a, b, kind] of data.rels) {
+      if (!P.has(a) || !P.has(b)) continue;
+      if (kind === 'parent') { push(g.bio, b, a); push(g.kids, a, b); }
+      else if (kind === 'adopt') { push(g.adopt, b, a); push(g.adoptKids, a, b); }
+      else if (kind === 'guardian') { push(g.guard, b, a); push(g.wards, a, b); }
+      else if (kind in PARTNER) { push(g.partners, a, { o: b, kind }); push(g.partners, b, { o: a, kind }); }
+      else if (kind in SIBLING) { push(g.sibs, a, { o: b, kind }); push(g.sibs, b, { o: a, kind }); }
+    }
+    const get = (mp, k) => mp.get(k) || [];
+    g.parents = id => [...get(g.bio, id), ...get(g.adopt, id)];
+    g.children = id => [...get(g.kids, id), ...get(g.adoptKids, id)];
+    g.spouses = id => get(g.partners, id).filter(x => x.kind === 'spouse').map(x => x.o);
+    g.siblings = id => {   // quem divide pai/mãe + irmãos declarados
+      const s = new Set(get(g.sibs, id).map(x => x.o));
+      for (const p of g.parents(id)) for (const c of g.children(p)) if (c !== id) s.add(c);
+      return [...s];
+    };
+    g.get = get;
+    G = g;
+  }
+  const many = (ids, fn) => [...new Set(ids.flatMap(fn))];
+  // parentesco de t visto a partir de s (pai/mãe, avô/avó, tio(a), primo(a), sogro(a)…)
+  function kinship(s, t) {
+    if (s === t) return null;
+    const g = G, has = (list, x) => list.includes(x);
+    const part = g.get(g.partners, s).find(x => x.o === t); if (part) return PARTNER[part.kind];
+    if (has(g.get(g.adopt, s), t)) return 'pai/mãe adotivo(a)';
+    if (has(g.get(g.bio, s), t)) return 'pai/mãe';
+    if (has(g.get(g.guard, s), t)) return 'tutor(a)';
+    if (has(g.get(g.adoptKids, s), t)) return 'filho(a) adotivo(a)';
+    if (has(g.get(g.kids, s), t)) return 'filho(a)';
+    if (has(g.get(g.wards, s), t)) return 'pupilo(a)';
+    const ex = g.get(g.sibs, s).find(x => x.o === t); if (ex) return SIBLING[ex.kind];
+    if (has(g.siblings(s), t)) {
+      const a = g.parents(s), b = g.parents(t), common = a.filter(x => b.includes(x)).length;
+      return (common && (a.length > common || b.length > common) && a.length > 1 && b.length > 1) ? 'meio-irmão(ã)' : 'irmão(ã)';
+    }
+    const P1 = g.parents(s), P2 = many(P1, g.parents), P3 = many(P2, g.parents), P4 = many(P3, g.parents);
+    if (has(P2, t)) return 'avô/avó'; if (has(P3, t)) return 'bisavô/bisavó'; if (has(P4, t)) return 'trisavô/trisavó';
+    const C1 = g.children(s), C2 = many(C1, g.children), C3 = many(C2, g.children);
+    if (has(C2, t)) return 'neto(a)'; if (has(C3, t)) return 'bisneto(a)';
+    const S1 = g.spouses(s), Sib = g.siblings(s);
+    if (has(many(P1, g.spouses), t)) return 'padrasto/madrasta';
+    const pp = P1.flatMap(x => g.get(g.partners, x)).find(x => x.o === t);
+    if (pp) return pp.kind === 'ex_spouse' ? 'ex de pai/mãe' : 'noivo(a) de pai/mãe';
+    if (has(many(S1, g.children), t)) return 'enteado(a)';
+    const unc = many(P1, g.siblings);
+    if (has(unc, t) || has(many(unc, g.spouses), t)) return 'tio(a)';
+    if (has(many(P2, g.siblings), t)) return 'tio(a)-avô(ó)';
+    if (has(many(Sib, g.children), t)) return 'sobrinho(a)';
+    if (has(many(many(Sib, g.children), g.children), t)) return 'sobrinho(a)-neto(a)';
+    if (has(many(unc, g.children), t)) return 'primo(a)';
+    if (has(many(many(P2, g.siblings), x => many(g.children(x), g.children)), t)) return 'primo(a) de 2º grau';
+    if (has(many(S1, g.parents), t)) return 'sogro(a)';
+    if (has(many(C1, g.spouses), t)) return 'genro/nora';
+    if (has(many(S1, g.siblings), t) || has(many(Sib, g.spouses), t)) return 'cunhado(a)';
+    if (has(many(S1, x => many(g.parents(x), g.siblings)), t)) return 'tio(a) do cônjuge';
+    // ainda ligado por algum caminho?
+    const seen = new Set([s]), q = [s];
+    while (q.length) {
+      const x = q.shift();
+      for (const y of [...g.parents(x), ...g.children(x), ...g.get(g.partners, x).map(p => p.o), ...g.get(g.sibs, x).map(p => p.o), ...g.get(g.guard, x), ...g.get(g.wards, x)])
+        if (!seen.has(y)) { if (y === t) return 'parente'; seen.add(y); q.push(y); }
+    }
+    return null;
+  }
 
   // ------------------------------------------------------------------ vista (pan/zoom)
   const viewKey = 'tree-view-' + D.tid;
@@ -133,6 +214,7 @@
     vp.style.backgroundPosition = `${view.x}px ${view.y}px`; vp.style.backgroundSize = `${24 * view.z}px ${24 * view.z}px`;
     $('ft-zoom').textContent = Math.round(view.z * 100) + '%';
     if (vp.clientWidth > 80) try { localStorage.setItem(viewKey, JSON.stringify(view)); } catch {}
+    if (selected) placeMenu();
   };
   function zoomAt(f, cx, cy) {
     const r = vp.getBoundingClientRect(); if (cx === undefined) { cx = r.left + r.width / 2; cy = r.top + r.height / 2; }
@@ -159,84 +241,86 @@
   });
   window.addEventListener('pointerup', () => { if (pan && !pan.moved) select(null); pan = null; vp.classList.remove('panning'); });
 
-  // ------------------------------------------------------------------ servidor
-  async function edit(body) {
-    const res = await api('POST', D.api, body);
-    data = res.data; render(); return res;
-  }
+  async function edit(body) { const res = await api('POST', D.api, body); data = res.data; render(); return res; }
 
-  // ------------------------------------------------------------------ desenho
+  // ------------------------------------------------------------------ posições
   function layout() {
-    const P = people(), parentsOf = new Map(), childrenOf = new Map(), spouseOf = new Map();
-    const push = (m, k, v) => (m.get(k) || m.set(k, []).get(k)).push(v);
-    for (const [p, c] of data.parents) if (P.has(p) && P.has(c)) { push(parentsOf, c, p); push(childrenOf, p, c); }
-    for (const [a, b] of data.spouses) if (P.has(a) && P.has(b)) { push(spouseOf, a, b); push(spouseOf, b, a); }
-    rel = { parentsOf, childrenOf, spouseOf };
-    // geração: filhos abaixo dos pais, cônjuges na mesma linha
+    const P = people(), g = G;
+    // geração: filhos (de sangue, adotivos, pupilos) abaixo; casais e irmãos na mesma linha
     const gen = new Map([...P.keys()].map(id => [id, 0]));
+    const down = []; for (const [c, ps] of [...g.bio, ...g.adopt, ...g.guard]) for (const p of ps) down.push([p, c]);
+    const same = []; for (const [a, xs] of [...g.partners, ...g.sibs]) for (const x of xs) same.push([a, x.o]);
     for (let i = 0; i < P.size + 2; i++) {
       let changed = false;
-      for (const [c, ps] of parentsOf) for (const p of ps) if (gen.get(c) < gen.get(p) + 1) { gen.set(c, gen.get(p) + 1); changed = true; }
-      for (const [a, ss] of spouseOf) for (const b of ss) {
-        const m = Math.max(gen.get(a), gen.get(b));
-        if (gen.get(a) !== m || gen.get(b) !== m) { gen.set(a, m); gen.set(b, m); changed = true; }
-      }
+      for (const [p, c] of down) if (gen.get(c) < gen.get(p) + 1) { gen.set(c, gen.get(p) + 1); changed = true; }
+      for (const [a, b] of same) { const m = Math.max(gen.get(a), gen.get(b)); if (gen.get(a) !== m || gen.get(b) !== m) { gen.set(a, m); gen.set(b, m); changed = true; } }
       if (!changed) break;
     }
-    // ordem em cada linha: perto dos pais; cônjuges lado a lado
-    const rows = []; for (const [id, g] of gen) (rows[g] ||= []).push(id);
+    const rows = []; for (const [id, gg] of gen) (rows[gg] ||= []).push(id);
     const pos = new Map();
-    rows.forEach((row, g) => {
+    rows.forEach((row, gg) => {
       if (!row) return;
       const key = id => {
-        const ps = (parentsOf.get(id) || []).filter(p => pos.has(p));
+        const ps = g.parents(id).filter(p => pos.has(p));
         if (ps.length) return ps.reduce((s, p) => s + pos.get(p), 0) / ps.length;
-        for (const s of spouseOf.get(id) || []) { const pp = (parentsOf.get(s) || []).filter(p => pos.has(p)); if (pp.length) return pos.get(pp[0]) + 0.5; }
+        for (const s of [...g.get(g.partners, id), ...g.get(g.sibs, id)]) { const pp = g.parents(s.o).filter(p => pos.has(p)); if (pp.length) return pos.get(pp[0]) + 0.5; }
         return 1e6 + id;
       };
       row.sort((a, b) => key(a) - key(b));
+      // casais lado a lado; irmãos declarados logo depois
       const ordered = [], used = new Set();
-      for (const id of row) {
-        if (used.has(id)) continue;
+      const place = id => {
+        if (used.has(id)) return;
+        // ex-cônjuges e noivos ficam à esquerda; cônjuge atual à direita (as linhas não cruzam outros cards)
+        for (const x of g.get(g.partners, id)) if (x.kind !== 'spouse' && !used.has(x.o) && gen.get(x.o) === gg) { ordered.push(x.o); used.add(x.o); }
         ordered.push(id); used.add(id);
-        for (const s of spouseOf.get(id) || []) if (!used.has(s) && gen.get(s) === g) { ordered.push(s); used.add(s); }
-      }
-      rows[g] = ordered; ordered.forEach((id, i) => pos.set(id, i));
+        for (const x of g.get(g.partners, id)) if (x.kind === 'spouse' && !used.has(x.o) && gen.get(x.o) === gg) { ordered.push(x.o); used.add(x.o); }
+        for (const x of g.get(g.sibs, id)) if (gen.get(x.o) === gg) place(x.o);
+      };
+      row.forEach(place);
+      rows[gg] = ordered; ordered.forEach((id, i) => pos.set(id, i));
     });
     const widest = Math.max(1, ...rows.filter(Boolean).map(r => r.length));
     const totalW = widest * (W + GAP_X) - GAP_X + PAD * 2;
     xy = new Map();
-    rows.forEach((row, g) => {
+    rows.forEach((row, gg) => {
       if (!row) return;
       const start = (totalW - (row.length * (W + GAP_X) - GAP_X)) / 2;
-      row.forEach((id, i) => xy.set(id, { x: start + i * (W + GAP_X), y: PAD + g * (H + GAP_Y) }));
+      row.forEach((id, i) => xy.set(id, { x: start + i * (W + GAP_X), y: PAD + gg * (H + GAP_Y) }));
     });
     world.dataset.w = totalW; world.dataset.h = PAD * 2 + rows.length * (H + GAP_Y) - GAP_Y;
   }
 
+  // ------------------------------------------------------------------ desenho
   function render() {
-    const P = people();
+    buildGraph();
+    const P = people(), g = G;
     $('ft-empty').classList.toggle('hidden', P.size > 0); $('ft-empty').classList.toggle('grid', P.size === 0);
     layout();
     nodes.replaceChildren(); svg.replaceChildren(); lines = [];
-    // linhas: cônjuges (com aliança) e filhos (saem do meio do casal)
     const NS = 'http://www.w3.org/2000/svg';
-    const line = (d, ids) => {
+    const line = (d, ids, dash = '') => {
       const p = document.createElementNS(NS, 'path');
       p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'var(--n-faint)'); p.setAttribute('stroke-width', '2');
+      if (dash) p.setAttribute('stroke-dasharray', dash);
       p.setAttribute('class', 'ft-line'); svg.append(p); lines.push({ el: p, ids: new Set(ids) });
     };
+    const tag = (text, x, y, ids, content) => {   // rótulo sobre a linha
+      const t = el('span', 'ft-tag absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted');
+      if (content) t.append(content); if (text) t.append(el('span', '', text));
+      Object.assign(t.style, { left: x + 'px', top: y + 'px' }); t.dataset.ids = ids.join(','); nodes.append(t);
+    };
+    // casais: cônjuges (aliança), ex-cônjuges e noivos (tracejado)
     const drawn = new Set();
-    for (const [a, ss] of rel.spouseOf) for (const b of ss) {
-      const k = [a, b].sort().join('-'); if (drawn.has(k)) continue; drawn.add(k);
-      const [l, r] = [xy.get(a), xy.get(b)].sort((p, q) => p.x - q.x), y = l.y + H / 2;
-      line(`M${l.x + W} ${y} H${r.x}`, [a, b]);
-      const ring = el('span', 'absolute grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface');
-      ring.append(ri('ring')); ring.title = 'Cônjuges'; Object.assign(ring.style, { left: (l.x + W + r.x) / 2 + 'px', top: y + 'px' });
-      nodes.append(ring);
+    for (const [a, xs] of g.partners) for (const { o: b, kind } of xs) {
+      const k = [a, b].sort().join('-') + kind; if (drawn.has(k)) continue; drawn.add(k);
+      const [l, r] = [xy.get(a), xy.get(b)].sort((p, q) => p.x - q.x), y = l.y + H / 2 + (kind === 'spouse' ? 0 : 18);
+      line(`M${l.x + W} ${y} H${r.x}`, [a, b], kind === 'spouse' ? '' : '6 5');
+      tag(kind === 'spouse' ? '' : (kind === 'ex_spouse' ? 'ex' : 'noivos'), (l.x + W + r.x) / 2, y, [a, b], kind === 'spouse' ? ri('ring') : null);
     }
+    // filhos de sangue: saem do meio do casal
     const groups = new Map();
-    for (const [c, ps] of rel.parentsOf) { const k = [...ps].sort().join('-'); (groups.get(k) || groups.set(k, { ps, kids: [] }).get(k)).kids.push(c); }
+    for (const [c, ps] of g.bio) { const k = [...ps].sort().join('-'); (groups.get(k) || groups.set(k, { ps, kids: [] }).get(k)).kids.push(c); }
     for (const { ps, kids } of groups.values()) {
       const pts = ps.map(p => xy.get(p));
       const couple = ps.length === 2 && Math.abs(pts[0].y - pts[1].y) < 1;
@@ -247,6 +331,22 @@
       line(`M${px} ${py} V${busY} M${Math.min(px, ...xs)} ${busY} H${Math.max(px, ...xs)}`, [...ps, ...kids]);
       for (const k of kids) { const p = xy.get(k); line(`M${p.x + W / 2} ${busY} V${p.y}`, [...ps, k]); }
     }
+    // adoção e tutela: linha própria, tracejada, com rótulo
+    for (const [mp, label, dash] of [[g.adopt, 'adoção', '7 5'], [g.guard, 'tutela', '2 5']]) for (const [c, ps] of mp) for (const p of ps) {
+      const a = xy.get(p), b = xy.get(c), x1 = a.x + W / 2 + 14, x2 = b.x + W / 2 + 14, my = a.y + H + (b.y - a.y - H) / 2;
+      line(`M${x1} ${a.y + H} V${my} H${x2} V${b.y}`, [p, c], dash);
+      tag(label, (x1 + x2) / 2, my, [p, c]);
+    }
+    // irmãos declarados (sem pais em comum na árvore): colchete por cima
+    const sd = new Set();
+    for (const [a, xs] of g.sibs) for (const { o: b, kind } of xs) {
+      const k = [a, b].sort().join('-'); if (sd.has(k)) continue; sd.add(k);
+      const pa = g.parents(a), pb = g.parents(b), shared = pa.some(p => pb.includes(p));
+      if (shared && kind === 'sibling') continue;   // já aparece pelos pais
+      const [l, r] = [xy.get(a), xy.get(b)].sort((p, q) => p.x - q.x), y = l.y - 22;
+      line(`M${l.x + W / 2} ${l.y} V${y} H${r.x + W / 2} V${r.y}`, [a, b], kind === 'half_sibling' ? '6 5' : '');
+      tag(kind === 'twin' ? 'gêmeos' : kind === 'half_sibling' ? 'meio-irmãos' : 'irmãos', (l.x + r.x + W) / 2, y, [a, b]);
+    }
     // cards
     for (const [id, p] of P) {
       const { x, y } = xy.get(id);
@@ -254,13 +354,14 @@
       c.dataset.id = id; c.tabIndex = 0; c.setAttribute('role', 'button'); c.setAttribute('aria-label', p.title);
       Object.assign(c.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
       if (selected === id) c.classList.add('sel');
+      const kin = el('span', 'ft-kin absolute -top-3 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-on-accent shadow');
+      c.append(kin);
       const av = el(p.cover ? 'img' : 'div', 'size-16 shrink-0 rounded-full object-cover ring-2 ring-accent/70 grid place-items-center bg-surface-2');
       if (p.cover) { av.src = p.cover; av.referrerPolicy = 'no-referrer'; av.alt = ''; } else av.append(glyph(p.icon, 32));
       av.draggable = false;
       c.append(av, el('p', 'line-clamp-2 text-sm font-semibold leading-tight text-ink', p.title));
       if (p.year !== null && p.year !== undefined) c.append(el('p', 'text-[11px] text-faint', 'ano ' + p.year));
       else if (p.summary) c.append(el('p', 'line-clamp-1 text-xs text-muted', p.summary));
-      // + em volta: em cima pai/mãe, embaixo filho(a), ao lado cônjuge
       const plus = (kind, tip, pos, tipPos) => {
         const b = el('button', 'ft-add'); b.type = 'button'; b.append(ui('plus', 'size-4'));
         const t = el('span', 'tip', tip); Object.assign(t.style, tipPos); b.append(t);
@@ -271,10 +372,11 @@
       plus('parent', 'Pai ou mãe', { left: '50%', top: '-13px', marginLeft: '-13px' }, { bottom: '30px' });
       plus('child', 'Filho(a)', { left: '50%', bottom: '-13px', marginLeft: '-13px' }, { top: '30px' });
       plus('spouse', 'Cônjuge', { right: '-13px', top: '50%', marginTop: '-13px' }, { left: '30px' });
+      plus('sibling', 'Irmão(ã)', { left: '-13px', top: '50%', marginTop: '-13px' }, { right: '30px' });
       c.addEventListener('click', () => select(id));
       c.addEventListener('dblclick', () => { location.href = p.url; });
       c.addEventListener('keydown', e => { if (e.key === 'Enter') select(id); });
-      c.addEventListener('mouseenter', () => highlight(id));
+      c.addEventListener('mouseenter', () => highlight(selected || id));
       c.addEventListener('mouseleave', () => highlight(selected));
       nodes.append(c);
     }
@@ -283,59 +385,83 @@
     highlight(selected); showMenu();
   }
 
-  // destaca a família direta (pais, filhos, cônjuges) e apaga o resto
+  // destaca a família direta e mostra o parentesco de cada pessoa em relação à selecionada
   function highlight(id) {
-    const fam = new Set(id ? [id, ...(rel.parentsOf.get(id) || []), ...(rel.childrenOf.get(id) || []), ...(rel.spouseOf.get(id) || [])] : []);
-    nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('dim', !!id && !fam.has(Number(c.dataset.id))));
+    const g = G;
+    const fam = new Set(id ? [id, ...g.parents(id), ...g.children(id), ...g.get(g.partners, id).map(x => x.o), ...g.siblings(id),
+                              ...g.get(g.guard, id), ...g.get(g.wards, id)] : []);
+    nodes.querySelectorAll('.ft-card').forEach(c => {
+      const cid = Number(c.dataset.id), kin = c.querySelector('.ft-kin');
+      c.classList.toggle('dim', !!id && !fam.has(cid));
+      const label = id && selected ? kinship(selected, cid) : null;
+      kin.textContent = label || ''; kin.classList.toggle('hidden', !label);
+      if (label && !fam.has(cid)) c.classList.remove('dim');   // parentes distantes aparecem também, só que sem destaque
+    });
     for (const l of lines) {
-      const hot = !!id && l.ids.has(id) && [...l.ids].every(x => fam.has(x) || !people().has(x));
-      l.el.classList.toggle('hot', hot); l.el.classList.toggle('dim', !!id && !l.ids.has(id));
+      const hot = !!id && l.ids.has(id);
+      l.el.classList.toggle('hot', hot); l.el.classList.toggle('dim', !!id && !hot);
     }
+    nodes.querySelectorAll('.ft-tag').forEach(t => t.classList.toggle('dim', !!id && !t.dataset.ids.split(',').map(Number).includes(id)));
   }
 
   // ------------------------------------------------------------------ seleção + menu
-  function select(id) { selected = id; nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('sel', Number(c.dataset.id) === id)); highlight(id); showMenu(); }
+  function select(id) { selected = id; moreOpen = false; nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('sel', Number(c.dataset.id) === id)); highlight(id); showMenu(); }
   function showMenu() {
     menu.replaceChildren();
     if (!selected) { menu.classList.add('hidden'); return; }
-    const P = people(), p = P.get(selected), at = xy.get(selected);
+    const P = people(), p = P.get(selected), g = G;
     const head = el('div', 'flex items-center gap-2 border-b border-line px-1 pb-2');
     head.append(glyph(p.icon), el('span', 'min-w-0 flex-1 truncate font-semibold text-ink', p.title));
     const open = el('a', 'btn btn-ghost btn-sm btn-icon'); open.href = p.url; open.append(ui('external', 'size-3.5')); open.title = 'Abrir a página'; open.setAttribute('aria-label', 'Abrir a página');
     head.append(open); menu.append(head);
     const item = (icon, label, fn, cls = '') => {
       const b = el('button', 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-ink-2 hover:bg-surface-2 ' + cls);
-      b.append(icon, el('span', '', label)); b.addEventListener('click', fn); menu.append(b);
+      b.append(icon, el('span', '', label)); b.addEventListener('click', fn); menu.append(b); return b;
     };
-    menu.append(el('p', 'px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', 'Adicionar'));
-    item(ui('plus', 'size-3.5'), 'Pai ou mãe', () => openPicker('parent', selected));
-    item(ui('plus', 'size-3.5'), 'Filho(a)', () => openPicker('child', selected));
-    item(ui('plus', 'size-3.5'), 'Cônjuge', () => openPicker('spouse', selected));
-    // laços atuais, com X para desfazer
-    const links = [
-      ...(rel.parentsOf.get(selected) || []).map(o => ({ o, label: 'pai/mãe', body: { kind: 'parent', a_id: o, b_id: selected } })),
-      ...(rel.spouseOf.get(selected) || []).map(o => ({ o, label: 'cônjuge', body: { kind: 'spouse', a_id: o, b_id: selected } })),
-      ...(rel.childrenOf.get(selected) || []).map(o => ({ o, label: 'filho(a)', body: { kind: 'parent', a_id: selected, b_id: o } })),
-    ];
+    const sec = t => menu.append(el('p', 'px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', t));
+    sec('Adicionar');
+    for (const k of ['parent', 'child', 'spouse', 'sibling']) item(ui('plus', 'size-3.5'), ADD[k], () => openPicker(k, selected));
+    const more = item(ui('chevron', 'size-3.5 transition' + (moreOpen ? ' rotate-90' : '')), 'Mais laços…', () => { moreOpen = !moreOpen; showMenu(); }, 'text-muted');
+    more.setAttribute('aria-expanded', moreOpen ? 'true' : 'false');
+    if (moreOpen) {
+      const grid = el('div', 'grid grid-cols-2 gap-0.5 pl-2');
+      for (const k of ['twin', 'half_sibling', 'ex_spouse', 'betrothed', 'adoptive_parent', 'adoptive_child', 'guardian', 'ward']) {
+        const b = el('button', 'rounded-md px-2 py-1 text-left text-xs text-ink-2 hover:bg-surface-2', ADD[k]);
+        b.addEventListener('click', () => openPicker(k, selected)); grid.append(b);
+      }
+      menu.append(grid);
+    }
+    // laços diretos, cada um com o X para desfazer
+    const links = [];
+    for (const o of g.get(g.bio, selected)) links.push({ o, body: { kind: 'parent', a_id: o, b_id: selected } });
+    for (const o of g.get(g.adopt, selected)) links.push({ o, body: { kind: 'adopt', a_id: o, b_id: selected } });
+    for (const o of g.get(g.guard, selected)) links.push({ o, body: { kind: 'guardian', a_id: o, b_id: selected } });
+    for (const x of g.get(g.partners, selected)) links.push({ o: x.o, body: { kind: x.kind, a_id: selected, b_id: x.o } });
+    for (const x of g.get(g.sibs, selected)) links.push({ o: x.o, body: { kind: x.kind, a_id: selected, b_id: x.o } });
+    for (const o of g.get(g.kids, selected)) links.push({ o, body: { kind: 'parent', a_id: selected, b_id: o } });
+    for (const o of g.get(g.adoptKids, selected)) links.push({ o, body: { kind: 'adopt', a_id: selected, b_id: o } });
+    for (const o of g.get(g.wards, selected)) links.push({ o, body: { kind: 'guardian', a_id: selected, b_id: o } });
     if (links.length) {
-      menu.append(el('p', 'px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', 'Laços'));
+      sec('Laços');
       for (const l of links) {
         const row = el('div', 'group flex items-center gap-2 rounded-md px-2 py-1 hover:bg-surface-2');
-        row.append(el('span', 'w-14 shrink-0 text-xs text-faint', l.label), el('span', 'min-w-0 flex-1 truncate text-ink-2', P.get(l.o).title));
+        row.append(el('span', 'w-20 shrink-0 truncate text-xs text-faint', kinship(selected, l.o) || ''), el('span', 'min-w-0 flex-1 truncate text-ink-2', P.get(l.o).title));
         const x = el('button', 'grid size-6 place-items-center rounded text-faint opacity-0 hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 focus:opacity-100');
         x.append(ui('x', 'size-3.5')); x.title = 'Desfazer este laço (nas páginas também)'; x.setAttribute('aria-label', `Desfazer laço com ${P.get(l.o).title}`);
         x.addEventListener('click', async () => { if (confirm(`Desfazer o laço entre ${p.title} e ${P.get(l.o).title}? Ele some das páginas também.`)) await edit({ action: 'unlink', ...l.body }); });
         row.append(x); menu.append(row);
       }
     }
-    const sep = el('div', 'my-1.5 border-t border-line'); menu.append(sep);
+    menu.append(el('div', 'my-1.5 border-t border-line'));
     item(ui('x', 'size-3.5'), 'Tirar desta árvore', async () => {
       if (confirm(`Tirar ${p.title} desta árvore? A página e os laços continuam existindo.`)) { selected = null; await edit({ action: 'remove', person_id: p.id }); }
     }, 'text-muted hover:!text-red-500');
-    Object.assign(menu.style, { left: '0px', top: '0px' });
     menu.classList.remove('hidden');
-    // posiciona ao lado do card (em coordenadas da tela, dentro do quadro)
-    const r = vp.getBoundingClientRect();
+    placeMenu();
+  }
+  function placeMenu() {
+    if (!selected || !xy.get(selected)) return;
+    const at = xy.get(selected), r = vp.getBoundingClientRect();
     let left = view.x + (at.x + W + 24) * view.z, top = view.y + at.y * view.z;
     if (left + menu.offsetWidth > r.width - 8) left = view.x + at.x * view.z - menu.offsetWidth - 24;
     menu.style.left = Math.max(8, left) + 'px'; menu.style.top = Math.max(8, Math.min(r.height - menu.offsetHeight - 8, top)) + 'px';
@@ -343,12 +469,11 @@
 
   // ------------------------------------------------------------------ seletor de pessoa
   const picker = $('ft-picker'), q = $('ft-q'), results = $('ft-results');
-  let pick = null;   // { kind, personId }
+  let pick = null;
   function openPicker(kind, personId) {
     const P = people(), who = personId ? P.get(personId).title : null;
     pick = { kind, personId };
-    $('ft-picker-title').textContent = kind === 'add' ? 'Adicionar pessoa à árvore'
-      : { parent: `Pai ou mãe de ${who}`, child: `Filho(a) de ${who}`, spouse: `Cônjuge de ${who}` }[kind];
+    $('ft-picker-title').textContent = kind === 'add' ? 'Adicionar pessoa à árvore' : `${ADD[kind]} de ${who}`;
     q.value = ''; drawResults(); picker.classList.remove('hidden'); picker.classList.add('grid'); q.focus();
   }
   function closePicker() { picker.classList.add('hidden'); picker.classList.remove('grid'); pick = null; }
@@ -402,12 +527,8 @@
   new ResizeObserver(() => {
     const r = vp.getBoundingClientRect();
     if (!fitted && r.width > 80 && r.height > 80) { fitted = true; fit(); }
-    if (selected) showMenu();
+    if (selected) placeMenu();
   }).observe(vp);
-  // mexer na vista reposiciona o menu
-  const reapply = () => { if (selected) showMenu(); };
-  vp.addEventListener('wheel', reapply); window.addEventListener('pointermove', () => { if (pan) reapply(); });
-  document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', reapply)); $('ft-fit').addEventListener('click', reapply);
 })();
 </script>
 {% endif %}

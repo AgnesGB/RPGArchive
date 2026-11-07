@@ -150,6 +150,31 @@ def timeline_remove(wid, tid, aid):
 
 # =========================================================================== árvores genealógicas
 
+# laços de família que a árvore desenha
+FAMILY_KINDS = ("parent", "adopt", "guardian", "spouse", "ex_spouse", "betrothed", "sibling", "twin", "half_sibling")
+SYMMETRIC_KINDS = {"spouse", "ex_spouse", "betrothed", "sibling", "twin", "half_sibling"}
+# tipo escolhido na árvore -> (tipo guardado, a outra pessoa vem primeiro?)
+LINK_KINDS = {
+    "parent": ("parent", True), "child": ("parent", False),
+    "spouse": ("spouse", False), "ex_spouse": ("ex_spouse", False), "betrothed": ("betrothed", False),
+    "sibling": ("sibling", False), "twin": ("twin", False), "half_sibling": ("half_sibling", False),
+    "adoptive_parent": ("adopt", True), "adoptive_child": ("adopt", False),
+    "guardian": ("guardian", True), "ward": ("guardian", False),
+}
+
+
+def _add_rel(wid, x, y, kind):
+    db = get_db()
+    if kind in SYMMETRIC_KINDS:
+        exists = db.execute("""SELECT 1 FROM relations WHERE world_id = ? AND kind = ?
+                               AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?))""", (wid, kind, x, y, y, x)).fetchone()
+    else:
+        exists = db.execute("SELECT 1 FROM relations WHERE world_id = ? AND kind = ? AND a_id = ? AND b_id = ?",
+                            (wid, kind, x, y)).fetchone()
+    if not exists and x != y:
+        db.execute("INSERT INTO relations (world_id, a_id, b_id, kind) VALUES (?, ?, ?, ?)", (wid, x, y, kind))
+
+
 def _tree_data(wid, tid):
     """Pessoas da árvore + laços (pai/mãe e cônjuge) entre elas."""
     db = get_db()
@@ -161,14 +186,13 @@ def _tree_data(wid, tid):
     if ids:
         marks = ",".join("?" * len(ids))
         rels = db.execute(
-            f"""SELECT a_id, b_id, kind FROM relations WHERE world_id = ? AND kind IN ('parent', 'spouse')
-                AND a_id IN ({marks}) AND b_id IN ({marks})""", (wid, *ids, *ids)).fetchall()
+            f"""SELECT a_id, b_id, kind FROM relations WHERE world_id = ? AND kind IN ({",".join("?" * len(FAMILY_KINDS))})
+                AND a_id IN ({marks}) AND b_id IN ({marks})""", (wid, *FAMILY_KINDS, *ids, *ids)).fetchall()
     return {
         "people": [{"id": p["id"], "title": p["title"], "icon": page_icon(p), "cover": p["image_url"],
                     "summary": p["summary"], "year": p["year"],
                     "url": url_for("pages.view", wid=wid, aid=p["id"])} for p in people],
-        "parents": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "parent"],
-        "spouses": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "spouse"],
+        "rels": [[r["a_id"], r["b_id"], r["kind"]] for r in rels],
     }
 
 
@@ -184,7 +208,7 @@ def trees(wid):
     current = next((t for t in all_trees if t["id"] == tid), None)
     if tid and current is None:
         abort(404)
-    data = _tree_data(wid, current["id"]) if current else {"people": [], "parents": [], "spouses": []}
+    data = _tree_data(wid, current["id"]) if current else {"people": [], "rels": []}
     # personagens primeiro no seletor
     pages = db.execute("""SELECT id, title, icon, category FROM articles WHERE world_id = ?
                           ORDER BY category != 'personagem', title COLLATE NOCASE""", (wid,)).fetchall()
@@ -228,7 +252,7 @@ def tree_edit(wid, tid):
     elif action == "link":
         a = get_page(world, int(body.get("person_id") or 0))["id"]
         kind = body.get("kind")
-        if kind not in ("parent", "child", "spouse"):
+        if kind not in LINK_KINDS:
             abort(400, "Tipo de laço inválido.")
         b = _person_for(world, body)
         if a == b:
@@ -236,17 +260,22 @@ def tree_edit(wid, tid):
         new_id = b
         add_member(a)
         add_member(b)
-        # parent: b é pai/mãe de a · child: b é filho(a) de a · spouse: entre os dois
-        x, y = {"parent": (b, a), "child": (a, b), "spouse": (a, b)}[kind]
-        kind = "spouse" if kind == "spouse" else "parent"
-        exists = db.execute(
-            """SELECT 1 FROM relations WHERE world_id = ? AND kind = ?
-               AND ((a_id = ? AND b_id = ?) OR (kind = 'spouse' AND a_id = ? AND b_id = ?))""",
-            (wid, kind, x, y, y, x)).fetchone()
-        if not exists:
-            db.execute("INSERT INTO relations (world_id, a_id, b_id, kind) VALUES (?, ?, ?, ?)", (wid, x, y, kind))
+        # a = pessoa selecionada, b = a outra; LINK_KINDS diz quem fica em cada ponta da relação
+        stored, b_first = LINK_KINDS[kind]
+        x, y = (b, a) if b_first else (a, b)
+        parents_of_a = [r["a_id"] for r in db.execute(
+            "SELECT a_id FROM relations WHERE world_id = ? AND kind = 'parent' AND b_id = ?", (wid, a))]
+        # irmão(ã) de quem já tem pais na árvore vira filho(a) dos mesmos pais (irmão de verdade)
+        if kind == "sibling" and parents_of_a:
+            stored = None
+        if stored:
+            _add_rel(wid, x, y, stored)
+        if kind in ("sibling", "twin"):
+            for p in parents_of_a:
+                _add_rel(wid, p, b, "parent")
+                add_member(p)
         # filho(a) de alguém com um único cônjuge na árvore vira filho(a) do casal
-        if body.get("kind") == "child":
+        if kind == "child":
             sp = db.execute(
                 """SELECT CASE WHEN r.a_id = ? THEN r.b_id ELSE r.a_id END AS s FROM relations r
                    JOIN tree_members m ON m.tree_id = ? AND m.article_id = CASE WHEN r.a_id = ? THEN r.b_id ELSE r.a_id END
@@ -258,11 +287,11 @@ def tree_edit(wid, tid):
                 db.execute("INSERT INTO relations (world_id, a_id, b_id, kind) VALUES (?, ?, ?, 'parent')", (wid, sp[0]["s"], b))
     elif action == "unlink":
         a, b, kind = int(body.get("a_id") or 0), int(body.get("b_id") or 0), body.get("kind")
-        if kind == "spouse":
-            db.execute("""DELETE FROM relations WHERE world_id = ? AND kind = 'spouse'
-                          AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?))""", (wid, a, b, b, a))
-        elif kind == "parent":
-            db.execute("DELETE FROM relations WHERE world_id = ? AND kind = 'parent' AND a_id = ? AND b_id = ?", (wid, a, b))
+        if kind in SYMMETRIC_KINDS:
+            db.execute("""DELETE FROM relations WHERE world_id = ? AND kind = ?
+                          AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?))""", (wid, kind, a, b, b, a))
+        elif kind in FAMILY_KINDS:
+            db.execute("DELETE FROM relations WHERE world_id = ? AND kind = ? AND a_id = ? AND b_id = ?", (wid, kind, a, b))
     elif action == "remove":
         db.execute("DELETE FROM tree_members WHERE tree_id = ? AND article_id = ?", (tid, int(body.get("person_id") or 0)))
     else:
