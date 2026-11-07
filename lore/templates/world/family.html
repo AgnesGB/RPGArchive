@@ -1,206 +1,414 @@
 {% extends "world/_layout.html" %}
 {% block title %}{{ current.name if current else 'Árvores genealógicas' }} · {{ world.name }}{% endblock %}
+{% block head %}
+<style>
+  #ft-vp { cursor: grab; touch-action: none; }
+  #ft-vp.panning { cursor: grabbing; }
+  #ft-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .ft-card { position: absolute; transition: opacity .15s, box-shadow .15s, border-color .15s; }
+  .ft-card.dim, .ft-line.dim { opacity: .25; }
+  .ft-card.sel { border-color: var(--a500); box-shadow: 0 0 0 3px color-mix(in oklab, var(--a500) 35%, transparent); }
+  .ft-line { transition: opacity .15s, stroke .15s; }
+  .ft-line.hot { stroke: var(--a500); }
+  .ft-add { position: absolute; z-index: 5; display: none; place-items: center; width: 26px; height: 26px; border-radius: 9999px;
+            background: var(--a500); color: var(--a-on); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+  .ft-add:hover { transform: scale(1.15); }
+  .ft-card.sel .ft-add, .ft-card:hover .ft-add { display: grid; }
+  .ft-add .tip { position: absolute; white-space: nowrap; font-size: 11px; background: var(--n-surface); color: var(--n-ink);
+                 border: 1px solid var(--n-line); border-radius: 6px; padding: 1px 6px; pointer-events: none; opacity: 0; transition: opacity .1s; }
+  .ft-add:hover .tip { opacity: 1; }
+</style>
+{% endblock %}
 {% block world_content %}
-{% macro people_select(name, characters, required=True) %}
-  <select name="{{ name }}" class="input py-1.5 text-sm" {{ 'required' if required }}>
-    <option value="">Escolha…</option>
-    {% for p in characters %}<option value="{{ p.id }}">{{ page_icon(p)|glyph_text }} {{ p.title }}</option>{% endfor %}
-  </select>
-{% endmacro %}
-<div class="px-6 py-8 lg:px-10">
-  <div class="flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <h1 class="flex items-center gap-3 font-display text-3xl text-ink">{{ ri('tree', 32) }} Árvores genealógicas</h1>
-      <p class="mt-1 text-muted">Uma árvore por família ou dinastia. Os laços (<em>pai/mãe</em>, <em>cônjuge</em>) valem para o mundo todo,
-        então quem casa entre famílias aparece nas duas.</p>
-    </div>
-    <form method="post" action="{{ url_for('history.tree_create', wid=world.id) }}" class="flex gap-2">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input class="input py-2" name="name" placeholder="Nome da nova árvore" required>
-      <button class="btn btn-primary">{{ ui('plus') }} Árvore</button>
-    </form>
+<div class="flex h-[calc(100vh-3.5rem)] flex-col">
+  {# ---------- topo: árvores ---------- #}
+  <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-4 py-2">
+    <h1 class="mr-2 flex items-center gap-2 font-display text-lg text-ink">{{ ri('tree') }} Árvores</h1>
+    {% for t in trees %}
+      <a href="{{ url_for('history.trees', wid=world.id, t=t.id) }}"
+         class="rounded-full px-3 py-1 text-sm {{ 'bg-accent text-on-accent font-medium' if current and current.id == t.id else 'text-muted hover:bg-surface-2 hover:text-ink' }}">
+        {{ t.name }} <span class="text-xs opacity-70">{{ t.n }}</span></a>
+    {% endfor %}
+    <details class="relative">
+      <summary class="btn btn-ghost btn-sm list-none">{{ ui('plus', 'size-3.5') }} Nova árvore</summary>
+      <form method="post" action="{{ url_for('history.tree_create', wid=world.id) }}" class="absolute left-0 top-full z-30 mt-1 flex w-72 gap-2 rounded-xl border border-line bg-surface p-2 shadow-2xl">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input class="input py-1.5 text-sm" name="name" placeholder="Ex.: Casa Cinzenta" required autofocus>
+        <button class="btn btn-primary btn-sm">Criar</button>
+      </form>
+    </details>
   </div>
 
-  {% if trees %}
-    <div class="mt-6 flex flex-wrap items-center gap-2 border-b border-line pb-3">
-      {% for t in trees %}
-        <a href="{{ url_for('history.trees', wid=world.id, t=t.id) }}"
-           class="rounded-full px-3 py-1 text-sm {{ 'bg-ink text-bg' if current and current.id == t.id else 'text-muted hover:bg-surface-2' }}">
-          {{ ri('tree') }} {{ t.name }} <span class="text-xs opacity-60">{{ t.n }}</span></a>
-      {% endfor %}
-    </div>
-  {% endif %}
-
   {% if current %}
-    <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
-      <form method="post" action="{{ url_for('history.tree_member', wid=world.id, tid=current.id) }}" class="panel flex flex-wrap items-end gap-3 p-4">
+    {# ---------- barra da árvore atual ---------- #}
+    <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-4 py-2">
+      <form method="post" action="{{ url_for('history.tree_update', wid=world.id, tid=current.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="min-w-44 flex-1"><label class="label text-xs">Pessoa</label>{{ people_select('a_id', characters) }}</div>
-        <div class="w-40">
-          <label class="label text-xs">é</label>
-          <select name="kind" class="input py-1.5 text-sm">
-            <option value="">(só adicionar à árvore)</option>
-            <option value="parent">pai / mãe de</option>
-            <option value="child">filho(a) de</option>
-            <option value="spouse">cônjuge de</option>
-          </select>
-        </div>
-        <div class="min-w-44 flex-1"><label class="label text-xs">Outra pessoa</label>{{ people_select('b_id', characters, False) }}</div>
-        <button class="btn btn-primary">Adicionar</button>
+        <input name="name" value="{{ current.name }}" onchange="this.form.submit()" aria-label="Nome da árvore"
+               class="w-56 rounded-md bg-transparent px-2 py-1 font-display text-lg text-ink outline-none hover:bg-surface-2 focus:bg-surface-2">
       </form>
-      <form method="post" action="{{ url_for('history.tree_update', wid=world.id, tid=current.id) }}" class="panel flex items-end gap-2 p-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div><label class="label text-xs">Nome da árvore</label><input name="name" value="{{ current.name }}" class="input w-48 py-1.5 text-sm" onchange="this.form.submit()"></div>
-        <button name="delete" value="1" class="btn btn-ghost btn-icon btn-quiet-danger" title="Apagar árvore" aria-label="Apagar árvore"
-                onclick="return confirm('Apagar a árvore “{{ current.name|e }}”? Pessoas e laços continuam nas páginas.')">{{ ui('trash') }}</button>
-      </form>
-    </div>
-  {% endif %}
-
-  {% if data.people %}
-    <div class="panel mt-6 overflow-auto bg-canvas">
-      <div id="tree" class="relative mx-auto" style="min-height: 300px">
-        <svg id="tree-lines" class="pointer-events-none absolute inset-0 overflow-visible"></svg>
+      <button id="ft-add-person" class="btn btn-primary btn-sm">{{ ui('plus', 'size-3.5') }} Pessoa</button>
+      <span class="hidden text-xs text-faint md:inline">Clique numa pessoa: os <strong>+</strong> em volta dela adicionam pai/mãe (em cima), filho(a) (embaixo) e cônjuge (ao lado).</span>
+      <div class="ml-auto flex items-center gap-1">
+        <button data-zoom="0.8" class="btn btn-ghost btn-sm btn-icon" title="Afastar" aria-label="Afastar">{{ ui('minus') }}</button>
+        <span id="ft-zoom" class="w-11 text-center text-xs text-muted">100%</span>
+        <button data-zoom="1.25" class="btn btn-ghost btn-sm btn-icon" title="Aproximar" aria-label="Aproximar">{{ ui('plus') }}</button>
+        <button id="ft-fit" class="btn btn-ghost btn-sm btn-icon" title="Enquadrar tudo" aria-label="Enquadrar tudo">{{ ui('fit') }}</button>
+        <span class="mx-1 h-6 w-px bg-line"></span>
+        <form method="post" action="{{ url_for('history.tree_update', wid=world.id, tid=current.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button name="delete" value="1" class="btn btn-ghost btn-sm btn-icon btn-quiet-danger" title="Apagar árvore" aria-label="Apagar árvore"
+                  onclick="return confirm('Apagar a árvore “{{ current.name|e }}”? As pessoas e os laços continuam nas páginas.')">{{ ui('trash') }}</button>
+        </form>
       </div>
     </div>
-    <p class="mt-2 text-xs text-faint">Passe o mouse numa pessoa e clique no X para tirá-la desta árvore (os laços continuam nas páginas).</p>
-    <form method="post" id="remove-member" action="{{ url_for('history.tree_member', wid=world.id, tid=current.id) }}" class="hidden">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="remove" value="1"><input type="hidden" name="a_id">
-    </form>
-  {% elif current %}
-    <div class="panel mt-6 p-10 text-center text-muted">Árvore vazia. Adicione a primeira pessoa e os laços dela acima.</div>
+
+    {# ---------- canvas ---------- #}
+    <div id="ft-vp" class="relative min-h-0 flex-1 select-none overflow-hidden bg-canvas"
+         style="background-image: radial-gradient(circle, var(--n-line-strong) 1px, transparent 1px); background-size: 24px 24px">
+      <div id="ft-world">
+        <svg id="ft-lines" class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1"></svg>
+        <div id="ft-nodes"></div>
+      </div>
+      <div id="ft-empty" class="absolute inset-0 hidden place-items-center text-center">
+        <div>
+          {{ ri('tree', 64) }}
+          <p class="mt-3 text-ink">Esta árvore ainda está vazia.</p>
+          <p class="mt-1 text-sm text-muted">Comece por alguém (um patriarca, a protagonista…) e vá adicionando a família em volta.</p>
+          <button id="ft-empty-add" class="btn btn-primary mt-4">{{ ui('plus') }} Adicionar a primeira pessoa</button>
+        </div>
+      </div>
+      {# menu da pessoa selecionada #}
+      <div id="ft-menu" class="absolute z-20 hidden w-64 rounded-xl border border-line bg-surface p-2 text-sm shadow-2xl"></div>
+    </div>
   {% else %}
-    <div class="panel mt-6 p-10 text-center text-muted">Nenhuma árvore ainda. Dê um nome (ex.: <em>Casa Cinzenta</em>) e crie a primeira.</div>
+    <div class="grid flex-1 place-items-center p-10 text-center">
+      <div>
+        {{ ri('tree', 64) }}
+        <h2 class="mt-3 font-display text-xl text-ink">Nenhuma árvore ainda</h2>
+        <p class="mt-1 max-w-md text-muted">Faça uma árvore por família ou dinastia. Os laços (pai/mãe, cônjuge) valem para o mundo todo,
+          então quem casa entre famílias aparece nas duas.</p>
+        <form method="post" action="{{ url_for('history.tree_create', wid=world.id) }}" class="mx-auto mt-5 flex max-w-sm gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input class="input" name="name" placeholder="Ex.: Casa Cinzenta" required>
+          <button class="btn btn-primary">Criar árvore</button>
+        </form>
+      </div>
+    </div>
   {% endif %}
 </div>
 
-<script id="tree-data" type="application/json">{{ data|tojson }}</script>
+{# ---------- seletor de pessoa (página existente ou personagem novo) ---------- #}
+<div id="ft-picker" class="fixed inset-0 z-50 hidden place-items-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="ft-picker-title">
+  <div class="w-full max-w-md rounded-2xl border border-line bg-surface p-4 shadow-2xl">
+    <p id="ft-picker-title" class="font-display text-lg text-ink"></p>
+    <input id="ft-q" class="input mt-3" placeholder="Buscar uma página ou digitar um nome novo…" autocomplete="off">
+    <ul id="ft-results" class="mt-2 max-h-72 space-y-0.5 overflow-y-auto"></ul>
+    <div class="mt-3 flex justify-between text-xs text-faint">
+      <span>Enter escolhe o primeiro · Esc fecha</span>
+      <button id="ft-picker-close" class="btn btn-ghost btn-sm">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+{% if current %}
+<script id="tree-data" type="application/json">{{ {'data': data, 'pages': page_list,
+  'api': url_for('history.tree_edit', wid=world.id, tid=current.id), 'tid': current.id}|tojson }}</script>
 <script>
 (() => {
-  const data = JSON.parse(document.getElementById('tree-data').textContent);
-  const box = document.getElementById('tree');
-  if (!box || !data.people.length) return;
-  const W = 168, H = 150, GAP_X = 36, GAP_Y = 90, PAD = 40;
-  const people = new Map(data.people.map(p => [p.id, p]));
-  const parentsOf = new Map(), childrenOf = new Map(), spouseOf = new Map();
-  for (const [p, c] of data.parents) {
-    if (!people.has(p) || !people.has(c)) continue;
-    (parentsOf.get(c) || parentsOf.set(c, []).get(c)).push(p);
-    (childrenOf.get(p) || childrenOf.set(p, []).get(p)).push(c);
-  }
-  for (const [a, b] of data.spouses) {
-    (spouseOf.get(a) || spouseOf.set(a, []).get(a)).push(b);
-    (spouseOf.get(b) || spouseOf.set(b, []).get(b)).push(a);
-  }
+  const D = JSON.parse(document.getElementById('tree-data').textContent);
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+  const vp = $('ft-vp'), world = $('ft-world'), nodes = $('ft-nodes'), svg = $('ft-lines'), menu = $('ft-menu');
+  const W = 172, H = 168, GAP_X = 48, GAP_Y = 96, PAD = 60;
+  let data = D.data, selected = null, xy = new Map(), lines = [];
+  let rel = { parentsOf: new Map(), childrenOf: new Map(), spouseOf: new Map() };
+  const people = () => new Map(data.people.map(p => [p.id, p]));
 
-  // 1) Geração: filhos abaixo dos pais, cônjuges na mesma linha
-  const gen = new Map([...people.keys()].map(id => [id, 0]));
-  for (let i = 0; i < people.size + 2; i++) {
-    let changed = false;
-    for (const [c, ps] of parentsOf) for (const p of ps) if (gen.get(c) < gen.get(p) + 1) { gen.set(c, gen.get(p) + 1); changed = true; }
-    for (const [a, ss] of spouseOf) for (const b of ss) {
-      const m = Math.max(gen.get(a), gen.get(b));
-      if (gen.get(a) !== m || gen.get(b) !== m) { gen.set(a, m); gen.set(b, m); changed = true; }
-    }
-    if (!changed) break;
-  }
-
-  // 2) Ordem em cada linha: média da posição dos pais, cônjuges lado a lado
-  const rows = [];
-  for (const [id, g] of gen) (rows[g] ||= []).push(id);
-  const pos = new Map();
-  rows.forEach((row, g) => {
-    if (!row) return;
-    const key = id => {
-      const ps = parentsOf.get(id) || [];
-      const fromParents = ps.filter(p => pos.has(p)).map(p => pos.get(p));
-      if (fromParents.length) return fromParents.reduce((a, b) => a + b, 0) / fromParents.length;
-      const sp = (spouseOf.get(id) || []).find(s => pos.has(s) || (parentsOf.get(s) || []).length);
-      if (sp && parentsOf.get(sp)) { const pp = parentsOf.get(sp).filter(p => pos.has(p)).map(p => pos.get(p)); if (pp.length) return pp[0] + 0.5; }
-      return 1e6 + id;
-    };
-    row.sort((a, b) => key(a) - key(b));
-    // encaixa cônjuges logo ao lado
-    const ordered = [], used = new Set();
-    for (const id of row) {
-      if (used.has(id)) continue;
-      ordered.push(id); used.add(id);
-      for (const s of spouseOf.get(id) || []) if (!used.has(s) && gen.get(s) === g) { ordered.push(s); used.add(s); }
-    }
-    rows[g] = ordered;
-    ordered.forEach((id, i) => pos.set(id, i));
-  });
-
-  // 3) Coordenadas: cada linha centralizada
-  const widest = Math.max(...rows.filter(Boolean).map(r => r.length));
-  const totalW = widest * (W + GAP_X) - GAP_X + PAD * 2;
-  const xy = new Map();
-  rows.forEach((row, g) => {
-    if (!row) return;
-    const rowW = row.length * (W + GAP_X) - GAP_X;
-    const start = (totalW - rowW) / 2;
-    row.forEach((id, i) => xy.set(id, { x: start + i * (W + GAP_X), y: PAD + g * (H + GAP_Y) }));
-  });
-  box.style.width = totalW + 'px';
-  box.style.height = (PAD * 2 + rows.length * (H + GAP_Y) - GAP_Y) + 'px';
-
-  // 4) Cards
-  for (const [id, p] of people) {
-    const { x, y } = xy.get(id);
-    const a = document.createElement('a');
-    a.href = p.url;
-    a.className = 'absolute flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-3 text-center shadow-md transition hover:-translate-y-0.5 hover:border-accent hover:shadow-xl';
-    Object.assign(a.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
-    const av = document.createElement(p.cover ? 'img' : 'div');
-    av.className = 'size-16 shrink-0 rounded-full object-cover ring-2 ring-accent grid place-items-center text-3xl bg-surface-2';
-    if (p.cover) { av.src = p.cover; av.referrerPolicy = 'no-referrer'; } else av.append(glyph(p.icon, 32));
-    const t = document.createElement('p'); t.className = 'line-clamp-2 text-sm font-semibold text-ink'; t.textContent = p.title;
-    const s = document.createElement('p'); s.className = 'line-clamp-1 text-xs text-muted'; s.textContent = p.summary || '';
-    const x = document.createElement('button');
-    x.type = 'button'; x.append(ui('x', 'size-3.5')); x.title = 'Tirar desta árvore'; x.setAttribute('aria-label', 'Tirar desta árvore');
-    x.className = 'absolute right-1.5 top-1.5 hidden size-6 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-red-600 group-hover:grid';
-    x.addEventListener('click', ev => { ev.preventDefault(); if (!confirm('Tirar ' + p.title + ' desta árvore?')) return;
-      const f = document.getElementById('remove-member'); f.a_id.value = p.id; f.submit(); });
-    a.classList.add('group');
-    a.append(av, t, s, x); box.append(a);
-  }
-
-  // 5) Linhas
-  const svg = document.getElementById('tree-lines');
-  const NS = 'http://www.w3.org/2000/svg';
-  const line = (d, dashed) => {
-    const el = document.createElementNS(NS, 'path');
-    el.setAttribute('d', d); el.setAttribute('fill', 'none'); el.setAttribute('stroke', 'var(--n-faint)'); el.setAttribute('stroke-width', '2');
-    if (dashed) el.setAttribute('stroke-dasharray', '5 4');
-    svg.append(el);
+  // ------------------------------------------------------------------ vista (pan/zoom)
+  const viewKey = 'tree-view-' + D.tid;
+  let view = null; try { view = JSON.parse(localStorage.getItem(viewKey)); } catch {}
+  const applyView = () => {
+    world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.z})`;
+    vp.style.backgroundPosition = `${view.x}px ${view.y}px`; vp.style.backgroundSize = `${24 * view.z}px ${24 * view.z}px`;
+    $('ft-zoom').textContent = Math.round(view.z * 100) + '%';
+    if (vp.clientWidth > 80) try { localStorage.setItem(viewKey, JSON.stringify(view)); } catch {}
   };
-  const drawn = new Set();
-  for (const [a, ss] of spouseOf) for (const b of ss) {
-    const k = [a, b].sort().join('-'); if (drawn.has(k) || !xy.has(a) || !xy.has(b)) continue; drawn.add(k);
-    const [l, r] = [xy.get(a), xy.get(b)].sort((p, q) => p.x - q.x);
-    const y = l.y + H / 2;
-    line(`M${l.x + W} ${y} H${r.x}`);
-    const heart = document.createElement('span');
-    heart.className = 'absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center'; heart.append(ri('ring')); heart.title = 'Cônjuges';
-    Object.assign(heart.style, { left: (l.x + W + r.x) / 2 + 'px', top: y + 'px' }); box.append(heart);
+  function zoomAt(f, cx, cy) {
+    const r = vp.getBoundingClientRect(); if (cx === undefined) { cx = r.left + r.width / 2; cy = r.top + r.height / 2; }
+    const wx = (cx - r.left - view.x) / view.z, wy = (cy - r.top - view.y) / view.z;
+    view.z = Math.min(2, Math.max(0.2, view.z * f)); view.x = cx - r.left - wx * view.z; view.y = cy - r.top - wy * view.z; applyView();
   }
-  // filhos: sai do meio dos pais, desce até uma barra e vai até cada filho
-  const groups = new Map();
-  for (const [c, ps] of parentsOf) {
-    const k = [...ps].sort().join('-');
-    (groups.get(k) || groups.set(k, { ps, kids: [] }).get(k)).kids.push(c);
+  function fit() {
+    const r = vp.getBoundingClientRect(), w = parseFloat(world.dataset.w) || 400, h = parseFloat(world.dataset.h) || 300;
+    const z = Math.min(1.1, Math.max(0.2, Math.min((r.width - 40) / w, (r.height - 40) / h)));
+    view = { z, x: (r.width - w * z) / 2, y: Math.max(10, (r.height - h * z) / 2) }; applyView();
   }
-  for (const { ps, kids } of groups.values()) {
-    const pts = ps.map(p => xy.get(p));
-    const px = pts.reduce((s, p) => s + p.x + W / 2, 0) / pts.length;
-    const py = Math.max(...pts.map(p => p.y)) + (ps.length > 1 ? H / 2 : H);
-    const ky = Math.min(...kids.map(k => xy.get(k).y));
-    const busY = ky - GAP_Y / 2;
-    line(`M${px} ${py} V${busY}`);
-    const xs = kids.map(k => xy.get(k).x + W / 2);
-    line(`M${Math.min(px, ...xs)} ${busY} H${Math.max(px, ...xs)}`);
-    for (const k of kids) { const p = xy.get(k); line(`M${p.x + W / 2} ${busY} V${p.y}`); }
+  document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => zoomAt(Number(b.dataset.zoom))));
+  $('ft-fit').addEventListener('click', fit);
+  vp.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX, e.clientY); }, { passive: false });
+  let pan = null;
+  vp.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('.ft-card, #ft-menu, button, a, input')) return;
+    pan = { sx: e.clientX, sy: e.clientY, x: view.x, y: view.y, moved: false }; vp.classList.add('panning');
+  });
+  window.addEventListener('pointermove', e => {
+    if (!pan) return;
+    view.x = pan.x + e.clientX - pan.sx; view.y = pan.y + e.clientY - pan.sy;
+    if (Math.abs(e.clientX - pan.sx) + Math.abs(e.clientY - pan.sy) > 3) pan.moved = true; applyView();
+  });
+  window.addEventListener('pointerup', () => { if (pan && !pan.moved) select(null); pan = null; vp.classList.remove('panning'); });
+
+  // ------------------------------------------------------------------ servidor
+  async function edit(body) {
+    const res = await api('POST', D.api, body);
+    data = res.data; render(); return res;
   }
+
+  // ------------------------------------------------------------------ desenho
+  function layout() {
+    const P = people(), parentsOf = new Map(), childrenOf = new Map(), spouseOf = new Map();
+    const push = (m, k, v) => (m.get(k) || m.set(k, []).get(k)).push(v);
+    for (const [p, c] of data.parents) if (P.has(p) && P.has(c)) { push(parentsOf, c, p); push(childrenOf, p, c); }
+    for (const [a, b] of data.spouses) if (P.has(a) && P.has(b)) { push(spouseOf, a, b); push(spouseOf, b, a); }
+    rel = { parentsOf, childrenOf, spouseOf };
+    // geração: filhos abaixo dos pais, cônjuges na mesma linha
+    const gen = new Map([...P.keys()].map(id => [id, 0]));
+    for (let i = 0; i < P.size + 2; i++) {
+      let changed = false;
+      for (const [c, ps] of parentsOf) for (const p of ps) if (gen.get(c) < gen.get(p) + 1) { gen.set(c, gen.get(p) + 1); changed = true; }
+      for (const [a, ss] of spouseOf) for (const b of ss) {
+        const m = Math.max(gen.get(a), gen.get(b));
+        if (gen.get(a) !== m || gen.get(b) !== m) { gen.set(a, m); gen.set(b, m); changed = true; }
+      }
+      if (!changed) break;
+    }
+    // ordem em cada linha: perto dos pais; cônjuges lado a lado
+    const rows = []; for (const [id, g] of gen) (rows[g] ||= []).push(id);
+    const pos = new Map();
+    rows.forEach((row, g) => {
+      if (!row) return;
+      const key = id => {
+        const ps = (parentsOf.get(id) || []).filter(p => pos.has(p));
+        if (ps.length) return ps.reduce((s, p) => s + pos.get(p), 0) / ps.length;
+        for (const s of spouseOf.get(id) || []) { const pp = (parentsOf.get(s) || []).filter(p => pos.has(p)); if (pp.length) return pos.get(pp[0]) + 0.5; }
+        return 1e6 + id;
+      };
+      row.sort((a, b) => key(a) - key(b));
+      const ordered = [], used = new Set();
+      for (const id of row) {
+        if (used.has(id)) continue;
+        ordered.push(id); used.add(id);
+        for (const s of spouseOf.get(id) || []) if (!used.has(s) && gen.get(s) === g) { ordered.push(s); used.add(s); }
+      }
+      rows[g] = ordered; ordered.forEach((id, i) => pos.set(id, i));
+    });
+    const widest = Math.max(1, ...rows.filter(Boolean).map(r => r.length));
+    const totalW = widest * (W + GAP_X) - GAP_X + PAD * 2;
+    xy = new Map();
+    rows.forEach((row, g) => {
+      if (!row) return;
+      const start = (totalW - (row.length * (W + GAP_X) - GAP_X)) / 2;
+      row.forEach((id, i) => xy.set(id, { x: start + i * (W + GAP_X), y: PAD + g * (H + GAP_Y) }));
+    });
+    world.dataset.w = totalW; world.dataset.h = PAD * 2 + rows.length * (H + GAP_Y) - GAP_Y;
+  }
+
+  function render() {
+    const P = people();
+    $('ft-empty').classList.toggle('hidden', P.size > 0); $('ft-empty').classList.toggle('grid', P.size === 0);
+    layout();
+    nodes.replaceChildren(); svg.replaceChildren(); lines = [];
+    // linhas: cônjuges (com aliança) e filhos (saem do meio do casal)
+    const NS = 'http://www.w3.org/2000/svg';
+    const line = (d, ids) => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'var(--n-faint)'); p.setAttribute('stroke-width', '2');
+      p.setAttribute('class', 'ft-line'); svg.append(p); lines.push({ el: p, ids: new Set(ids) });
+    };
+    const drawn = new Set();
+    for (const [a, ss] of rel.spouseOf) for (const b of ss) {
+      const k = [a, b].sort().join('-'); if (drawn.has(k)) continue; drawn.add(k);
+      const [l, r] = [xy.get(a), xy.get(b)].sort((p, q) => p.x - q.x), y = l.y + H / 2;
+      line(`M${l.x + W} ${y} H${r.x}`, [a, b]);
+      const ring = el('span', 'absolute grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface');
+      ring.append(ri('ring')); ring.title = 'Cônjuges'; Object.assign(ring.style, { left: (l.x + W + r.x) / 2 + 'px', top: y + 'px' });
+      nodes.append(ring);
+    }
+    const groups = new Map();
+    for (const [c, ps] of rel.parentsOf) { const k = [...ps].sort().join('-'); (groups.get(k) || groups.set(k, { ps, kids: [] }).get(k)).kids.push(c); }
+    for (const { ps, kids } of groups.values()) {
+      const pts = ps.map(p => xy.get(p));
+      const couple = ps.length === 2 && Math.abs(pts[0].y - pts[1].y) < 1;
+      const px = pts.reduce((s, p) => s + p.x + W / 2, 0) / pts.length;
+      const py = couple ? pts[0].y + H / 2 : Math.max(...pts.map(p => p.y)) + H;
+      const busY = Math.min(...kids.map(k => xy.get(k).y)) - GAP_Y / 2;
+      const xs = kids.map(k => xy.get(k).x + W / 2);
+      line(`M${px} ${py} V${busY} M${Math.min(px, ...xs)} ${busY} H${Math.max(px, ...xs)}`, [...ps, ...kids]);
+      for (const k of kids) { const p = xy.get(k); line(`M${p.x + W / 2} ${busY} V${p.y}`, [...ps, k]); }
+    }
+    // cards
+    for (const [id, p] of P) {
+      const { x, y } = xy.get(id);
+      const c = el('div', 'ft-card group flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border border-line bg-surface px-3 pb-3 pt-4 text-center shadow-md hover:border-line-strong');
+      c.dataset.id = id; c.tabIndex = 0; c.setAttribute('role', 'button'); c.setAttribute('aria-label', p.title);
+      Object.assign(c.style, { left: x + 'px', top: y + 'px', width: W + 'px', height: H + 'px' });
+      if (selected === id) c.classList.add('sel');
+      const av = el(p.cover ? 'img' : 'div', 'size-16 shrink-0 rounded-full object-cover ring-2 ring-accent/70 grid place-items-center bg-surface-2');
+      if (p.cover) { av.src = p.cover; av.referrerPolicy = 'no-referrer'; av.alt = ''; } else av.append(glyph(p.icon, 32));
+      av.draggable = false;
+      c.append(av, el('p', 'line-clamp-2 text-sm font-semibold leading-tight text-ink', p.title));
+      if (p.year !== null && p.year !== undefined) c.append(el('p', 'text-[11px] text-faint', 'ano ' + p.year));
+      else if (p.summary) c.append(el('p', 'line-clamp-1 text-xs text-muted', p.summary));
+      // + em volta: em cima pai/mãe, embaixo filho(a), ao lado cônjuge
+      const plus = (kind, tip, pos, tipPos) => {
+        const b = el('button', 'ft-add'); b.type = 'button'; b.append(ui('plus', 'size-4'));
+        const t = el('span', 'tip', tip); Object.assign(t.style, tipPos); b.append(t);
+        b.setAttribute('aria-label', `${tip} de ${p.title}`); Object.assign(b.style, pos);
+        b.addEventListener('click', ev => { ev.stopPropagation(); openPicker(kind, id); });
+        c.append(b);
+      };
+      plus('parent', 'Pai ou mãe', { left: '50%', top: '-13px', marginLeft: '-13px' }, { bottom: '30px' });
+      plus('child', 'Filho(a)', { left: '50%', bottom: '-13px', marginLeft: '-13px' }, { top: '30px' });
+      plus('spouse', 'Cônjuge', { right: '-13px', top: '50%', marginTop: '-13px' }, { left: '30px' });
+      c.addEventListener('click', () => select(id));
+      c.addEventListener('dblclick', () => { location.href = p.url; });
+      c.addEventListener('keydown', e => { if (e.key === 'Enter') select(id); });
+      c.addEventListener('mouseenter', () => highlight(id));
+      c.addEventListener('mouseleave', () => highlight(selected));
+      nodes.append(c);
+    }
+    svg.setAttribute('width', world.dataset.w); svg.setAttribute('height', world.dataset.h);
+    if (selected && !P.has(selected)) selected = null;
+    highlight(selected); showMenu();
+  }
+
+  // destaca a família direta (pais, filhos, cônjuges) e apaga o resto
+  function highlight(id) {
+    const fam = new Set(id ? [id, ...(rel.parentsOf.get(id) || []), ...(rel.childrenOf.get(id) || []), ...(rel.spouseOf.get(id) || [])] : []);
+    nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('dim', !!id && !fam.has(Number(c.dataset.id))));
+    for (const l of lines) {
+      const hot = !!id && l.ids.has(id) && [...l.ids].every(x => fam.has(x) || !people().has(x));
+      l.el.classList.toggle('hot', hot); l.el.classList.toggle('dim', !!id && !l.ids.has(id));
+    }
+  }
+
+  // ------------------------------------------------------------------ seleção + menu
+  function select(id) { selected = id; nodes.querySelectorAll('.ft-card').forEach(c => c.classList.toggle('sel', Number(c.dataset.id) === id)); highlight(id); showMenu(); }
+  function showMenu() {
+    menu.replaceChildren();
+    if (!selected) { menu.classList.add('hidden'); return; }
+    const P = people(), p = P.get(selected), at = xy.get(selected);
+    const head = el('div', 'flex items-center gap-2 border-b border-line px-1 pb-2');
+    head.append(glyph(p.icon), el('span', 'min-w-0 flex-1 truncate font-semibold text-ink', p.title));
+    const open = el('a', 'btn btn-ghost btn-sm btn-icon'); open.href = p.url; open.append(ui('external', 'size-3.5')); open.title = 'Abrir a página'; open.setAttribute('aria-label', 'Abrir a página');
+    head.append(open); menu.append(head);
+    const item = (icon, label, fn, cls = '') => {
+      const b = el('button', 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-ink-2 hover:bg-surface-2 ' + cls);
+      b.append(icon, el('span', '', label)); b.addEventListener('click', fn); menu.append(b);
+    };
+    menu.append(el('p', 'px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', 'Adicionar'));
+    item(ui('plus', 'size-3.5'), 'Pai ou mãe', () => openPicker('parent', selected));
+    item(ui('plus', 'size-3.5'), 'Filho(a)', () => openPicker('child', selected));
+    item(ui('plus', 'size-3.5'), 'Cônjuge', () => openPicker('spouse', selected));
+    // laços atuais, com X para desfazer
+    const links = [
+      ...(rel.parentsOf.get(selected) || []).map(o => ({ o, label: 'pai/mãe', body: { kind: 'parent', a_id: o, b_id: selected } })),
+      ...(rel.spouseOf.get(selected) || []).map(o => ({ o, label: 'cônjuge', body: { kind: 'spouse', a_id: o, b_id: selected } })),
+      ...(rel.childrenOf.get(selected) || []).map(o => ({ o, label: 'filho(a)', body: { kind: 'parent', a_id: selected, b_id: o } })),
+    ];
+    if (links.length) {
+      menu.append(el('p', 'px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', 'Laços'));
+      for (const l of links) {
+        const row = el('div', 'group flex items-center gap-2 rounded-md px-2 py-1 hover:bg-surface-2');
+        row.append(el('span', 'w-14 shrink-0 text-xs text-faint', l.label), el('span', 'min-w-0 flex-1 truncate text-ink-2', P.get(l.o).title));
+        const x = el('button', 'grid size-6 place-items-center rounded text-faint opacity-0 hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 focus:opacity-100');
+        x.append(ui('x', 'size-3.5')); x.title = 'Desfazer este laço (nas páginas também)'; x.setAttribute('aria-label', `Desfazer laço com ${P.get(l.o).title}`);
+        x.addEventListener('click', async () => { if (confirm(`Desfazer o laço entre ${p.title} e ${P.get(l.o).title}? Ele some das páginas também.`)) await edit({ action: 'unlink', ...l.body }); });
+        row.append(x); menu.append(row);
+      }
+    }
+    const sep = el('div', 'my-1.5 border-t border-line'); menu.append(sep);
+    item(ui('x', 'size-3.5'), 'Tirar desta árvore', async () => {
+      if (confirm(`Tirar ${p.title} desta árvore? A página e os laços continuam existindo.`)) { selected = null; await edit({ action: 'remove', person_id: p.id }); }
+    }, 'text-muted hover:!text-red-500');
+    Object.assign(menu.style, { left: '0px', top: '0px' });
+    menu.classList.remove('hidden');
+    // posiciona ao lado do card (em coordenadas da tela, dentro do quadro)
+    const r = vp.getBoundingClientRect();
+    let left = view.x + (at.x + W + 24) * view.z, top = view.y + at.y * view.z;
+    if (left + menu.offsetWidth > r.width - 8) left = view.x + at.x * view.z - menu.offsetWidth - 24;
+    menu.style.left = Math.max(8, left) + 'px'; menu.style.top = Math.max(8, Math.min(r.height - menu.offsetHeight - 8, top)) + 'px';
+  }
+
+  // ------------------------------------------------------------------ seletor de pessoa
+  const picker = $('ft-picker'), q = $('ft-q'), results = $('ft-results');
+  let pick = null;   // { kind, personId }
+  function openPicker(kind, personId) {
+    const P = people(), who = personId ? P.get(personId).title : null;
+    pick = { kind, personId };
+    $('ft-picker-title').textContent = kind === 'add' ? 'Adicionar pessoa à árvore'
+      : { parent: `Pai ou mãe de ${who}`, child: `Filho(a) de ${who}`, spouse: `Cônjuge de ${who}` }[kind];
+    q.value = ''; drawResults(); picker.classList.remove('hidden'); picker.classList.add('grid'); q.focus();
+  }
+  function closePicker() { picker.classList.add('hidden'); picker.classList.remove('grid'); pick = null; }
+  function drawResults() {
+    const P = people(), s = q.value.trim().toLowerCase();
+    results.replaceChildren();
+    const list = D.pages.filter(p => p.id !== pick?.personId && (!s || p.title.toLowerCase().includes(s))).slice(0, 60);
+    const exact = D.pages.some(p => p.title.toLowerCase() === s);
+    let header = null;
+    for (const p of list) {
+      const h = p.person ? 'Personagens' : 'Outras páginas';
+      if (h !== header) { header = h; results.append(el('li', 'px-2 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-faint', h)); }
+      const li = el('li'); const b = el('button', 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-ink-2 hover:bg-surface-2');
+      b.append(glyph(p.icon), el('span', 'min-w-0 flex-1 truncate', p.title));
+      if (P.has(p.id)) b.append(el('span', 'text-[10px] text-faint', 'na árvore'));
+      b.addEventListener('click', () => choose({ other_id: p.id })); li.append(b); results.append(li);
+    }
+    // criar personagem novo vem por último (Enter escolhe o primeiro resultado existente, se houver)
+    if (s && !exact) {
+      const li = el('li', 'mt-1 border-t border-line pt-1'); const b = el('button', 'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-ink hover:bg-surface-2');
+      b.append(ui('plus', 'size-4 text-accent-ink'), el('span', '', `Criar personagem “${q.value.trim()}”`));
+      b.addEventListener('click', () => choose({ new_title: q.value.trim() })); li.append(b); results.append(li);
+    }
+    if (!results.children.length) results.append(el('li', 'p-3 text-sm text-faint', 'Digite um nome para criar um personagem novo.'));
+  }
+  async function choose(who) {
+    const { kind, personId } = pick; closePicker();
+    const body = kind === 'add' ? { action: 'add', person_id: who.other_id, new_title: who.new_title }
+                                : { action: 'link', kind, person_id: personId, ...who };
+    const res = await edit(body);
+    if (who.new_title && res.new_id && !D.pages.some(p => p.id === res.new_id)) D.pages.unshift({ id: res.new_id, title: who.new_title, icon: 'ri:hood', person: true });
+    select(res.new_id || personId);
+  }
+  q.addEventListener('input', drawResults);
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); results.querySelector('button')?.click(); } });
+  picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
+  $('ft-picker-close').addEventListener('click', closePicker);
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!picker.classList.contains('hidden')) closePicker(); else select(null);
+  });
+  $('ft-add-person').addEventListener('click', () => openPicker('add'));
+  $('ft-empty-add').addEventListener('click', () => openPicker('add'));
+
+  // ------------------------------------------------------------------ início
+  render();
+  // o CSS (Tailwind) monta o layout depois deste script: só enquadra quando o quadro tiver tamanho de verdade
+  let fitted = !!view;
+  if (!view) view = { x: 0, y: 0, z: 1 };
+  applyView();
+  new ResizeObserver(() => {
+    const r = vp.getBoundingClientRect();
+    if (!fitted && r.width > 80 && r.height > 80) { fitted = true; fit(); }
+    if (selected) showMenu();
+  }).observe(vp);
+  // mexer na vista reposiciona o menu
+  const reapply = () => { if (selected) showMenu(); };
+  vp.addEventListener('wheel', reapply); window.addEventListener('pointermove', () => { if (pan) reapply(); });
+  document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', reapply)); $('ft-fit').addEventListener('click', reapply);
 })();
 </script>
+{% endif %}
 {% endblock %}

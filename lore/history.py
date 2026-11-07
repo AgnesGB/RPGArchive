@@ -1,7 +1,7 @@
 """Várias linhas do tempo e várias árvores genealógicas por mundo."""
 import re
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 
 from .access import get_page, get_world, page_icon, touch_world
 from .auth import login_required
@@ -150,6 +150,28 @@ def timeline_remove(wid, tid, aid):
 
 # =========================================================================== árvores genealógicas
 
+def _tree_data(wid, tid):
+    """Pessoas da árvore + laços (pai/mãe e cônjuge) entre elas."""
+    db = get_db()
+    people = db.execute(
+        """SELECT a.id, a.title, a.icon, a.category, a.image_url, a.summary, a.year FROM tree_members m
+           JOIN articles a ON a.id = m.article_id WHERE m.tree_id = ?""", (tid,)).fetchall()
+    ids = {p["id"] for p in people}
+    rels = []
+    if ids:
+        marks = ",".join("?" * len(ids))
+        rels = db.execute(
+            f"""SELECT a_id, b_id, kind FROM relations WHERE world_id = ? AND kind IN ('parent', 'spouse')
+                AND a_id IN ({marks}) AND b_id IN ({marks})""", (wid, *ids, *ids)).fetchall()
+    return {
+        "people": [{"id": p["id"], "title": p["title"], "icon": page_icon(p), "cover": p["image_url"],
+                    "summary": p["summary"], "year": p["year"],
+                    "url": url_for("pages.view", wid=wid, aid=p["id"])} for p in people],
+        "parents": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "parent"],
+        "spouses": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "spouse"],
+    }
+
+
 @bp.route("/w/<int:wid>/trees")
 @login_required
 def trees(wid):
@@ -162,29 +184,91 @@ def trees(wid):
     current = next((t for t in all_trees if t["id"] == tid), None)
     if tid and current is None:
         abort(404)
-    data = {"people": [], "parents": [], "spouses": []}
-    if current:
-        people = db.execute(
-            """SELECT a.id, a.title, a.icon, a.category, a.image_url, a.summary FROM tree_members m
-               JOIN articles a ON a.id = m.article_id WHERE m.tree_id = ?""", (current["id"],)).fetchall()
-        ids = {p["id"] for p in people}
-        if ids:
-            marks = ",".join("?" * len(ids))
-            rels = db.execute(
-                f"""SELECT a_id, b_id, kind FROM relations WHERE world_id = ? AND kind IN ('parent', 'spouse')
-                    AND a_id IN ({marks}) AND b_id IN ({marks})""", (wid, *ids, *ids)).fetchall()
-        else:
-            rels = []
-        data = {
-            "people": [{"id": p["id"], "title": p["title"], "icon": page_icon(p), "cover": p["image_url"],
-                        "summary": p["summary"], "url": url_for("pages.view", wid=wid, aid=p["id"])} for p in people],
-            "parents": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "parent"],
-            "spouses": [[r["a_id"], r["b_id"]] for r in rels if r["kind"] == "spouse"],
-        }
-    characters = db.execute("SELECT id, title, icon, category FROM articles WHERE world_id = ? ORDER BY title COLLATE NOCASE",
-                            (wid,)).fetchall()
+    data = _tree_data(wid, current["id"]) if current else {"people": [], "parents": [], "spouses": []}
+    # personagens primeiro no seletor
+    pages = db.execute("""SELECT id, title, icon, category FROM articles WHERE world_id = ?
+                          ORDER BY category != 'personagem', title COLLATE NOCASE""", (wid,)).fetchall()
+    page_list = [{"id": p["id"], "title": p["title"], "icon": page_icon(p), "person": p["category"] == "personagem"}
+                 for p in pages]
     return render_template("world/family.html", world=world, trees=all_trees, current=current, data=data,
-                           characters=characters)
+                           page_list=page_list)
+
+
+def _person_for(world, body, field_id="other_id", field_new="new_title"):
+    """Página existente (por id) ou um personagem novo criado só com o nome."""
+    db = get_db()
+    if body.get(field_id):
+        return get_page(world, int(body[field_id]))["id"]
+    title = str(body.get(field_new) or "").strip()[:200]
+    if not title:
+        abort(400, "Escolha uma pessoa ou digite um nome.")
+    row = db.execute("SELECT id FROM articles WHERE world_id = ? AND lower(title) = lower(?)", (world["id"], title)).fetchone()
+    if row:
+        return row["id"]
+    cur = db.execute("""INSERT INTO articles (world_id, title, category, created_by, updated_by)
+                        VALUES (?, ?, 'personagem', ?, ?)""", (world["id"], title, g.user["id"], g.user["id"]))
+    touch_world(world["id"])
+    return cur.lastrowid
+
+
+@bp.post("/w/<int:wid>/trees/<int:tid>/edit")
+@login_required
+def tree_edit(wid, tid):
+    """API da árvore (JSON): add | link | unlink | remove. Devolve os dados atualizados."""
+    world = get_world(wid)
+    _get("trees", wid, tid)
+    db = get_db()
+    body = request.get_json(silent=True) or {}
+    action = body.get("action")
+    add_member = lambda pid: db.execute("INSERT OR IGNORE INTO tree_members (tree_id, article_id) VALUES (?, ?)", (tid, pid))
+    new_id = None
+    if action == "add":
+        new_id = _person_for(world, body, "person_id")
+        add_member(new_id)
+    elif action == "link":
+        a = get_page(world, int(body.get("person_id") or 0))["id"]
+        kind = body.get("kind")
+        if kind not in ("parent", "child", "spouse"):
+            abort(400, "Tipo de laço inválido.")
+        b = _person_for(world, body)
+        if a == b:
+            abort(400, "Escolha outra pessoa.")
+        new_id = b
+        add_member(a)
+        add_member(b)
+        # parent: b é pai/mãe de a · child: b é filho(a) de a · spouse: entre os dois
+        x, y = {"parent": (b, a), "child": (a, b), "spouse": (a, b)}[kind]
+        kind = "spouse" if kind == "spouse" else "parent"
+        exists = db.execute(
+            """SELECT 1 FROM relations WHERE world_id = ? AND kind = ?
+               AND ((a_id = ? AND b_id = ?) OR (kind = 'spouse' AND a_id = ? AND b_id = ?))""",
+            (wid, kind, x, y, y, x)).fetchone()
+        if not exists:
+            db.execute("INSERT INTO relations (world_id, a_id, b_id, kind) VALUES (?, ?, ?, ?)", (wid, x, y, kind))
+        # filho(a) de alguém com um único cônjuge na árvore vira filho(a) do casal
+        if body.get("kind") == "child":
+            sp = db.execute(
+                """SELECT CASE WHEN r.a_id = ? THEN r.b_id ELSE r.a_id END AS s FROM relations r
+                   JOIN tree_members m ON m.tree_id = ? AND m.article_id = CASE WHEN r.a_id = ? THEN r.b_id ELSE r.a_id END
+                   WHERE r.world_id = ? AND r.kind = 'spouse' AND (r.a_id = ? OR r.b_id = ?)""",
+                (a, tid, a, wid, a, a)).fetchall()
+            if len(sp) == 1 and sp[0]["s"] != b and not db.execute(
+                    "SELECT 1 FROM relations WHERE world_id = ? AND kind = 'parent' AND a_id = ? AND b_id = ?",
+                    (wid, sp[0]["s"], b)).fetchone():
+                db.execute("INSERT INTO relations (world_id, a_id, b_id, kind) VALUES (?, ?, ?, 'parent')", (wid, sp[0]["s"], b))
+    elif action == "unlink":
+        a, b, kind = int(body.get("a_id") or 0), int(body.get("b_id") or 0), body.get("kind")
+        if kind == "spouse":
+            db.execute("""DELETE FROM relations WHERE world_id = ? AND kind = 'spouse'
+                          AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?))""", (wid, a, b, b, a))
+        elif kind == "parent":
+            db.execute("DELETE FROM relations WHERE world_id = ? AND kind = 'parent' AND a_id = ? AND b_id = ?", (wid, a, b))
+    elif action == "remove":
+        db.execute("DELETE FROM tree_members WHERE tree_id = ? AND article_id = ?", (tid, int(body.get("person_id") or 0)))
+    else:
+        abort(400, "Ação inválida.")
+    db.commit()
+    return jsonify(data=_tree_data(wid, tid), new_id=new_id)
 
 
 @bp.post("/w/<int:wid>/trees")
