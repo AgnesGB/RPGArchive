@@ -7,7 +7,6 @@
   const el = (tag, cls = '', text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const vp = $('mviewport'), world = $('mworld'), pinsEl = $('pins'), side = $('side'), img = $('map-img');
   const cv = { terrain: $('cv-terrain'), grid: $('cv-grid'), objects: $('cv-objects'), fog: $('cv-fog'), ui: $('cv-ui') };
-  const PLAYER = !!D.player;          // jogador: só observa e move tokens
   const ctx = Object.fromEntries(Object.entries(cv).map(([k, c]) => [k, c.getContext('2d')]));
   const SQ3 = Math.sqrt(3);
 
@@ -322,20 +321,13 @@
     const m = fogMask.getContext('2d');
     m.setTransform(1, 0, 0, 1, 0, 0); m.clearRect(0, 0, fogMask.width, fogMask.height); m.setTransform(Q, 0, 0, Q, 0, 0);
     m.fillStyle = '#000';
-    const pad = PLAYER ? blur : 0;     // para o jogador a névoa "vaza" um pouco para fora: nada aparece pela borda borrada
-    for (const k of fogSet) { const [c, r] = parseKey(k); m.fillRect(c * cw - pad, r * ch - pad, cw + pad * 2 + 0.5, ch + pad * 2 + 0.5); }
+    for (const k of fogSet) { const [c, r] = parseKey(k); m.fillRect(c * cw, r * ch, cw + 0.5, ch + 0.5); }
     g.save(); g.filter = `blur(${blur}px)`; g.drawImage(fogMask, 0, 0, W, H); g.restore();
-    if (PLAYER) { g.save(); g.drawImage(fogMask, 0, 0, W, H); g.restore(); }   // miolo totalmente opaco
-    g.save(); g.globalCompositeOperation = 'source-in';
-    if (PLAYER) {
-      const gr = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) / 1.2);
-      gr.addColorStop(0, '#16131f'); gr.addColorStop(1, '#07060b'); g.fillStyle = gr;
-    } else g.fillStyle = 'rgba(14, 12, 26, 0.62)';
+    g.save(); g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgba(14, 12, 26, 0.62)';
     g.fillRect(0, 0, W, H); g.restore();
-    if (!PLAYER) {   // mestre: listras para lembrar que ali está coberto
-      g.save(); g.globalCompositeOperation = 'source-atop'; g.strokeStyle = 'rgba(196, 181, 253, 0.22)'; g.lineWidth = 2;
-      g.beginPath(); for (let x = -H; x < W; x += 18) { g.moveTo(x, H); g.lineTo(x + H, 0); } g.stroke(); g.restore();
-    }
+    // listras para lembrar que ali está coberto
+    g.save(); g.globalCompositeOperation = 'source-atop'; g.strokeStyle = 'rgba(196, 181, 253, 0.22)'; g.lineWidth = 2;
+    g.beginPath(); for (let x = -H; x < W; x += 18) { g.moveTo(x, H); g.lineTo(x + H, 0); } g.stroke(); g.restore();
   }
   const drawFogSoon = () => { cancelAnimationFrame(fogRaf); fogRaf = requestAnimationFrame(drawFog); };
   let fogBrush = 2;
@@ -387,7 +379,6 @@
   // ================================================================== modo
   let mode = 'play', tool = 'terrain';
   function setMode(m) {
-    if (PLAYER) m = 'play';
     mode = m;
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('bg-surface', b.dataset.mode === m));
     document.querySelectorAll('[data-only]').forEach(e => { e.classList.toggle('hidden', e.dataset.only !== m); e.classList.toggle('flex', e.dataset.only === m); });
@@ -696,7 +687,7 @@
     return c.toDataURL('image/jpeg', 0.72);
   }
   async function save() {
-    if (!dirty || PLAYER) return;
+    if (!dirty) return;
     syncFog();
     if (saving) { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); return; }
     saving = true; dirty = false; saveState('salvando…');
@@ -833,20 +824,6 @@
     side.classList.remove('hidden'); side.classList.add('flex');
     side.replaceChildren();
     const isToken = p.kind === 'token';
-    if (PLAYER) {      // jogador: só lê (nome, cor e, se for um achado revelado, a página)
-      const head = el('div', 'flex items-center justify-between border-b border-line p-4');
-      const h = el('p', 'flex items-center gap-2 font-display text-lg text-ink'); h.append(iconLabel(ri(isToken ? 'coin' : 'flag'), p.label || (isToken ? 'Token' : 'Marcador'))); head.append(h);
-      const x = el('button', 'btn btn-ghost btn-sm btn-icon'); x.append(ui('x')); x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.addEventListener('click', closeSide); head.append(x);
-      side.append(head);
-      const body = el('div', 'space-y-3 p-4 text-sm text-muted'); side.append(body);
-      if (p.article) {
-        const a = el('a', 'group block overflow-hidden rounded-xl border border-line hover:border-accent'); a.href = p.article.url;
-        if (p.article.cover) { const i = el('img', 'h-32 w-full object-cover'); i.src = p.article.cover; i.referrerPolicy = 'no-referrer'; a.append(i); }
-        a.append(el('p', 'p-3 font-semibold text-ink group-hover:text-accent-ink', p.article.title)); body.append(a);
-      }
-      body.append(el('p', '', isToken ? 'Arraste o token para movê-lo. Todos na mesa veem a mudança.' : 'Marcador do mapa.'));
-      return;
-    }
     const head = el('div', 'flex items-center justify-between border-b border-line p-4');
     const h = el('p', 'flex items-center gap-2 font-display text-lg text-ink'); h.append(iconLabel(ri(isToken ? 'coin' : 'flag'), isToken ? 'Token' : 'Marcador')); head.append(h);
     const x = el('button', 'btn btn-ghost btn-sm btn-icon'); x.append(ui('x')); x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.addEventListener('click', closeSide); head.append(x);
@@ -915,7 +892,7 @@
   }
   let fogLive = false;
   function setFogLive(v) {
-    fogLive = v && !PLAYER;
+    fogLive = v;
     $('fog-live')?.classList.toggle('btn-primary', fogLive); $('fog-live')?.classList.toggle('btn-outline', !fogLive);
     $('fog-hint')?.classList.toggle('hidden', !fogLive);
     vp.classList.toggle('placing', fogLive);
@@ -950,7 +927,7 @@
       vp.classList.add('panning'); return;
     }
     if (mode === 'play') {
-      if (placing && !PLAYER) {
+      if (placing) {
         const f = toFrac(e.clientX, e.clientY), kind = placing; stopPlacing(); touched();
         const np = await api('POST', D.api, { kind, ...f, color: kind === 'token' ? '#3b82f6' : '#ef4444', label: kind === 'token' ? 'Jogador' : '' });
         pins.set(np.id, np); renderPins(); openSide(np); return;
@@ -958,7 +935,7 @@
       const pinEl = e.target.closest('.pin');
       if (pinEl) {
         const pin = pins.get(Number(pinEl.dataset.id));
-        action = { type: 'pin', p: pin, n: pinEl, moved: false, sx: e.clientX, sy: e.clientY, locked: PLAYER && pin.kind !== 'token' };
+        action = { type: 'pin', p: pin, n: pinEl, moved: false, sx: e.clientX, sy: e.clientY };
       }
       return;
     }
@@ -1100,10 +1077,10 @@
     computeSize();
     if (!view) fit(); else applyView();
     drawTerrainAll(); drawGrid(); drawObjects(); fogDims(); drawFog(); renderPins();
-    buildPalette(); buildSetsPanel(); setTool('terrain'); setMode(D.startEdit && !PLAYER ? 'edit' : 'play');
+    buildPalette(); buildSetsPanel(); setTool('terrain'); setMode(D.startEdit ? 'edit' : 'play');
     window.addEventListener('resize', () => applyView());
     // mapa novo (ou antigo sem miniatura): salva uma vez para a lista de mapas mostrar a prévia
-    if (!D.hasThumb && !PLAYER) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);
+    if (!D.hasThumb) setTimeout(() => { dirty = true; lastThumb = 0; save(); }, 600);
   }
   if (img && !img.complete) img.addEventListener('load', start); else start();
 })();

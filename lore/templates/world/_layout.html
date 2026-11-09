@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import "play/_nav.html" as pn with context %}
 {# Árvore de páginas da barra lateral. key separa o estado aberto/fechado de cada seção (Todas, cada categoria). #}
 {% macro chev() %}<span class="grid w-3 shrink-0 place-items-center text-faint transition [details[open]>summary>&]:rotate-90">{{ ui('chevron', 'size-3') }}</span>{% endmacro %}
 {% macro tree(nodes, key, depth=1) %}
@@ -35,13 +34,8 @@
         <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">{{ ui('search') }}</span>
       </form>
 
-      {% if world.party_of %}
-      {# mundo da mesa: o mesmo menu que os jogadores veem na Mesa #}
-      {{ pn.party_nav(world.party_of, world.id) }}
-      {% else %}
       <nav class="space-y-0.5">
         <a href="{{ url_for('worlds.world_home', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.world_home' }}" {{ 'aria-current=page' if ep == 'worlds.world_home' }}>{{ ri('home') }} Início</a>
-        <a href="{{ url_for('play.dashboard', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('play.') }}">{{ ri('sword') }} Jogar <span class="ml-auto rounded-full bg-accent/15 px-1.5 text-[10px] font-semibold uppercase text-accent-ink">mesa</span></a>
         <a href="{{ url_for('boards.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('boards.') }}">{{ ri('web') }} Mapas mentais <span class="ml-auto text-xs text-faint">{{ g.boards|length }}</span></a>
         <a href="{{ url_for('maps.index', wid=world.id) }}" class="nav-link {{ 'active' if ep and ep.startswith('maps.') }}">{{ ri('map') }} Mapas <span class="ml-auto text-xs text-faint">{{ g.maps|length }}</span></a>
         <a href="{{ url_for('history.timelines', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'history.timelines' }}">{{ ri('scroll') }} Linhas do tempo</a>
@@ -49,19 +43,11 @@
         <a href="{{ url_for('files.library', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'files.library' }}">{{ ri('chest') }} Acervo</a>
         <a href="{{ url_for('worlds.members', wid=world.id) }}" class="nav-link {{ 'active' if ep == 'worlds.members' }}">{{ ri('people') }} Pessoas <span class="ml-auto text-xs text-faint">{{ g.member_count }}</span></a>
       </nav>
-      {% endif %}
 
       <div id="sidebar-pages" data-world="{{ world.id }}">
         <div class="flex items-center justify-between pr-1">
-          <p class="section-title">{{ 'Anotações do grupo' if world.party_of else 'Páginas' }}</p>
-          {% if world.party_of %}
-            <form method="post" action="{{ url_for('pages.quick_new', wid=world.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="grid size-6 place-items-center rounded text-faint hover:bg-surface-2 hover:text-ink" title="Nova anotação" aria-label="Nova anotação">{{ ui('plus') }}</button>
-            </form>
-          {% else %}
+          <p class="section-title">Páginas</p>
           <a href="{{ url_for('pages.new', wid=world.id) }}" class="grid size-6 place-items-center rounded text-faint hover:bg-surface-2 hover:text-ink" title="Nova página" aria-label="Nova página">{{ ui('plus') }}</a>
-          {% endif %}
         </div>
 
         {% if g.favorites %}
@@ -86,7 +72,7 @@
         </details>
 
         {# na área do grupo as categorias ficam no filtro da Biblioteca (menu acima) #}
-        {% for c in (CATEGORIES if not world.party_of else []) %}
+        {% for c in CATEGORIES %}
           {% set n = g.category_counts.get(c.key, 0) %}
           <details data-key="cat-{{ c.key }}" data-cat="{{ c.key }}">
             <summary class="nav-link cursor-pointer list-none {{ 'active' if cat is defined and cat == c.key }}">
@@ -122,7 +108,7 @@
       })();
       </script>
 
-      {% if g.is_owner and not world.party_of %}
+      {% if g.is_owner %}
         <a href="{{ url_for('worlds.world_settings', wid=world.id) }}" class="nav-link text-muted {{ 'active' if ep == 'worlds.world_settings' }}">{{ ri('gear') }} Configurações</a>
       {% endif %}
     </div>

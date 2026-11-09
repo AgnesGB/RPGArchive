@@ -62,14 +62,11 @@ def file_dict(f):
 def serve(fid):
     db = get_db()
     f = db.execute(
-        """SELECT f.*, m.role FROM files f JOIN world_members m ON m.world_id = f.world_id AND m.user_id = ?
+        """SELECT f.* FROM files f JOIN world_members m ON m.world_id = f.world_id AND m.user_id = ?
+                                    AND m.role IN ('owner', 'editor')
            WHERE f.id = ?""", (g.user["id"], fid)).fetchone()
     if f is None:
         abort(404)
-    if f["role"] == "player":   # jogador: só arquivos que aparecem na Mesa (mapas compartilhados e achados)
-        from .play import player_file_ids
-        if fid not in player_file_ids(f["world_id"]):
-            abort(404)
     path = Path(current_app.config["UPLOAD_DIR"]) / str(f["world_id"]) / f["stored_name"]
     if not path.exists():
         abort(404)

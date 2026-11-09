@@ -18,7 +18,7 @@ def list_worlds():
                   (SELECT COUNT(*) FROM articles a WHERE a.world_id = w.id) AS n_pages,
                   (SELECT COUNT(*) FROM world_members x WHERE x.world_id = w.id) AS n_members
            FROM worlds w
-           JOIN world_members m ON m.world_id = w.id AND m.user_id = ?
+           JOIN world_members m ON m.world_id = w.id AND m.user_id = ? AND m.role IN ('owner', 'editor')
            JOIN users o ON o.id = w.user_id
            WHERE w.party_of IS NULL
            ORDER BY w.updated_at DESC""",
@@ -54,8 +54,6 @@ def create_world():
 @login_required
 def world_home(wid):
     world = get_world(wid)
-    if world["party_of"]:      # mundo da mesa: o "início" dele é o painel da Mesa
-        return redirect(url_for("play.dashboard", wid=world["party_of"]))
     db = get_db()
     recent = db.execute(
         """SELECT a.*, u.name AS editor FROM articles a LEFT JOIN users u ON u.id = a.updated_by
@@ -149,9 +147,7 @@ def invite(wid):
         db.execute("INSERT OR IGNORE INTO world_members (world_id, user_id, role) VALUES (?, ?, 'editor')",
                    (wid, user["id"]))
         db.execute("UPDATE world_members SET role = 'editor' WHERE world_id = ? AND user_id = ? AND role = 'player'",
-                   (wid, user["id"]))   # jogador promovido a colaborador
-        from .play import sync_party
-        sync_party(wid)
+                   (wid, user["id"]))   # antigo jogador da Mesa (removida) vira colaborador
         flash(f"{user['name']} agora tem acesso a este mundo.", "success")
     else:
         db.execute("INSERT OR IGNORE INTO world_invites (world_id, email, invited_by) VALUES (?, ?, ?)",
@@ -173,8 +169,6 @@ def remove_member(wid, uid):
         return redirect(url_for("worlds.members", wid=wid))
     db = get_db()
     db.execute("DELETE FROM world_members WHERE world_id = ? AND user_id = ? AND role != 'owner'", (wid, uid))
-    from .play import sync_party
-    sync_party(wid)
     db.commit()
     if leaving:
         flash(f"Você saiu de “{world['name']}”.", "success")

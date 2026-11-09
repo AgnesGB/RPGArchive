@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS world_members (
 CREATE INDEX IF NOT EXISTS idx_members_user ON world_members(user_id);
 
 -- Convites para e-mails que ainda não têm conta: viram membros ao entrar
--- Mesa de jogo: mapas que os jogadores veem e "arquivos encontrados" (páginas/arquivos revelados)
+-- LEGADO da Mesa de jogo (removida): tabelas e worlds.party_of ficam só para não perder dados antigos.
+-- Nada no app lê ou escreve nelas.
 CREATE TABLE IF NOT EXISTS play_maps (
     world_id   INTEGER NOT NULL REFERENCES worlds(id) ON DELETE CASCADE,
     map_id     INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
@@ -270,7 +271,7 @@ CREATE TABLE IF NOT EXISTS timeline_pages (
 _ADDED_COLUMNS = {
     "users": {"theme": "TEXT NOT NULL DEFAULT 'dark'", "accent": "TEXT NOT NULL DEFAULT 'yellow'"},
     "world_invites": {"role": "TEXT NOT NULL DEFAULT 'editor'"},
-    "worlds": {"party_of": "INTEGER REFERENCES worlds(id) ON DELETE CASCADE",   # mundo da mesa (área dos jogadores)
+    "worlds": {"party_of": "INTEGER REFERENCES worlds(id) ON DELETE CASCADE",   # legado: mundo da Mesa (removida)
                "icon": "TEXT NOT NULL DEFAULT ''", "cover_url": "TEXT NOT NULL DEFAULT ''",
                "cover_pos": "INTEGER NOT NULL DEFAULT 50"},
     "articles": {"parent_id": "INTEGER REFERENCES articles(id) ON DELETE SET NULL",

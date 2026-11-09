@@ -52,12 +52,12 @@ def create_app() -> Flask:
     app.json.sort_keys = False
     app.jinja_env.policies["json.dumps_kwargs"] = {"sort_keys": False}
 
-    from . import auth, boards, db, files, history, icons, maps, pages, play, worlds
+    from . import auth, boards, db, files, history, icons, maps, pages, worlds
 
     db.init_app(app)
     icons.init_app(app)
     auth.init_app(app)
-    for mod in (auth, worlds, pages, history, boards, maps, files, play):
+    for mod in (auth, worlds, pages, history, boards, maps, files):
         app.register_blueprint(mod.bp)
 
     # --- CSRF simples: token na sessão, enviado em formulários e no header dos fetch() ---

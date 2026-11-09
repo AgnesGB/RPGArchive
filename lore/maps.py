@@ -183,7 +183,6 @@ def view(wid, mid):
         start_edit=bool(request.args.get("edit")),
         has_thumb=bool(m["thumb"]),
         tile_sets=sets_of(wid),
-        player_view=False,
     )
 
 

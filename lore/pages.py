@@ -175,26 +175,6 @@ def new(wid):
     return _render_form(world, page, True)
 
 
-@bp.post("/w/<int:wid>/pages/quick")
-@login_required
-def quick_new(wid):
-    """Cria uma página "Sem título" e abre direto no editor de blocos (estilo Notion): o título já vem selecionado."""
-    world = get_world(wid)
-    cat = request.form.get("category")
-    cat = cat if cat in CATEGORY_MAP else "nota"
-    db = get_db()
-    title, n = "Sem título", 1
-    while _title_taken(wid, title):
-        n += 1
-        title = f"Sem título {n}"
-    cur = db.execute("""INSERT INTO articles (world_id, title, icon, category, summary, content, image_url, cover_pos,
-                        created_by, updated_by) VALUES (?, ?, '', ?, '', '', '', 50, ?, ?)""",
-                     (world["id"], title, cat, g.user["id"], g.user["id"]))
-    touch_world(wid)
-    db.commit()
-    return redirect(url_for("pages.view", wid=wid, aid=cur.lastrowid))
-
-
 def _timelines(wid):
     return get_db().execute("SELECT id, name, color FROM timelines WHERE world_id = ? ORDER BY id", (wid,)).fetchall()
 

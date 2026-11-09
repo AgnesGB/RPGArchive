@@ -39,22 +39,7 @@ Inspirado no Notion (páginas), no vvd.world (wiki do mundo) e no Milanote (mapa
   - **Jogar**: **marcadores** (ligados a páginas, com livro/arquivo anexado e anotações) e **tokens** de jogadores
     arrastáveis, sincronizados entre todos.
   - **Névoa** (fog of war): ferramenta "Névoa" no editor (pincel, cobrir/revelar tudo) e botão "Revelar névoa" no
-    modo Jogar para ir abrindo durante a sessão. O mestre vê através (listrado); jogadores veem opaco e não recebem
-    marcadores/tokens que estejam sob a névoa.
-- **Mesa (aba Jogar)** — papel **jogador**, diferente de colaborador:
-  - Jogadores só entram na Mesa; qualquer rota do planejamento os redireciona para lá (`get_world` barra por padrão).
-  - **Encontros** (só o mestre): planeje cada cena com mapas, páginas e arquivos do acervo, mais anotações do mestre.
-    **Começar** põe os mapas do encontro na mesa; páginas e arquivos são revelados um a um ("revelar") quando os
-    jogadores acharem; **Encerrar** tira os mapas da mesa (o que foi revelado continua revelado).
-  - **Mapas da mesa**: o mestre escolhe quais mapas compartilhar; jogadores só observam e movem tokens
-    (anotações, anexos e passagens secretas ficam escondidos).
-  - **Biblioteca do grupo**: num lugar só, o que o mestre revelou (páginas e arquivos do acervo, marcados
-    "encontrado") e o que o grupo escreveu na área dos jogadores ("do grupo"), com filtro por origem e por categoria
-    (personagens, locais, facções…). Só os arquivos revelados ficam acessíveis.
-  - **Área do grupo**: um "mundo da mesa" ligado ao principal, onde jogadores (e o mestre) fazem anotações, mapas mentais,
-    cronologias e árvores genealógicas.
-  - **Menu dos jogadores**: na Mesa e na área do grupo os jogadores veem só Mapas da mesa, Biblioteca (com atalhos por
-    categoria) e as ferramentas do grupo. O mestre vê, na Mesa, a barra lateral do planejamento.
+    modo Jogar para ir abrindo durante a sessão (a área coberta aparece listrada).
 - **Barra lateral recolhível**: o adesivo colado na borda da barra (ou Ctrl+\).
 - **Acervo**: todas as imagens e arquivos do mundo (imagens, PDF, EPUB, TXT, MD, DOCX, ODT, ZIP, áudio e vídeo; até 40 MB).
 
